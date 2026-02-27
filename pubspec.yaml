@@ -38,6 +38,15 @@ dependencies:
   fluttertoast: ^8.2.8
   flutter_native_splash: ^2.4.1
   path: ^1.9.0
+  
+  # New dependencies for enhanced features
+  provider: ^6.1.2
+  confetti: ^0.8.0
+  fl_chart: ^0.69.0
+  shared_preferences: ^2.3.3
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
 
 flutter_launcher_icons:
   android: "launcher_icon"
@@ -69,6 +78,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  generate: true
 
   #images folder
   assets:
