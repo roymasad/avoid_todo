@@ -6,7 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 
 class ToDoItem extends StatelessWidget {
   final ToDo todo;
-  final onDeleteItem;
+  final void Function(String?) onDeleteItem;
 
   const ToDoItem({
     super.key,

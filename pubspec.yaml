@@ -37,6 +37,7 @@ dependencies:
   sqflite: ^2.4.0
   fluttertoast: ^8.2.8
   flutter_native_splash: ^2.4.1
+  path: ^1.9.0
 
 flutter_launcher_icons:
   android: "launcher_icon"

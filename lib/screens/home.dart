@@ -152,17 +152,10 @@ class _HomeState extends State<Home> {
     );
   }
 
-  void _handleToDoChange(ToDo todo) {
+  void _deleteToDoItem(String? id) {
+    if (id == null) return;
     setState(() {
-      //todo.isDone = !todo.isDone;
-    });
-  }
-
-  void _deleteToDoItem(String id) {
-    setState(() {
-
       _deleteTodo(int.parse(id));
-
       todosList.removeWhere((item) => item.id == id);
     });
   }
