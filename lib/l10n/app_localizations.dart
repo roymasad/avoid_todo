@@ -583,6 +583,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Streak reset. Don\'t give up!'**
   String get relapseSuccess;
+
+  /// No description provided for @onboardingWelcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Avoid ToDo'**
+  String get onboardingWelcomeTitle;
+
+  /// No description provided for @onboardingWelcomeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'A different kind of productivity app. Focus on what you should STOP doing to live a better life.'**
+  String get onboardingWelcomeDesc;
+
+  /// No description provided for @onboardingTagsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Organize with Tags'**
+  String get onboardingTagsTitle;
+
+  /// No description provided for @onboardingTagsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Create custom categories to track different areas of your life like Health, Work, or Social habits.'**
+  String get onboardingTagsDesc;
+
+  /// No description provided for @onboardingMoneyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track Your Savings'**
+  String get onboardingMoneyTitle;
+
+  /// No description provided for @onboardingMoneyDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'See the real financial impact of your habits. Every avoided relapse is money in your pocket!'**
+  String get onboardingMoneyDesc;
+
+  /// No description provided for @onboardingRelapseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Understand Your Triggers'**
+  String get onboardingRelapseTitle;
+
+  /// No description provided for @onboardingRelapseDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Log relapses and notes to identify what causes them. Knowledge is power in breaking habits.'**
+  String get onboardingRelapseDesc;
+
+  /// No description provided for @onboardingBadgesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Earn Achievement Badges'**
+  String get onboardingBadgesTitle;
+
+  /// No description provided for @onboardingBadgesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay motivated with milestones for long streaks and significant savings. You\'ve got this!'**
+  String get onboardingBadgesDesc;
+
+  /// No description provided for @getStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get getStarted;
+
+  /// No description provided for @next.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get next;
+
+  /// No description provided for @skip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get skip;
+
+  /// No description provided for @help.
+  ///
+  /// In en, this message translates to:
+  /// **'Help & Guide'**
+  String get help;
+
+  /// No description provided for @helpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'App Guide & FAQ'**
+  String get helpTitle;
+
+  /// No description provided for @faq1Question.
+  ///
+  /// In en, this message translates to:
+  /// **'How are streaks calculated?'**
+  String get faq1Question;
+
+  /// No description provided for @faq1Answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Streaks for recurring habits start from your last completion or relapse. For single events, they track until you archive the goal.'**
+  String get faq1Answer;
+
+  /// No description provided for @faq2Question.
+  ///
+  /// In en, this message translates to:
+  /// **'How does money tracking work?'**
+  String get faq2Question;
+
+  /// No description provided for @faq2Answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Set an estimated cost for each habit. We multiply this by your successful streak duration to show total savings.'**
+  String get faq2Answer;
+
+  /// No description provided for @faq3Question.
+  ///
+  /// In en, this message translates to:
+  /// **'Can I edit my tags?'**
+  String get faq3Question;
+
+  /// No description provided for @faq3Answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes! Long-press any tag in the filter or edit screen to manage your custom tags.'**
+  String get faq3Answer;
+
+  /// No description provided for @coachMarkAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track a new habit'**
+  String get coachMarkAddTitle;
+
+  /// No description provided for @coachMarkAddDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap here to add something you want to avoid.'**
+  String get coachMarkAddDesc;
+
+  /// No description provided for @coachMarkFilterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter your list'**
+  String get coachMarkFilterTitle;
+
+  /// No description provided for @coachMarkFilterDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name or filter by tags to find specific items.'**
+  String get coachMarkFilterDesc;
+
+  /// No description provided for @coachMarkMenuTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore more'**
+  String get coachMarkMenuTitle;
+
+  /// No description provided for @coachMarkMenuDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the menu to view Statistics, Archive, and this Help guide.'**
+  String get coachMarkMenuDesc;
+
+  /// No description provided for @resetTutorial.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Tutorial'**
+  String get resetTutorial;
+
+  /// No description provided for @tutorialResetSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Tutorial reset. Restart the app to see the walkthrough again.'**
+  String get tutorialResetSuccess;
 }
 
 class _AppLocalizationsDelegate

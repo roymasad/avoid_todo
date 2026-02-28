@@ -13,6 +13,9 @@ import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
 import 'archive_screen.dart';
 import 'statistics_screen.dart';
+import 'help_screen.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -29,6 +32,12 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   final _costController = TextEditingController();
   late ConfettiController _confettiController;
   late AnimationController _animationController;
+
+  // Coach Marks Keys
+  final GlobalKey _menuKey = GlobalKey();
+  final GlobalKey _searchKey = GlobalKey();
+  final GlobalKey _addKey = GlobalKey();
+  List<TargetFocus> targets = [];
 
   // Filters
   List<String> _selectedTagIds = [];
@@ -50,6 +59,163 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     );
     _fetchTodos();
     _fetchTags();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkCoachMarks();
+    });
+  }
+
+  Future<void> _checkCoachMarks() async {
+    final prefs = await SharedPreferences.getInstance();
+    final bool hasSeenCoachMarks = prefs.getBool('hasSeenCoachMarks') ?? false;
+    if (!hasSeenCoachMarks) {
+      _showCoachMarks();
+    }
+  }
+
+  void _showCoachMarks() {
+    final l10n = AppLocalizations.of(context);
+    _initTargets();
+    TutorialCoachMark(
+      targets: targets,
+      colorShadow: tdAvoidRed,
+      textSkip: l10n?.skip ?? "SKIP",
+      paddingFocus: 10,
+      opacityShadow: 0.7,
+      onFinish: () {
+        SharedPreferences.getInstance().then((prefs) {
+          prefs.setBool('hasSeenCoachMarks', true);
+        });
+      },
+      onSkip: () {
+        SharedPreferences.getInstance().then((prefs) {
+          prefs.setBool('hasSeenCoachMarks', true);
+        });
+        return true;
+      },
+    ).show(context: context);
+  }
+
+  void _initTargets() {
+    final l10n = AppLocalizations.of(context)!;
+    targets.clear();
+    targets.add(
+      TargetFocus(
+        identify: "menu",
+        keyTarget: _menuKey,
+        alignSkip: Alignment.topRight,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            builder: (context, controller) {
+              return Material(
+                color: Colors.transparent,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.coachMarkMenuTitle,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 22.0,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      l10n.coachMarkMenuDesc,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.0,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    targets.add(
+      TargetFocus(
+        identify: "search",
+        keyTarget: _searchKey,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            builder: (context, controller) {
+              return Material(
+                color: Colors.transparent,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.coachMarkFilterTitle,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 22.0,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      l10n.coachMarkFilterDesc,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.0,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+
+    targets.add(
+      TargetFocus(
+        identify: "add",
+        keyTarget: _addKey,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            builder: (context, controller) {
+              return Material(
+                color: Colors.transparent,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.coachMarkAddTitle,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 22.0,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      l10n.coachMarkAddDesc,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.0,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -485,7 +651,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
             ),
             child: Column(
               children: [
-                _buildSearchBox(),
+                _buildSearchBox(key: _searchKey),
                 Expanded(
                   child: _foundToDo.isEmpty
                       ? Center(
@@ -587,6 +753,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        key: _addKey,
         onPressed: _showAddTodoDialog,
         icon: const Icon(Icons.add),
         label: const Text('Add'),
@@ -926,8 +1093,9 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     );
   }
 
-  Widget _buildSearchBox() {
+  Widget _buildSearchBox({Key? key}) {
     return Container(
+      key: key,
       padding: const EdgeInsets.symmetric(horizontal: 15),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -967,6 +1135,13 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   AppBar _buildAppBar() {
     return AppBar(
+      leading: Builder(
+        builder: (context) => IconButton(
+          key: _menuKey,
+          icon: const Icon(Icons.menu),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+      ),
       title: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -1111,6 +1286,18 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           ),
           const Divider(),
           ListTile(
+            leading: const Icon(Icons.help_outline),
+            title: Text(l10n?.help ?? 'Help & Guide'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HelpScreen()),
+              );
+            },
+          ),
+          const Divider(),
+          ListTile(
             leading: const Icon(Icons.info),
             title: Text(l10n?.about ?? 'About'),
             onTap: () {
@@ -1130,6 +1317,24 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                     ],
                   );
                 },
+              );
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.refresh, color: Colors.orange),
+            title: Text(l10n?.resetTutorial ?? 'Reset Tutorial',
+                style: const TextStyle(color: Colors.orange)),
+            onTap: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('hasSeenOnboarding', false);
+              await prefs.setBool('hasSeenCoachMarks', false);
+              if (!mounted) return;
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    content: Text(l10n?.tutorialResetSuccess ??
+                        'Tutorial reset. Restart the app to see the walkthrough again.')),
               );
             },
           ),

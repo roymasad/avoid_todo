@@ -252,4 +252,102 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get relapseSuccess => 'Streak reset. Don\'t give up!';
+
+  @override
+  String get onboardingWelcomeTitle => 'Welcome to Avoid ToDo';
+
+  @override
+  String get onboardingWelcomeDesc =>
+      'A different kind of productivity app. Focus on what you should STOP doing to live a better life.';
+
+  @override
+  String get onboardingTagsTitle => 'Organize with Tags';
+
+  @override
+  String get onboardingTagsDesc =>
+      'Create custom categories to track different areas of your life like Health, Work, or Social habits.';
+
+  @override
+  String get onboardingMoneyTitle => 'Track Your Savings';
+
+  @override
+  String get onboardingMoneyDesc =>
+      'See the real financial impact of your habits. Every avoided relapse is money in your pocket!';
+
+  @override
+  String get onboardingRelapseTitle => 'Understand Your Triggers';
+
+  @override
+  String get onboardingRelapseDesc =>
+      'Log relapses and notes to identify what causes them. Knowledge is power in breaking habits.';
+
+  @override
+  String get onboardingBadgesTitle => 'Earn Achievement Badges';
+
+  @override
+  String get onboardingBadgesDesc =>
+      'Stay motivated with milestones for long streaks and significant savings. You\'ve got this!';
+
+  @override
+  String get getStarted => 'Get Started';
+
+  @override
+  String get next => 'Next';
+
+  @override
+  String get skip => 'Skip';
+
+  @override
+  String get help => 'Help & Guide';
+
+  @override
+  String get helpTitle => 'App Guide & FAQ';
+
+  @override
+  String get faq1Question => 'How are streaks calculated?';
+
+  @override
+  String get faq1Answer =>
+      'Streaks for recurring habits start from your last completion or relapse. For single events, they track until you archive the goal.';
+
+  @override
+  String get faq2Question => 'How does money tracking work?';
+
+  @override
+  String get faq2Answer =>
+      'Set an estimated cost for each habit. We multiply this by your successful streak duration to show total savings.';
+
+  @override
+  String get faq3Question => 'Can I edit my tags?';
+
+  @override
+  String get faq3Answer =>
+      'Yes! Long-press any tag in the filter or edit screen to manage your custom tags.';
+
+  @override
+  String get coachMarkAddTitle => 'Track a new habit';
+
+  @override
+  String get coachMarkAddDesc => 'Tap here to add something you want to avoid.';
+
+  @override
+  String get coachMarkFilterTitle => 'Filter your list';
+
+  @override
+  String get coachMarkFilterDesc =>
+      'Search by name or filter by tags to find specific items.';
+
+  @override
+  String get coachMarkMenuTitle => 'Explore more';
+
+  @override
+  String get coachMarkMenuDesc =>
+      'Open the menu to view Statistics, Archive, and this Help guide.';
+
+  @override
+  String get resetTutorial => 'Reset Tutorial';
+
+  @override
+  String get tutorialResetSuccess =>
+      'Tutorial reset. Restart the app to see the walkthrough again.';
 }

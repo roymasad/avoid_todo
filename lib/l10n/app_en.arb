@@ -101,5 +101,13 @@
   "faq2Question": "How does money tracking work?",
   "faq2Answer": "Set an estimated cost for each habit. We multiply this by your successful streak duration to show total savings.",
   "faq3Question": "Can I edit my tags?",
-  "faq3Answer": "Yes! Long-press any tag in the filter or edit screen to manage your custom tags."
+  "faq3Answer": "Yes! Long-press any tag in the filter or edit screen to manage your custom tags.",
+  "coachMarkAddTitle": "Track a new habit",
+  "coachMarkAddDesc": "Tap here to add something you want to avoid.",
+  "coachMarkFilterTitle": "Filter your list",
+  "coachMarkFilterDesc": "Search by name or filter by tags to find specific items.",
+  "coachMarkMenuTitle": "Explore more",
+  "coachMarkMenuDesc": "Open the menu to view Statistics, Archive, and this Help guide.",
+  "resetTutorial": "Reset Tutorial",
+  "tutorialResetSuccess": "Tutorial reset. Restart the app to see the walkthrough again."
 }

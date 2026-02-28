@@ -254,4 +254,103 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get relapseSuccess => 'Série réinitialisée. N\'abandonnez pas !';
+
+  @override
+  String get onboardingWelcomeTitle => 'Bienvenue sur Avoid ToDo';
+
+  @override
+  String get onboardingWelcomeDesc =>
+      'Une application de productivité différente. Concentrez-vous sur ce que vous devriez ARRÊTER de faire pour vivre mieux.';
+
+  @override
+  String get onboardingTagsTitle => 'Organisez avec des Étiquettes';
+
+  @override
+  String get onboardingTagsDesc =>
+      'Créez des catégories personnalisées pour suivre différents domaines de votre vie comme la Santé, le Travail ou les habitudes Sociales.';
+
+  @override
+  String get onboardingMoneyTitle => 'Suivez vos Économies';
+
+  @override
+  String get onboardingMoneyDesc =>
+      'Visualisez l\'impact financier réel de vos habitudes. Chaque rechute évitée est de l\'argent dans votre poche !';
+
+  @override
+  String get onboardingRelapseTitle => 'Comprenez vos Déclencheurs';
+
+  @override
+  String get onboardingRelapseDesc =>
+      'Notez les rechutes et les notes pour identifier ce qui les cause. La connaissance est la clé pour changer ses habitudes.';
+
+  @override
+  String get onboardingBadgesTitle => 'Gagnez des Badges de Réussite';
+
+  @override
+  String get onboardingBadgesDesc =>
+      'Restez motivé avec des jalons pour les longues séries et les économies significatives. Vous pouvez le faire !';
+
+  @override
+  String get getStarted => 'Commencer';
+
+  @override
+  String get next => 'Suivant';
+
+  @override
+  String get skip => 'Passer';
+
+  @override
+  String get help => 'Aide et Guide';
+
+  @override
+  String get helpTitle => 'Guide de l\'application et FAQ';
+
+  @override
+  String get faq1Question => 'Comment sont calculées les séries ?';
+
+  @override
+  String get faq1Answer =>
+      'Les séries pour les habitudes récurrentes commencent à partir de votre dernière complétion ou rechute. Pour les événements uniques, elles sont suivies jusqu\'à ce que vous archiviez l\'objectif.';
+
+  @override
+  String get faq2Question => 'Comment fonctionne le suivi de l\'argent ?';
+
+  @override
+  String get faq2Answer =>
+      'Définissez un coût estimé pour chaque habitude. Nous multiplions cela par la durée de votre série réussie pour afficher les économies totales.';
+
+  @override
+  String get faq3Question => 'Puis-je modifier mes étiquettes ?';
+
+  @override
+  String get faq3Answer =>
+      'Oui ! Appuyez longuement sur n\'importe quelle étiquette dans le filtre ou l\'écran de modification pour gérer vos étiquettes personnalisées.';
+
+  @override
+  String get coachMarkAddTitle => 'Suivez une nouvelle habitude';
+
+  @override
+  String get coachMarkAddDesc =>
+      'Appuyez ici pour ajouter quelque chose que vous voulez éviter.';
+
+  @override
+  String get coachMarkFilterTitle => 'Filtrez votre liste';
+
+  @override
+  String get coachMarkFilterDesc =>
+      'Recherchez par nom ou filtrez par étiquettes pour trouver des éléments spécifiques.';
+
+  @override
+  String get coachMarkMenuTitle => 'Explorez plus';
+
+  @override
+  String get coachMarkMenuDesc =>
+      'Ouvrez le menu pour voir les Statistiques, les Archives et ce guide d\'Aide.';
+
+  @override
+  String get resetTutorial => 'Réinitialiser le tutoriel';
+
+  @override
+  String get tutorialResetSuccess =>
+      'Tutoriel réinitialisé. Redémarrez l\'application pour revoir le guide.';
 }

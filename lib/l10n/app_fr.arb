@@ -101,5 +101,13 @@
   "faq2Question": "Comment fonctionne le suivi de l'argent ?",
   "faq2Answer": "Définissez un coût estimé pour chaque habitude. Nous multiplions cela par la durée de votre série réussie pour afficher les économies totales.",
   "faq3Question": "Puis-je modifier mes étiquettes ?",
-  "faq3Answer": "Oui ! Appuyez longuement sur n'importe quelle étiquette dans le filtre ou l'écran de modification pour gérer vos étiquettes personnalisées."
+  "faq3Answer": "Oui ! Appuyez longuement sur n'importe quelle étiquette dans le filtre ou l'écran de modification pour gérer vos étiquettes personnalisées.",
+  "coachMarkAddTitle": "Suivez une nouvelle habitude",
+  "coachMarkAddDesc": "Appuyez ici pour ajouter quelque chose que vous voulez éviter.",
+  "coachMarkFilterTitle": "Filtrez votre liste",
+  "coachMarkFilterDesc": "Recherchez par nom ou filtrez par étiquettes pour trouver des éléments spécifiques.",
+  "coachMarkMenuTitle": "Explorez plus",
+  "coachMarkMenuDesc": "Ouvrez le menu pour voir les Statistiques, les Archives et ce guide d'Aide.",
+  "resetTutorial": "Réinitialiser le tutoriel",
+  "tutorialResetSuccess": "Tutoriel réinitialisé. Redémarrez l'application pour revoir le guide."
 }

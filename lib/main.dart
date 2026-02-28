@@ -7,7 +7,9 @@ import './providers/theme_provider.dart';
 import './providers/locale_provider.dart';
 import './helpers/notification_helper.dart';
 import './constants/themes.dart';
+import './screens/onboarding_screen.dart';
 import 'package:avoid_todo/l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,9 +18,10 @@ void main() async {
   try {
     await notificationHelper.init();
     await notificationHelper.scheduleDailyCheckInNotification();
-  } catch (_) {
-    // Notification scheduling is non-critical; continue if it fails
-  }
+  } catch (_) {}
+
+  final prefs = await SharedPreferences.getInstance();
+  final bool hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
 
   runApp(
     MultiProvider(
@@ -26,13 +29,14 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
       ],
-      child: const MyApp(),
+      child: MyApp(hasSeenOnboarding: hasSeenOnboarding),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool hasSeenOnboarding;
+  const MyApp({super.key, required this.hasSeenOnboarding});
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +63,7 @@ class MyApp extends StatelessWidget {
             Locale('en'),
             Locale('fr'),
           ],
-          home: const Home(),
+          home: hasSeenOnboarding ? const Home() : const OnboardingScreen(),
         );
       },
     );
