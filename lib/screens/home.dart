@@ -8,14 +8,21 @@ import '../constants/colors.dart';
 import '../constants/themes.dart';
 import '../widgets/todo_item.dart';
 import '../helpers/database_helper.dart';
+import '../helpers/notification_helper.dart';
 import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
 import 'archive_screen.dart';
 import 'statistics_screen.dart';
 import 'help_screen.dart';
+import 'map_picker_screen.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:permission_handler/permission_handler.dart';
+// Note: Map implementation uses simple location names for now.
+
+enum SortOption { latest, oldest, avoidType, costType, priority }
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -37,6 +44,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   final GlobalKey _menuKey = GlobalKey();
   final GlobalKey _searchKey = GlobalKey();
   final GlobalKey _addKey = GlobalKey();
+
+  AvoidType _selectedType = AvoidType.generic;
+  String? _selectedContactId;
+  String? _locationName;
+  double? _latitude;
+  double? _longitude;
+  DateTime? _reminderDateTime;
+
   List<TargetFocus> targets = [];
 
   // Filters
@@ -47,6 +62,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   // Phase 1 New Fields
   bool _isRecurring = true;
   DateTime? _eventDate;
+  CostType _selectedCostType = CostType.money;
+  SortOption _selectedSortOption = SortOption.latest;
 
   @override
   void initState() {
@@ -230,10 +247,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   Future<void> _fetchTodos() async {
     final todos = await DatabaseHelper.instance.readAllTodos();
-    setState(() {
-      todosList = todos;
-      _foundToDo = todos;
-    });
+    todosList = todos;
+    _runFilter(_searchController.text);
   }
 
   Future<void> _fetchTags() async {
@@ -256,24 +271,43 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       priority: _selectedPriority,
       orderIndex: todosList.length,
       isRecurring: _isRecurring,
-      eventDate: _eventDate,
+      relapseCount: 0,
       estimatedCost: double.tryParse(_costController.text),
+      costType: _selectedCostType,
+      avoidType: _selectedType,
+      contactId: _selectedContactId,
+      locationName: _locationName,
+      latitude: _latitude,
+      longitude: _longitude,
+      reminderDateTime: _reminderDateTime,
     );
 
-    await DatabaseHelper.instance.create(newTodo);
+    final newId = await DatabaseHelper.instance.create(newTodo);
+    if (_reminderDateTime != null) {
+      await NotificationHelper()
+          .scheduleReminder(newId, todo, _reminderDateTime!);
+    }
     _todoController.clear();
     _costController.clear();
     setState(() {
+      _selectedCostType = CostType.money;
       _selectedTagIds = [];
       _selectedPriority = TodoPriority.medium;
       _isRecurring = true;
       _eventDate = null;
+      _selectedType = AvoidType.generic;
+      _selectedContactId = null;
+      _locationName = null;
+      _latitude = null;
+      _longitude = null;
+      _reminderDateTime = null;
     });
     _fetchTodos();
   }
 
   Future<void> _archiveTodo(int id) async {
     await DatabaseHelper.instance.archiveTodo(id);
+    await NotificationHelper().cancelReminder(id.toString());
     _confettiController.play();
     _fetchTodos();
   }
@@ -317,6 +351,23 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         return l10n?.medium ?? 'Medium';
       case TodoPriority.low:
         return l10n?.low ?? 'Low';
+    }
+  }
+
+  IconData _getCostIcon(CostType type) {
+    switch (type) {
+      case CostType.money:
+        return Icons.attach_money;
+      case CostType.mood:
+        return Icons.mood;
+      case CostType.health:
+        return Icons.health_and_safety;
+      case CostType.time:
+        return Icons.timer;
+      case CostType.goodwill:
+        return Icons.handshake;
+      case CostType.patience:
+        return Icons.hourglass_empty;
     }
   }
 
@@ -404,6 +455,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   }
 
   void _showAddTodoDialog() {
+    final locationController = TextEditingController(text: _locationName);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -418,197 +470,428 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
             right: 16,
             top: 16,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppLocalizations.of(context)?.addThingToAvoid ??
-                    'Add Thing to Avoid',
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _todoController,
-                decoration: InputDecoration(
-                  hintText: AppLocalizations.of(context)?.whatToAvoid ??
-                      'What do you need to avoid?',
-                  prefixIcon: const Icon(Icons.block),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppLocalizations.of(context)?.addThingToAvoid ??
+                      'Add Thing to Avoid',
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-                autofocus: true,
-              ),
-              const SizedBox(height: 16),
-              Text(AppLocalizations.of(context)?.tags ?? 'Tags:',
-                  style: const TextStyle(fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              FutureBuilder<List<Tag>>(
-                future: DatabaseHelper.instance.getAllTags(),
-                builder: (context, snapshot) {
-                  final localTags = snapshot.data ?? _allTags;
-                  return Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: [
-                      ...localTags.map((tag) {
-                        final isSelected = _selectedTagIds.contains(tag.id);
-                        return FilterChip(
-                          label: Text(tag.name),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _todoController,
+                  decoration: InputDecoration(
+                    hintText: AppLocalizations.of(context)?.whatToAvoid ??
+                        'What do you need to avoid?',
+                    prefixIcon: const Icon(Icons.block),
+                  ),
+                  autofocus: true,
+                ),
+                const SizedBox(height: 16),
+                const Text('Avoid Type:',
+                    style: TextStyle(fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: AvoidType.values.map((type) {
+                      final isSelected = _selectedType == type;
+                      IconData icon;
+                      String label;
+                      switch (type) {
+                        case AvoidType.generic:
+                          icon = Icons.block;
+                          label = 'Generic';
+                          break;
+                        case AvoidType.people:
+                          icon = Icons.person;
+                          label = 'People';
+                          break;
+                        case AvoidType.event:
+                          icon = Icons.event;
+                          label = 'Event';
+                          break;
+                        case AvoidType.place:
+                          icon = Icons.place;
+                          label = 'Place';
+                          break;
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ChoiceChip(
+                          avatar: Icon(icon, size: 16),
+                          label: Text(label),
                           selected: isSelected,
                           onSelected: (selected) {
-                            setModalState(() {
-                              if (selected) {
-                                _selectedTagIds.add(tag.id);
-                              } else {
-                                _selectedTagIds.remove(tag.id);
-                              }
-                            });
+                            if (selected) {
+                              setModalState(() {
+                                _selectedType = type;
+                              });
+                            }
                           },
-                          selectedColor: tag.color.withAlpha(180),
-                          checkmarkColor: Colors.white,
+                          selectedColor: tdAvoidRed.withAlpha(200),
                           labelStyle: TextStyle(
                             color: isSelected ? Colors.white : null,
                           ),
-                        );
-                      }),
-                      ActionChip(
-                        avatar: const Icon(Icons.add, size: 16),
-                        label: Text(
-                            AppLocalizations.of(context)?.newTag ?? 'New tag'),
-                        onPressed: () => _showCreateTagDialog(
-                            context, localTags, setModalState),
-                      ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-              Text(AppLocalizations.of(context)?.priority ?? 'Priority:',
-                  style: const TextStyle(fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: TodoPriority.values.map((priority) {
-                  final isSelected = _selectedPriority == priority;
-                  Color color;
-                  switch (priority) {
-                    case TodoPriority.high:
-                      color = AppThemes.priorityHigh;
-                      break;
-                    case TodoPriority.medium:
-                      color = AppThemes.priorityMedium;
-                      break;
-                    case TodoPriority.low:
-                      color = AppThemes.priorityLow;
-                      break;
-                  }
-                  return ChoiceChip(
-                    label: Text(_getPriorityLabel(priority)),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+
+                if (_selectedType == AvoidType.people) ...[
+                  const SizedBox(height: 16),
+                  const Text('Associated Person:',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      if (await Permission.contacts.request().isGranted) {
+                        final contact =
+                            await FlutterContacts.openExternalPick();
+                        if (contact != null) {
+                          setModalState(() {
+                            _selectedContactId = contact.id;
+                            _todoController.text = contact.displayName;
+                          });
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.contact_phone),
+                    label: Text(_selectedContactId == null
+                        ? 'Select from Contacts'
+                        : 'Change Contact'),
+                  ),
+                ],
+
+                if (_selectedType == AvoidType.place) ...[
+                  const SizedBox(height: 16),
+                  const Text('Avoid Location:',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: locationController,
+                    onChanged: (val) => _locationName = val,
+                    decoration: const InputDecoration(
+                      hintText: 'Place name or address',
+                      prefixIcon: Icon(Icons.location_on),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MapPickerScreen(
+                            initialLat: _latitude,
+                            initialLng: _longitude,
+                          ),
+                        ),
+                      );
+                      if (result != null && result is Map<String, dynamic>) {
                         setModalState(() {
-                          _selectedPriority = priority;
+                          _latitude = result['lat'];
+                          _longitude = result['lng'];
+                          _locationName = result['address'];
+                          locationController.text = _locationName ?? '';
                         });
                       }
                     },
-                    selectedColor: color,
-                    labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : null,
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 16),
+                    icon: const Icon(Icons.map),
+                    label: const Text('Pick on Map'),
+                  ),
+                ],
 
-              // Recurring vs Single Event Toggle
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                    AppLocalizations.of(context)?.isRecurring ??
-                        'Is this a recurring habit?',
+                if (_selectedType == AvoidType.event) ...[
+                  const SizedBox(height: 16),
+                  const Text('Event Reminder:',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.alarm),
+                    title: Text(_reminderDateTime == null
+                        ? 'Set Reminder'
+                        : '${_reminderDateTime!.day}/${_reminderDateTime!.month} ${_reminderDateTime!.hour}:${_reminderDateTime!.minute}'),
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate:
+                            DateTime.now().add(const Duration(hours: 1)),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (date != null && context.mounted) {
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+                        if (time != null) {
+                          setModalState(() {
+                            _reminderDateTime = DateTime(
+                              date.year,
+                              date.month,
+                              date.day,
+                              time.hour,
+                              time.minute,
+                            );
+                          });
+                        }
+                      }
+                    },
+                    trailing: _reminderDateTime != null
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () => setModalState(() {
+                              _reminderDateTime = null;
+                            }),
+                          )
+                        : null,
+                  ),
+                ],
+
+                const SizedBox(height: 16),
+                Text(AppLocalizations.of(context)?.tags ?? 'Tags:',
                     style: const TextStyle(fontWeight: FontWeight.w500)),
-                value: _isRecurring,
-                onChanged: (bool value) {
-                  setModalState(() {
-                    _isRecurring = value;
-                    if (value) {
-                      _eventDate = null; // Clear date if switching back
-                    }
-                  });
-                },
-                activeThumbColor: tdAvoidRed,
-              ),
-
-              if (!_isRecurring)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Row(
-                    children: [
-                      Text(
-                          '${AppLocalizations.of(context)?.eventDate ?? 'Event Date'}: ',
-                          style: const TextStyle(fontWeight: FontWeight.w500)),
-                      TextButton.icon(
-                        icon: const Icon(Icons.calendar_today, size: 18),
-                        label: Text(_eventDate == null
-                            ? (AppLocalizations.of(context)?.selectDate ??
-                                'Select Date')
-                            : '${_eventDate!.day}/${_eventDate!.month}/${_eventDate!.year}'),
-                        onPressed: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate:
-                                DateTime.now().add(const Duration(days: 1)),
-                            firstDate: DateTime.now(),
-                            lastDate:
-                                DateTime.now().add(const Duration(days: 365)),
-                          );
-                          if (picked != null) {
-                            setModalState(() {
-                              _eventDate = picked;
-                            });
-                          }
-                        },
+                const SizedBox(height: 8),
+                FutureBuilder<List<Tag>>(
+                  future: DatabaseHelper.instance.getAllTags(),
+                  builder: (context, snapshot) {
+                    final localTags = snapshot.data ?? _allTags;
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          ...localTags.map((tag) {
+                            final isSelected = _selectedTagIds.contains(tag.id);
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: FilterChip(
+                                label: Text(tag.name),
+                                selected: isSelected,
+                                onSelected: (selected) {
+                                  setModalState(() {
+                                    if (selected) {
+                                      _selectedTagIds.add(tag.id);
+                                    } else {
+                                      _selectedTagIds.remove(tag.id);
+                                    }
+                                  });
+                                },
+                                selectedColor: tag.color.withAlpha(180),
+                                checkmarkColor: Colors.white,
+                                labelStyle: TextStyle(
+                                  color: isSelected ? Colors.white : null,
+                                ),
+                              ),
+                            );
+                          }),
+                          ActionChip(
+                            avatar: const Icon(Icons.add, size: 16),
+                            label: Text(AppLocalizations.of(context)?.newTag ??
+                                'New tag'),
+                            onPressed: () => _showCreateTagDialog(
+                                context, localTags, setModalState),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-
-              const SizedBox(height: 16),
-              TextField(
-                controller: _costController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)?.estimatedCostLabel ??
-                      'Estimated Cost per Relapse / Duration',
-                  hintText: 'e.g., 5.00',
-                  prefixIcon: const Icon(Icons.attach_money),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    _addTodo(_todoController.text);
-                    Navigator.pop(context);
+                    );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: tdAvoidRed,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                ),
+                const SizedBox(height: 16),
+                Text(AppLocalizations.of(context)?.priority ?? 'Priority:',
+                    style: const TextStyle(fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: TodoPriority.values.map((priority) {
+                    final isSelected = _selectedPriority == priority;
+                    Color color;
+                    switch (priority) {
+                      case TodoPriority.high:
+                        color = AppThemes.priorityHigh;
+                        break;
+                      case TodoPriority.medium:
+                        color = AppThemes.priorityMedium;
+                        break;
+                      case TodoPriority.low:
+                        color = AppThemes.priorityLow;
+                        break;
+                    }
+                    return ChoiceChip(
+                      label: Text(_getPriorityLabel(priority)),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected) {
+                          setModalState(() {
+                            _selectedPriority = priority;
+                          });
+                        }
+                      },
+                      selectedColor: color,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : null,
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+
+                // Recurring vs Single Event Toggle
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                      AppLocalizations.of(context)?.isRecurring ??
+                          'Is this a recurring habit?',
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
+                  value: _isRecurring,
+                  onChanged: (bool value) {
+                    setModalState(() {
+                      _isRecurring = value;
+                      if (value) {
+                        _eventDate = null; // Clear date if switching back
+                      }
+                    });
+                  },
+                  activeThumbColor: tdAvoidRed,
+                ),
+
+                if (!_isRecurring)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Row(
+                      children: [
+                        Text(
+                            '${AppLocalizations.of(context)?.eventDate ?? 'Event Date'}: ',
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w500)),
+                        TextButton.icon(
+                          icon: const Icon(Icons.calendar_today, size: 18),
+                          label: Text(_eventDate == null
+                              ? (AppLocalizations.of(context)?.selectDate ??
+                                  'Select Date')
+                              : '${_eventDate!.day}/${_eventDate!.month}/${_eventDate!.year}'),
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate:
+                                  DateTime.now().add(const Duration(days: 1)),
+                              firstDate: DateTime.now(),
+                              lastDate:
+                                  DateTime.now().add(const Duration(days: 365)),
+                            );
+                            if (picked != null) {
+                              setModalState(() {
+                                _eventDate = picked;
+                              });
+                            }
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                  child: Text(AppLocalizations.of(context)?.addToAvoidList ??
-                      'Add to Avoid List'),
+
+                const Text('Cost Type:',
+                    style: TextStyle(fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: CostType.values.map((type) {
+                      final isSelected = _selectedCostType == type;
+                      IconData icon;
+                      String label;
+                      switch (type) {
+                        case CostType.money:
+                          icon = Icons.attach_money;
+                          label = 'Money';
+                          break;
+                        case CostType.mood:
+                          icon = Icons.mood;
+                          label = 'Mood';
+                          break;
+                        case CostType.health:
+                          icon = Icons.health_and_safety;
+                          label = 'Health';
+                          break;
+                        case CostType.time:
+                          icon = Icons.timer;
+                          label = 'Time';
+                          break;
+                        case CostType.goodwill:
+                          icon = Icons.handshake;
+                          label = 'Goodwill';
+                          break;
+                        case CostType.patience:
+                          icon = Icons.hourglass_empty;
+                          label = 'Patience';
+                          break;
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ChoiceChip(
+                          avatar: Icon(icon, size: 16),
+                          label: Text(label),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setModalState(() {
+                                _selectedCostType = type;
+                              });
+                            }
+                          },
+                          // Use a different color for cost types to distinguish
+                          selectedColor: Colors.blue.withAlpha(200),
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : null,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-            ],
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _costController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText:
+                        AppLocalizations.of(context)?.estimatedCostLabel ??
+                            'Cost Amount (per relapse/duration)',
+                    hintText: 'e.g., 5.0',
+                    prefixIcon: Icon(_getCostIcon(_selectedCostType)),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _addTodo(_todoController.text);
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: tdAvoidRed,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(AppLocalizations.of(context)?.addToAvoidList ??
+                        'Add to Avoid List'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),
@@ -625,6 +908,25 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               .toLowerCase()
               .contains(enteredKeyword.toLowerCase()))
           .toList();
+    }
+
+    // Apply Sorting
+    switch (_selectedSortOption) {
+      case SortOption.latest:
+        results.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        break;
+      case SortOption.oldest:
+        results.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+        break;
+      case SortOption.avoidType:
+        results.sort((a, b) => a.avoidType.index.compareTo(b.avoidType.index));
+        break;
+      case SortOption.costType:
+        results.sort((a, b) => a.costType.index.compareTo(b.costType.index));
+        break;
+      case SortOption.priority:
+        results.sort((a, b) => a.priority.index.compareTo(b.priority.index));
+        break;
     }
 
     setState(() {
@@ -651,7 +953,51 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
             ),
             child: Column(
               children: [
-                _buildSearchBox(key: _searchKey),
+                Row(
+                  children: [
+                    Expanded(child: _buildSearchBox(key: _searchKey)),
+                    const SizedBox(width: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: PopupMenuButton<SortOption>(
+                        icon: const Icon(Icons.sort),
+                        onSelected: (SortOption result) {
+                          setState(() {
+                            _selectedSortOption = result;
+                            _runFilter(_searchController.text);
+                          });
+                        },
+                        itemBuilder: (BuildContext context) =>
+                            <PopupMenuEntry<SortOption>>[
+                          const PopupMenuItem<SortOption>(
+                            value: SortOption.latest,
+                            child: Text('Latest'),
+                          ),
+                          const PopupMenuItem<SortOption>(
+                            value: SortOption.oldest,
+                            child: Text('Oldest'),
+                          ),
+                          const PopupMenuItem<SortOption>(
+                            value: SortOption.avoidType,
+                            child: Text('Avoid Type'),
+                          ),
+                          const PopupMenuItem<SortOption>(
+                            value: SortOption.costType,
+                            child: Text('Cost Type'),
+                          ),
+                          const PopupMenuItem<SortOption>(
+                            value: SortOption.priority,
+                            child: Text('Priority'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 15),
                 Expanded(
                   child: _foundToDo.isEmpty
                       ? Center(
@@ -765,10 +1111,18 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     final textController = TextEditingController(text: todo.todoText);
     final costController =
         TextEditingController(text: todo.estimatedCost?.toString() ?? '');
+    final locationController = TextEditingController(text: todo.locationName);
     List<String> editTagIds = List.from(todo.tagIds);
     TodoPriority editPriority = todo.priority;
     bool editIsRecurring = todo.isRecurring;
     DateTime? editEventDate = todo.eventDate;
+    AvoidType editType = todo.avoidType;
+    String? editContactId = todo.contactId;
+    String? editLocationName = todo.locationName;
+    double? editLatitude = todo.latitude;
+    double? editLongitude = todo.longitude;
+    DateTime? editReminderDateTime = todo.reminderDateTime;
+    CostType editCostType = todo.costType;
     final localTags = List<Tag>.from(_allTags);
 
     await showModalBottomSheet(
@@ -785,205 +1139,449 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
             right: 16,
             top: 16,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppLocalizations.of(context)?.editItem ?? 'Edit Item',
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: textController,
-                decoration: const InputDecoration(
-                  hintText: 'What do you need to avoid?',
-                  prefixIcon: Icon(Icons.block),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppLocalizations.of(context)?.editItem ?? 'Edit Item',
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-                autofocus: true,
-              ),
-              const SizedBox(height: 16),
-              const Text('Tags:',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  ...localTags.map((tag) {
-                    final isSelected = editTagIds.contains(tag.id);
-                    return FilterChip(
-                      label: Text(tag.name),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setModalState(() {
-                          if (selected) {
-                            editTagIds.add(tag.id);
-                          } else {
-                            editTagIds.remove(tag.id);
-                          }
-                        });
-                      },
-                      selectedColor: tag.color.withAlpha(180),
-                      checkmarkColor: Colors.white,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : null,
-                      ),
-                    );
-                  }),
-                  ActionChip(
-                    avatar: const Icon(Icons.add, size: 16),
-                    label: const Text('New tag'),
-                    onPressed: () =>
-                        _showCreateTagDialog(context, localTags, setModalState),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: textController,
+                  decoration: const InputDecoration(
+                    hintText: 'What do you need to avoid?',
+                    prefixIcon: Icon(Icons.block),
+                  ),
+                  autofocus: true,
+                ),
+                const SizedBox(height: 16),
+                const Text('Avoid Type:',
+                    style: TextStyle(fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: AvoidType.values.map((type) {
+                      final isSelected = editType == type;
+                      IconData icon;
+                      String label;
+                      switch (type) {
+                        case AvoidType.generic:
+                          icon = Icons.block;
+                          label = 'Generic';
+                          break;
+                        case AvoidType.people:
+                          icon = Icons.person;
+                          label = 'People';
+                          break;
+                        case AvoidType.event:
+                          icon = Icons.event;
+                          label = 'Event';
+                          break;
+                        case AvoidType.place:
+                          icon = Icons.place;
+                          label = 'Place';
+                          break;
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ChoiceChip(
+                          avatar: Icon(icon, size: 16),
+                          label: Text(label),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setModalState(() {
+                                editType = type;
+                              });
+                            }
+                          },
+                          selectedColor: tdAvoidRed.withAlpha(200),
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : null,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                if (editType == AvoidType.people) ...[
+                  const SizedBox(height: 16),
+                  const Text('Associated Person:',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      if (await Permission.contacts.request().isGranted) {
+                        final contact =
+                            await FlutterContacts.openExternalPick();
+                        if (contact != null) {
+                          setModalState(() {
+                            editContactId = contact.id;
+                            textController.text = contact.displayName;
+                          });
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.contact_phone),
+                    label: Text(editContactId == null
+                        ? 'Select from Contacts'
+                        : 'Change Contact'),
                   ),
                 ],
-              ),
-              const SizedBox(height: 16),
-              Text(AppLocalizations.of(context)?.priority ?? 'Priority:',
-                  style: const TextStyle(fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: TodoPriority.values.map((priority) {
-                  final isSelected = editPriority == priority;
-                  Color color;
-                  String label;
-                  switch (priority) {
-                    case TodoPriority.high:
-                      color = AppThemes.priorityHigh;
-                      label = 'High';
-                      break;
-                    case TodoPriority.medium:
-                      color = AppThemes.priorityMedium;
-                      label = 'Medium';
-                      break;
-                    case TodoPriority.low:
-                      color = AppThemes.priorityLow;
-                      label = 'Low';
-                      break;
-                  }
-                  return ChoiceChip(
-                    label: Text(label),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
+                if (editType == AvoidType.place) ...[
+                  const SizedBox(height: 16),
+                  const Text('Avoid Location:',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: locationController,
+                    onChanged: (val) => editLocationName = val,
+                    decoration: const InputDecoration(
+                      hintText: 'Place name or address',
+                      prefixIcon: Icon(Icons.location_on),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MapPickerScreen(
+                            initialLat: editLatitude,
+                            initialLng: editLongitude,
+                          ),
+                        ),
+                      );
+                      if (result != null && result is Map<String, dynamic>) {
                         setModalState(() {
-                          editPriority = priority;
+                          editLatitude = result['lat'];
+                          editLongitude = result['lng'];
+                          editLocationName = result['address'];
+                          locationController.text = editLocationName ?? '';
                         });
                       }
                     },
-                    selectedColor: color,
-                    labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : null,
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 16),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Is this a recurring habit?',
+                    icon: const Icon(Icons.map),
+                    label: const Text('Pick on Map'),
+                  ),
+                ],
+                if (editType == AvoidType.event) ...[
+                  const SizedBox(height: 16),
+                  const Text('Event Reminder:',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.alarm),
+                    title: Text(editReminderDateTime == null
+                        ? 'Set Reminder'
+                        : '${editReminderDateTime!.day}/${editReminderDateTime!.month} ${editReminderDateTime!.hour}:${editReminderDateTime!.minute}'),
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: editReminderDateTime ??
+                            DateTime.now().add(const Duration(hours: 1)),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (date != null && context.mounted) {
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: editReminderDateTime != null
+                              ? TimeOfDay.fromDateTime(editReminderDateTime!)
+                              : TimeOfDay.now(),
+                        );
+                        if (time != null) {
+                          setModalState(() {
+                            editReminderDateTime = DateTime(
+                              date.year,
+                              date.month,
+                              date.day,
+                              time.hour,
+                              time.minute,
+                            );
+                          });
+                        }
+                      }
+                    },
+                    trailing: editReminderDateTime != null
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () => setModalState(() {
+                              editReminderDateTime = null;
+                            }),
+                          )
+                        : null,
+                  ),
+                ],
+                const SizedBox(height: 16),
+                const Text('Tags:',
                     style: TextStyle(fontWeight: FontWeight.w500)),
-                value: editIsRecurring,
-                onChanged: (bool value) {
-                  setModalState(() {
-                    editIsRecurring = value;
-                    if (value) {
-                      editEventDate = null;
-                    }
-                  });
-                },
-                activeThumbColor: tdAvoidRed,
-              ),
-              if (!editIsRecurring)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      const Text('Event Date: ',
-                          style: TextStyle(fontWeight: FontWeight.w500)),
-                      TextButton.icon(
-                        icon: const Icon(Icons.calendar_today, size: 18),
-                        label: Text(editEventDate == null
-                            ? 'Select Date'
-                            : '${editEventDate!.day}/${editEventDate!.month}/${editEventDate!.year}'),
-                        onPressed: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: editEventDate ?? DateTime.now(),
-                            firstDate: DateTime.now()
-                                .subtract(const Duration(days: 365)),
-                            lastDate:
-                                DateTime.now().add(const Duration(days: 365)),
-                          );
-                          if (picked != null) {
-                            setModalState(() {
-                              editEventDate = picked;
-                            });
-                          }
-                        },
+                      ...localTags.map((tag) {
+                        final isSelected = editTagIds.contains(tag.id);
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: FilterChip(
+                            label: Text(tag.name),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setModalState(() {
+                                if (selected) {
+                                  editTagIds.add(tag.id);
+                                } else {
+                                  editTagIds.remove(tag.id);
+                                }
+                              });
+                            },
+                            selectedColor: tag.color.withAlpha(180),
+                            checkmarkColor: Colors.white,
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.white : null,
+                            ),
+                          ),
+                        );
+                      }),
+                      ActionChip(
+                        avatar: const Icon(Icons.add, size: 16),
+                        label: Text(
+                            AppLocalizations.of(context)?.newTag ?? 'New tag'),
+                        onPressed: () => _showCreateTagDialog(
+                            context, localTags, setModalState),
                       ),
                     ],
                   ),
                 ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: costController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Estimated Cost per Relapse / Duration',
-                  hintText: 'e.g., 5.00',
-                  prefixIcon: Icon(Icons.attach_money),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text(
-                          AppLocalizations.of(context)?.cancel ?? 'Cancel'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (!editIsRecurring && editEventDate == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Please select an event date.')),
-                          );
-                          return;
+                const SizedBox(height: 16),
+                Text(AppLocalizations.of(context)?.priority ?? 'Priority:',
+                    style: const TextStyle(fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: TodoPriority.values.map((priority) {
+                    final isSelected = editPriority == priority;
+                    Color color;
+                    String label;
+                    switch (priority) {
+                      case TodoPriority.high:
+                        color = AppThemes.priorityHigh;
+                        label = 'High';
+                        break;
+                      case TodoPriority.medium:
+                        color = AppThemes.priorityMedium;
+                        label = 'Medium';
+                        break;
+                      case TodoPriority.low:
+                        color = AppThemes.priorityLow;
+                        label = 'Low';
+                        break;
+                    }
+                    return ChoiceChip(
+                      label: Text(label),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected) {
+                          setModalState(() {
+                            editPriority = priority;
+                          });
                         }
-
-                        final updatedTodo = todo.copyWith(
-                          todoText: textController.text,
-                          tagIds: editTagIds,
-                          priority: editPriority,
-                          isRecurring: editIsRecurring,
-                          eventDate: editEventDate,
-                          estimatedCost: double.tryParse(costController.text),
-                        );
-                        await DatabaseHelper.instance.update(updatedTodo);
-                        _fetchTodos();
-                        if (context.mounted) Navigator.pop(context);
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: tdAvoidRed,
-                        foregroundColor: Colors.white,
+                      selectedColor: color,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : null,
                       ),
-                      child: Text(AppLocalizations.of(context)?.save ?? 'Save'),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Is this a recurring habit?',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  value: editIsRecurring,
+                  onChanged: (bool value) {
+                    setModalState(() {
+                      editIsRecurring = value;
+                      if (value) {
+                        editEventDate = null;
+                      }
+                    });
+                  },
+                  activeThumbColor: tdAvoidRed,
+                ),
+                if (!editIsRecurring)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Row(
+                      children: [
+                        const Text('Event Date: ',
+                            style: TextStyle(fontWeight: FontWeight.w500)),
+                        TextButton.icon(
+                          icon: const Icon(Icons.calendar_today, size: 18),
+                          label: Text(editEventDate == null
+                              ? 'Select Date'
+                              : '${editEventDate!.day}/${editEventDate!.month}/${editEventDate!.year}'),
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: editEventDate ?? DateTime.now(),
+                              firstDate: DateTime.now()
+                                  .subtract(const Duration(days: 365)),
+                              lastDate:
+                                  DateTime.now().add(const Duration(days: 365)),
+                            );
+                            if (picked != null) {
+                              setModalState(() {
+                                editEventDate = picked;
+                              });
+                            }
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
-            ],
+                const Text('Cost Type:',
+                    style: TextStyle(fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: CostType.values.map((type) {
+                      final isSelected = editCostType == type;
+                      IconData icon;
+                      String label;
+                      switch (type) {
+                        case CostType.money:
+                          icon = Icons.attach_money;
+                          label = 'Money';
+                          break;
+                        case CostType.mood:
+                          icon = Icons.mood;
+                          label = 'Mood';
+                          break;
+                        case CostType.health:
+                          icon = Icons.health_and_safety;
+                          label = 'Health';
+                          break;
+                        case CostType.time:
+                          icon = Icons.timer;
+                          label = 'Time';
+                          break;
+                        case CostType.goodwill:
+                          icon = Icons.handshake;
+                          label = 'Goodwill';
+                          break;
+                        case CostType.patience:
+                          icon = Icons.hourglass_empty;
+                          label = 'Patience';
+                          break;
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ChoiceChip(
+                          avatar: Icon(icon, size: 16),
+                          label: Text(label),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setModalState(() {
+                                editCostType = type;
+                              });
+                            }
+                          },
+                          selectedColor: Colors.blue.withAlpha(200),
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : null,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: costController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: 'Cost Amount (per relapse/duration)',
+                    hintText: 'e.g., 5.0',
+                    prefixIcon: Icon(_getCostIcon(editCostType)),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                            AppLocalizations.of(context)?.cancel ?? 'Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (!editIsRecurring && editEventDate == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content:
+                                      Text('Please select an event date.')),
+                            );
+                            return;
+                          }
+
+                          final updatedTodo = todo.copyWith(
+                            todoText: textController.text,
+                            tagIds: editTagIds,
+                            priority: editPriority,
+                            isRecurring: editIsRecurring,
+                            eventDate: editEventDate,
+                            estimatedCost: double.tryParse(costController.text),
+                            costType: editCostType,
+                            avoidType: editType,
+                            contactId: editContactId,
+                            locationName: editLocationName,
+                            latitude: editLatitude,
+                            longitude: editLongitude,
+                            reminderDateTime: editReminderDateTime,
+                          );
+                          await DatabaseHelper.instance.update(updatedTodo);
+                          if (editReminderDateTime != null) {
+                            await NotificationHelper().scheduleReminder(
+                                todo.id!,
+                                updatedTodo.todoText!,
+                                editReminderDateTime!);
+                          } else if (todo.reminderDateTime != null) {
+                            await NotificationHelper().cancelReminder(todo.id!);
+                          }
+                          _fetchTodos();
+                          if (context.mounted) Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: tdAvoidRed,
+                          foregroundColor: Colors.white,
+                        ),
+                        child:
+                            Text(AppLocalizations.of(context)?.save ?? 'Save'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),

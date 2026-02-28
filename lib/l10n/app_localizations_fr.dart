@@ -353,4 +353,7 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get tutorialResetSuccess =>
       'Tutoriel réinitialisé. Redémarrez l\'application pour revoir le guide.';
+
+  @override
+  String get savingsSummary => 'Économies par type d\'article';
 }

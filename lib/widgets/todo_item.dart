@@ -7,6 +7,7 @@ import '../helpers/database_helper.dart';
 import '../constants/themes.dart';
 import '../constants/colors.dart';
 import '../l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ToDoItem extends StatefulWidget {
   final ToDo todo;
@@ -162,22 +163,60 @@ class _ToDoItemState extends State<ToDoItem> {
               _buildTagChips(),
               const SizedBox(height: 4),
               Row(children: [
-                _buildPriorityChip(context, widget.todo.priority)
+                _buildPriorityChip(context, widget.todo.priority),
+                if (widget.todo.estimatedCost != null) ...[
+                  const SizedBox(width: 8),
+                  _buildCostChip(context),
+                ],
               ]),
+              if (widget.todo.avoidType == AvoidType.place &&
+                  widget.todo.locationName != null) ...[
+                const SizedBox(height: 4),
+                GestureDetector(
+                  onTap: () async {
+                    final url =
+                        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(widget.todo.locationName!)}';
+                    if (await canLaunchUrl(Uri.parse(url))) {
+                      await launchUrl(Uri.parse(url));
+                    }
+                  },
+                  child: Row(
+                    children: [
+                      const Icon(Icons.location_on,
+                          size: 12, color: Colors.blue),
+                      const SizedBox(width: 4),
+                      Text(
+                        widget.todo.locationName!.length > 20
+                            ? '${widget.todo.locationName!.substring(0, 20)}...'
+                            : widget.todo.locationName!,
+                        style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.blue,
+                            decoration: TextDecoration.underline),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              if (widget.todo.avoidType == AvoidType.event &&
+                  widget.todo.reminderDateTime != null) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.alarm, size: 12, color: Colors.orange),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Reminder: ${DateFormat.Hm().format(widget.todo.reminderDateTime!)}',
+                      style:
+                          const TextStyle(fontSize: 11, color: Colors.orange),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
-        leading: widget.todo.isRecurring
-            ? Icon(
-                Icons.whatshot,
-                color: widget.todo.isArchived ? Colors.grey : tdAvoidRed,
-              )
-            : Icon(
-                Icons.event,
-                color: isDark
-                    ? AppThemes.darkTextSecondary
-                    : AppThemes.lightTextSecondary,
-              ),
+        leading: _buildLeadingIcon(isDark),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -297,5 +336,79 @@ class _ToDoItemState extends State<ToDoItem> {
         ),
       ),
     );
+  }
+
+  Widget _buildCostChip(BuildContext context) {
+    final cost = widget.todo.estimatedCost!;
+    final type = widget.todo.costType;
+    IconData icon;
+    String prefix = "";
+
+    switch (type) {
+      case CostType.money:
+        icon = Icons.attach_money;
+        prefix = "\$";
+        break;
+      case CostType.mood:
+        icon = Icons.mood;
+        break;
+      case CostType.health:
+        icon = Icons.health_and_safety;
+        break;
+      case CostType.time:
+        icon = Icons.timer;
+        break;
+      case CostType.goodwill:
+        icon = Icons.handshake;
+        break;
+      case CostType.patience:
+        icon = Icons.hourglass_empty;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.blue.withAlpha(30),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: Colors.blue),
+          const SizedBox(width: 4),
+          Text(
+            "$prefix${cost.toStringAsFixed(cost == cost.toInt() ? 0 : 1)}",
+            style: const TextStyle(
+              fontSize: 11,
+              color: Colors.blue,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLeadingIcon(bool isDark) {
+    if (widget.todo.isArchived) {
+      return const Icon(Icons.archive, color: Colors.grey);
+    }
+
+    switch (widget.todo.avoidType) {
+      case AvoidType.generic:
+        return Icon(
+          widget.todo.isRecurring ? Icons.whatshot : Icons.event,
+          color: widget.todo.isRecurring
+              ? tdAvoidRed
+              : (isDark ? Colors.white70 : Colors.black54),
+        );
+      case AvoidType.people:
+        return const Icon(Icons.person, color: Colors.purple);
+      case AvoidType.event:
+        return const Icon(Icons.event, color: Colors.orange);
+      case AvoidType.place:
+        return const Icon(Icons.place, color: Colors.blue);
+    }
   }
 }

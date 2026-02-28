@@ -109,5 +109,6 @@
   "coachMarkMenuTitle": "Explore more",
   "coachMarkMenuDesc": "Open the menu to view Statistics, Archive, and this Help guide.",
   "resetTutorial": "Reset Tutorial",
-  "tutorialResetSuccess": "Tutorial reset. Restart the app to see the walkthrough again."
+  "tutorialResetSuccess": "Tutorial reset. Restart the app to see the walkthrough again.",
+  "savingsSummary": "Savings by Item Type"
 }

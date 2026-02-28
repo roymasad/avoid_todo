@@ -350,4 +350,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get tutorialResetSuccess =>
       'Tutorial reset. Restart the app to see the walkthrough again.';
+
+  @override
+  String get savingsSummary => 'Savings by Item Type';
 }

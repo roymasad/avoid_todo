@@ -757,6 +757,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tutorial reset. Restart the app to see the walkthrough again.'**
   String get tutorialResetSuccess;
+
+  /// No description provided for @savingsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Savings by Item Type'**
+  String get savingsSummary;
 }
 
 class _AppLocalizationsDelegate

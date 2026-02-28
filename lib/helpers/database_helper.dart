@@ -22,7 +22,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 6,
+      version: 8,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -47,7 +47,14 @@ class DatabaseHelper {
       eventDate TEXT,
       lastRelapsedAt TEXT,
       relapseCount INTEGER NOT NULL DEFAULT 0,
-      estimatedCost REAL
+      estimatedCost REAL,
+      costType INTEGER NOT NULL DEFAULT 0,
+      avoidType INTEGER NOT NULL DEFAULT 0,
+      contactId TEXT,
+      locationName TEXT,
+      latitude REAL,
+      longitude REAL,
+      reminderDateTime TEXT
     )
     ''');
 
@@ -86,6 +93,9 @@ class DatabaseHelper {
       await db.insert('tags', tag.toMap(),
           conflictAlgorithm: ConflictAlgorithm.ignore);
     }
+    // Cleanup: Remove the 'other' tag if it was previously seeded
+    await db.delete('tags', where: 'id = ?', whereArgs: ['other']);
+    await db.delete('todo_tags', where: 'tagId = ?', whereArgs: ['other']);
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -176,6 +186,20 @@ class DatabaseHelper {
           conflictAlgorithm: ConflictAlgorithm.ignore,
         );
       }
+    }
+
+    if (oldVersion < 7) {
+      await db.execute(
+          'ALTER TABLE todo ADD COLUMN avoidType INTEGER NOT NULL DEFAULT 0');
+      await db.execute('ALTER TABLE todo ADD COLUMN contactId TEXT');
+      await db.execute('ALTER TABLE todo ADD COLUMN locationName TEXT');
+      await db.execute('ALTER TABLE todo ADD COLUMN latitude REAL');
+      await db.execute('ALTER TABLE todo ADD COLUMN longitude REAL');
+      await db.execute('ALTER TABLE todo ADD COLUMN reminderDateTime TEXT');
+    }
+    if (oldVersion < 8) {
+      await db.execute(
+          'ALTER TABLE todo ADD COLUMN costType INTEGER NOT NULL DEFAULT 0');
     }
   }
 

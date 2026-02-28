@@ -54,11 +54,6 @@ class Tag {
             name: 'Social',
             colorValue: 0xFFFF9800,
             isBuiltIn: true),
-        const Tag(
-            id: 'other',
-            name: 'Other',
-            colorValue: 0xFF9E9E9E,
-            isBuiltIn: true),
       ];
 
   // Preset palette for custom tags

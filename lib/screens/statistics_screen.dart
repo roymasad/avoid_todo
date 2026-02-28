@@ -18,7 +18,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   bool isLoading = true;
   int totalAvoided = 0;
   int activeCount = 0;
-  double moneySaved = 0.0;
+  Map<CostType, double> savingsByType = {};
+  Map<CostType, bool> hasTaskType = {};
   Map<String, int> tagBreakdown = {};
   Map<String, Tag> tagMap = {};
   Map<TodoPriority, int> priorityBreakdown = {};
@@ -61,31 +62,57 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       LIMIT 10
     ''');
 
-    // Calculate money saved and find longest streak
-    double totalSaved = 0.0;
+    // Calculate savings by type and find longest streak
+    Map<CostType, double> totalSavings = {
+      for (var t in CostType.values) t: 0.0
+    };
+    Map<CostType, bool> hasType = {for (var t in CostType.values) t: false};
     Duration longestStreak = Duration.zero;
     final allTodos = await DatabaseHelper.instance.readAllTodos();
-    for (var todo in allTodos) {
-      if (!todo.isArchived && todo.isRecurring) {
-        final streak = DateTime.now().difference(todo.lastRelapsedAt);
-        if (streak > longestStreak) longestStreak = streak;
 
-        if (todo.estimatedCost != null && todo.estimatedCost! > 0) {
-          totalSaved += (streak.inDays * todo.estimatedCost!);
+    for (var todo in allTodos) {
+      hasType[todo.costType] = true;
+      if (todo.estimatedCost == null || todo.estimatedCost! <= 0) continue;
+
+      double saving = 0.0;
+      if (todo.isRecurring) {
+        // Savings for current/last streak
+        final endTime = todo.isArchived ? todo.updatedAt : DateTime.now();
+        final streak = endTime.difference(todo.lastRelapsedAt);
+
+        if (streak.inDays > 0) {
+          saving = streak.inDays * todo.estimatedCost!;
         }
+
+        // Update longest streak (only for active items)
+        if (!todo.isArchived && streak > longestStreak) {
+          longestStreak = streak;
+        }
+      } else {
+        // One-time item saved if archived
+        if (todo.isArchived) {
+          saving = todo.estimatedCost!;
+        }
+      }
+
+      if (saving > 0) {
+        totalSavings[todo.costType] =
+            (totalSavings[todo.costType] ?? 0.0) + saving;
       }
     }
 
+    final totalSavedMoney = totalSavings[CostType.money] ?? 0.0;
     final current24h = longestStreak.inHours >= 24;
     final current7d = longestStreak.inDays >= 7;
-    final currentBudget = totalSaved >= 50;
-    final currentMega = totalSaved >= 200;
+    final currentBudget = totalSavedMoney >= 50;
+    final currentMega = totalSavedMoney >= 200;
     final currentConsistency = active >= 5;
 
     setState(() {
       totalAvoided = avoided;
       activeCount = active;
-      moneySaved = totalSaved;
+      savingsByType = totalSavings;
+      hasTaskType = hasType;
       tagBreakdown = tags;
       tagMap = tagMapData;
       priorityBreakdown = priorities;
@@ -169,17 +196,82 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                l10n?.moneySaved ?? 'Money Saved',
-                '\$${moneySaved.toStringAsFixed(2)}',
-                Icons.attach_money,
-                Colors.amber.shade600,
-              ),
-            ),
-          ],
+        Text(
+          l10n?.savingsSummary ?? 'Savings by Item Type',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 1.2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+          ),
+          itemCount: CostType.values.length,
+          itemBuilder: (context, index) {
+            final type = CostType.values[index];
+            final amount = savingsByType[type] ?? 0.0;
+            final hasThisTask = hasTaskType[type] ?? false;
+
+            if (amount <= 0 && !hasThisTask && type != CostType.money) {
+              return const SizedBox.shrink();
+            }
+
+            IconData icon;
+            String label;
+            Color color;
+            String prefix = "";
+            String suffix = "";
+
+            switch (type) {
+              case CostType.money:
+                icon = Icons.attach_money;
+                label = 'Money';
+                color = Colors.amber.shade700;
+                prefix = "\$";
+                break;
+              case CostType.mood:
+                icon = Icons.mood;
+                label = 'Mood';
+                color = Colors.blue.shade600;
+                suffix = " pts";
+                break;
+              case CostType.health:
+                icon = Icons.health_and_safety;
+                label = 'Health';
+                color = Colors.green.shade600;
+                suffix = " pts";
+                break;
+              case CostType.time:
+                icon = Icons.timer;
+                label = 'Time';
+                color = Colors.orange.shade700;
+                suffix = " hrs";
+                break;
+              case CostType.goodwill:
+                icon = Icons.handshake;
+                label = 'Goodwill';
+                color = Colors.purple.shade600;
+                suffix = " pts";
+                break;
+              case CostType.patience:
+                icon = Icons.hourglass_empty;
+                label = 'Patience';
+                color = Colors.teal.shade600;
+                suffix = " pts";
+                break;
+            }
+
+            return _buildStatCard(
+              label,
+              "$prefix${amount.toStringAsFixed(amount == amount.toInt() ? 0 : 1)}$suffix",
+              icon,
+              color,
+            );
+          },
         ),
       ],
     );

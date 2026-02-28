@@ -1,9 +1,13 @@
 enum TodoPriority { high, medium, low }
 
+enum AvoidType { generic, people, event, place }
+
+enum CostType { money, mood, health, time, goodwill, patience }
+
 class ToDo {
   String? id;
   String? todoText;
-  List<String> tagIds; // replaces single category
+  List<String> tagIds;
   TodoPriority priority;
   int orderIndex;
   DateTime createdAt;
@@ -16,7 +20,16 @@ class ToDo {
   DateTime? eventDate;
   DateTime lastRelapsedAt;
   int relapseCount;
-  double? estimatedCost; // Phase 3
+  double? estimatedCost;
+  CostType costType;
+
+  // Avoid Types fields
+  AvoidType avoidType;
+  String? contactId;
+  String? locationName;
+  double? latitude;
+  double? longitude;
+  DateTime? reminderDateTime;
 
   ToDo({
     this.id,
@@ -33,6 +46,13 @@ class ToDo {
     DateTime? lastRelapsedAt,
     this.relapseCount = 0,
     this.estimatedCost,
+    this.costType = CostType.money,
+    this.avoidType = AvoidType.generic,
+    this.contactId,
+    this.locationName,
+    this.latitude,
+    this.longitude,
+    this.reminderDateTime,
   })  : tagIds = tagIds ?? [],
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now(),
@@ -53,6 +73,13 @@ class ToDo {
       'lastRelapsedAt': lastRelapsedAt.toIso8601String(),
       'relapseCount': relapseCount,
       'estimatedCost': estimatedCost,
+      'costType': costType.index,
+      'avoidType': avoidType.index,
+      'contactId': contactId,
+      'locationName': locationName,
+      'latitude': latitude,
+      'longitude': longitude,
+      'reminderDateTime': reminderDateTime?.toIso8601String(),
     };
   }
 
@@ -78,6 +105,22 @@ class ToDo {
       estimatedCost: map['estimatedCost'] != null
           ? (map['estimatedCost'] as num).toDouble()
           : null,
+      costType: map['costType'] != null
+          ? CostType.values[map['costType']]
+          : CostType.money,
+      avoidType: map['avoidType'] != null
+          ? AvoidType.values[map['avoidType']]
+          : AvoidType.generic,
+      contactId: map['contactId'],
+      locationName: map['locationName'],
+      latitude:
+          map['latitude'] != null ? (map['latitude'] as num).toDouble() : null,
+      longitude: map['longitude'] != null
+          ? (map['longitude'] as num).toDouble()
+          : null,
+      reminderDateTime: map['reminderDateTime'] != null
+          ? DateTime.parse(map['reminderDateTime'])
+          : null,
     );
   }
 
@@ -96,6 +139,13 @@ class ToDo {
     DateTime? lastRelapsedAt,
     int? relapseCount,
     double? estimatedCost,
+    CostType? costType,
+    AvoidType? avoidType,
+    String? contactId,
+    String? locationName,
+    double? latitude,
+    double? longitude,
+    DateTime? reminderDateTime,
   }) {
     return ToDo(
       id: id ?? this.id,
@@ -112,6 +162,13 @@ class ToDo {
       lastRelapsedAt: lastRelapsedAt ?? this.lastRelapsedAt,
       relapseCount: relapseCount ?? this.relapseCount,
       estimatedCost: estimatedCost ?? this.estimatedCost,
+      costType: costType ?? this.costType,
+      avoidType: avoidType ?? this.avoidType,
+      contactId: contactId ?? this.contactId,
+      locationName: locationName ?? this.locationName,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      reminderDateTime: reminderDateTime ?? this.reminderDateTime,
     );
   }
 }

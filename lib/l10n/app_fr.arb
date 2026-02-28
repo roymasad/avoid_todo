@@ -109,5 +109,6 @@
   "coachMarkMenuTitle": "Explorez plus",
   "coachMarkMenuDesc": "Ouvrez le menu pour voir les Statistiques, les Archives et ce guide d'Aide.",
   "resetTutorial": "Réinitialiser le tutoriel",
-  "tutorialResetSuccess": "Tutoriel réinitialisé. Redémarrez l'application pour revoir le guide."
+  "tutorialResetSuccess": "Tutoriel réinitialisé. Redémarrez l'application pour revoir le guide.",
+  "savingsSummary": "Économies par type d'article"
 }

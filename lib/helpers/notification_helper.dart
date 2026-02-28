@@ -69,4 +69,40 @@ class NotificationHelper {
     }
     return scheduledDate;
   }
+
+  Future<void> scheduleReminder(
+      String id, String title, DateTime reminderTime) async {
+    final int notificationId = int.tryParse(id) ?? id.hashCode;
+
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'event_reminders',
+      'Event Reminders',
+      channelDescription: 'Reminders for specific things to avoid',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: DarwinNotificationDetails(),
+    );
+
+    final scheduledDate = tz.TZDateTime.from(reminderTime, tz.local);
+    if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return;
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      id: notificationId,
+      title: 'Reminder: Avoid $title',
+      body: 'This is your scheduled reminder to avoid this.',
+      scheduledDate: scheduledDate,
+      notificationDetails: platformChannelSpecifics,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
+
+  Future<void> cancelReminder(String id) async {
+    final int notificationId = int.tryParse(id) ?? id.hashCode;
+    await flutterLocalNotificationsPlugin.cancel(id: notificationId);
+  }
 }
