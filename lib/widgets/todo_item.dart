@@ -12,12 +12,14 @@ class ToDoItem extends StatefulWidget {
   final ToDo todo;
   final Function(ToDo) onEditItem;
   final Function(ToDo)? onRelapse;
+  final Function(ToDo)? onArchive;
 
   const ToDoItem({
     super.key,
     required this.todo,
     required this.onEditItem,
     this.onRelapse,
+    this.onArchive,
   });
 
   @override
@@ -257,16 +259,7 @@ class _ToDoItemState extends State<ToDoItem> {
                   color: Colors.white,
                   iconSize: 18,
                   icon: const Icon(Icons.check),
-                  onPressed: () {
-                    final l10n = AppLocalizations.of(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(l10n?.swipeToAvoid ??
-                            'Swipe right to mark as avoided!'),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  },
+                  onPressed: () => widget.onArchive?.call(widget.todo),
                 ),
               ),
           ],

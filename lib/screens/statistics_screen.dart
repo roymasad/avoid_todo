@@ -26,6 +26,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   List<Map<String, dynamic>> mostAvoided = [];
   List<Map<String, dynamic>> recentRelapses = [];
 
+  // Badge flags
+  bool is24hUnlocked = false;
+  bool is7dUnlocked = false;
+  bool isBudgetUnlocked = false;
+  bool isMegaUnlocked = false;
+  bool isConsistencyUnlocked = false;
+
   @override
   void initState() {
     super.initState();
@@ -54,17 +61,26 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       LIMIT 10
     ''');
 
-    // Calculate money saved from active habits (duration * cost)
+    // Calculate money saved and find longest streak
     double totalSaved = 0.0;
+    Duration longestStreak = Duration.zero;
     final allTodos = await DatabaseHelper.instance.readAllTodos();
     for (var todo in allTodos) {
-      if (todo.isRecurring &&
-          todo.estimatedCost != null &&
-          todo.estimatedCost! > 0) {
-        final duration = DateTime.now().difference(todo.lastRelapsedAt).inDays;
-        totalSaved += (duration * todo.estimatedCost!);
+      if (!todo.isArchived && todo.isRecurring) {
+        final streak = DateTime.now().difference(todo.lastRelapsedAt);
+        if (streak > longestStreak) longestStreak = streak;
+
+        if (todo.estimatedCost != null && todo.estimatedCost! > 0) {
+          totalSaved += (streak.inDays * todo.estimatedCost!);
+        }
       }
     }
+
+    final current24h = longestStreak.inHours >= 24;
+    final current7d = longestStreak.inDays >= 7;
+    final currentBudget = totalSaved >= 50;
+    final currentMega = totalSaved >= 200;
+    final currentConsistency = active >= 5;
 
     setState(() {
       totalAvoided = avoided;
@@ -76,6 +92,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       weeklyStats = weekly;
       mostAvoided = topAvoided;
       recentRelapses = relapsesResult;
+      is24hUnlocked = current24h;
+      is7dUnlocked = current7d;
+      isBudgetUnlocked = currentBudget;
+      isMegaUnlocked = currentMega;
+      isConsistencyUnlocked = currentConsistency;
       isLoading = false;
     });
   }
@@ -106,6 +127,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildOverviewCards(l10n),
+                    const SizedBox(height: 24),
+                    _buildBadgesSection(l10n),
                     const SizedBox(height: 24),
                     _buildWeeklyChart(isDark, l10n),
                     const SizedBox(height: 24),
@@ -150,7 +173,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           children: [
             Expanded(
               child: _buildStatCard(
-                'Money Saved', // l10n later
+                l10n?.moneySaved ?? 'Money Saved',
                 '\$${moneySaved.toStringAsFixed(2)}',
                 Icons.attach_money,
                 Colors.amber.shade600,
@@ -182,6 +205,111 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             Text(
               title,
               style: const TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBadgesSection(AppLocalizations? l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n?.badges ?? 'Badges & Milestones',
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 100,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              _buildBadgeIcon(
+                l10n?.badge24hTitle ?? '24h Freedom',
+                l10n?.badge24hDesc ?? '24h streak',
+                Icons.timer_outlined,
+                is24hUnlocked,
+                Colors.blue,
+              ),
+              _buildBadgeIcon(
+                l10n?.badge7dTitle ?? '7 Day Warrior',
+                l10n?.badge7dDesc ?? '7 days streak',
+                Icons.security_rounded,
+                is7dUnlocked,
+                Colors.purple,
+              ),
+              _buildBadgeIcon(
+                l10n?.badgeBudgetTitle ?? 'Budget Saver',
+                l10n?.badgeBudgetDesc ?? 'Saved \$50',
+                Icons.savings_outlined,
+                isBudgetUnlocked,
+                Colors.green,
+              ),
+              _buildBadgeIcon(
+                l10n?.badgeMegaTitle ?? 'Mega Saver',
+                l10n?.badgeMegaDesc ?? 'Saved \$200',
+                Icons.workspace_premium,
+                isMegaUnlocked,
+                Colors.amber,
+              ),
+              _buildBadgeIcon(
+                l10n?.badgeConsistencyTitle ?? 'Consistency',
+                l10n?.badgeConsistencyDesc ?? '5+ habits',
+                Icons.repeat_rounded,
+                isConsistencyUnlocked,
+                Colors.orange,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBadgeIcon(
+      String title, String desc, IconData icon, bool isUnlocked, Color color) {
+    return Container(
+      width: 120,
+      margin: const EdgeInsets.only(right: 12),
+      decoration: BoxDecoration(
+        color: isUnlocked ? color.withAlpha(25) : Colors.grey.withAlpha(25),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isUnlocked ? color.withAlpha(127) : Colors.grey.withAlpha(127),
+          width: 2,
+        ),
+      ),
+      child: Tooltip(
+        message: desc,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 32,
+              color: isUnlocked ? color : Colors.grey,
+            ),
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: isUnlocked ? null : Colors.grey,
+                ),
+              ),
+            ),
+            Icon(
+              isUnlocked ? Icons.lock_open : Icons.lock,
+              size: 12,
+              color: isUnlocked ? color : Colors.grey,
             ),
           ],
         ),
@@ -306,9 +434,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'By Tag',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              l10n?.byTag ?? 'By Tag',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Row(

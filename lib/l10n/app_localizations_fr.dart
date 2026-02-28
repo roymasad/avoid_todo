@@ -162,5 +162,96 @@ class AppLocalizationsFr extends AppLocalizations {
   String get totalAvoided => 'Total Évités';
 
   @override
-  String get byPriority => 'Par Priorité';
+  String get byPriority => 'Par priorité';
+
+  @override
+  String get moneySaved => 'Argent économisé';
+
+  @override
+  String get tags => 'Étiquettes';
+
+  @override
+  String get newTag => 'Nouvelle étiquette';
+
+  @override
+  String get tagName => 'Nom de l\'étiquette';
+
+  @override
+  String get create => 'Créer';
+
+  @override
+  String get relapseTrigger => 'Déclencheur de rechute';
+
+  @override
+  String get triggerNote => 'Note de déclenchement';
+
+  @override
+  String get badges => 'Badges et Jalons';
+
+  @override
+  String get badge24hTitle => '24h de Liberté';
+
+  @override
+  String get badge24hDesc => 'Sans rechute pendant 24 heures';
+
+  @override
+  String get badge7dTitle => 'Guerrier de 7 Jours';
+
+  @override
+  String get badge7dDesc => 'Sans rechute pendant 7 jours';
+
+  @override
+  String get badgeBudgetTitle => 'Économiseur Budget';
+
+  @override
+  String get badgeBudgetDesc => 'Plus de 50 \$ économisés';
+
+  @override
+  String get badgeMegaTitle => 'Méga Économiseur';
+
+  @override
+  String get badgeMegaDesc => 'Plus de 200 \$ économisés';
+
+  @override
+  String get badgeConsistencyTitle => 'Constance';
+
+  @override
+  String get badgeConsistencyDesc => 'Plus de 5 habitudes actives';
+
+  @override
+  String get locked => 'Verrouillé';
+
+  @override
+  String get unlocked => 'Déverrouillé';
+
+  @override
+  String get byTag => 'Par étiquette';
+
+  @override
+  String get isRecurring => 'S\'agit-il d\'une habitude récurrente ?';
+
+  @override
+  String get eventDate => 'Date de l\'événement';
+
+  @override
+  String get selectDate => 'Choisir une date';
+
+  @override
+  String get estimatedCostLabel => 'Coût estimé par rechute/durée';
+
+  @override
+  String get relapseDialogTitle => 'Oh non ! Quel a été le déclencheur ?';
+
+  @override
+  String get relapseDialogSubtitle =>
+      'Noter vos déclencheurs vous aide à les éviter à l\'avenir.';
+
+  @override
+  String get relapseDialogHint => 'Notes optionnelles...';
+
+  @override
+  String get confirmRelapse => 'Confirmer la rechute';
+
+  @override
+  String get relapseSuccess => 'Série réinitialisée. N\'abandonnez pas !';
 }

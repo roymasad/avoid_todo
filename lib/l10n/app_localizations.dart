@@ -403,6 +403,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'By Priority'**
   String get byPriority;
+
+  /// No description provided for @moneySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Money Saved'**
+  String get moneySaved;
+
+  /// No description provided for @tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get tags;
+
+  /// No description provided for @newTag.
+  ///
+  /// In en, this message translates to:
+  /// **'New Tag'**
+  String get newTag;
+
+  /// No description provided for @tagName.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag name'**
+  String get tagName;
+
+  /// No description provided for @create.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get create;
+
+  /// No description provided for @relapseTrigger.
+  ///
+  /// In en, this message translates to:
+  /// **'Relapse Trigger'**
+  String get relapseTrigger;
+
+  /// No description provided for @triggerNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Trigger Note'**
+  String get triggerNote;
+
+  /// No description provided for @badges.
+  ///
+  /// In en, this message translates to:
+  /// **'Badges & Milestones'**
+  String get badges;
+
+  /// No description provided for @badge24hTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'24h Freedom'**
+  String get badge24hTitle;
+
+  /// No description provided for @badge24hDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Stayed clean for 24 hours'**
+  String get badge24hDesc;
+
+  /// No description provided for @badge7dTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'7 Day Warrior'**
+  String get badge7dTitle;
+
+  /// No description provided for @badge7dDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Stayed clean for 7 days'**
+  String get badge7dDesc;
+
+  /// No description provided for @badgeBudgetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget Saver'**
+  String get badgeBudgetTitle;
+
+  /// No description provided for @badgeBudgetDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved over \$50'**
+  String get badgeBudgetDesc;
+
+  /// No description provided for @badgeMegaTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mega Saver'**
+  String get badgeMegaTitle;
+
+  /// No description provided for @badgeMegaDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved over \$200'**
+  String get badgeMegaDesc;
+
+  /// No description provided for @badgeConsistencyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Consistency'**
+  String get badgeConsistencyTitle;
+
+  /// No description provided for @badgeConsistencyDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'5+ active habits'**
+  String get badgeConsistencyDesc;
+
+  /// No description provided for @locked.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get locked;
+
+  /// No description provided for @unlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocked'**
+  String get unlocked;
+
+  /// No description provided for @byTag.
+  ///
+  /// In en, this message translates to:
+  /// **'By Tag'**
+  String get byTag;
+
+  /// No description provided for @isRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Is this a recurring habit?'**
+  String get isRecurring;
+
+  /// No description provided for @eventDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Event Date'**
+  String get eventDate;
+
+  /// No description provided for @selectDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Date'**
+  String get selectDate;
+
+  /// No description provided for @estimatedCostLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated Cost per Relapse/Duration'**
+  String get estimatedCostLabel;
+
+  /// No description provided for @relapseDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Oh no! What triggered this?'**
+  String get relapseDialogTitle;
+
+  /// No description provided for @relapseDialogSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Logging your triggers helps you avoid them in the future.'**
+  String get relapseDialogSubtitle;
+
+  /// No description provided for @relapseDialogHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional notes...'**
+  String get relapseDialogHint;
+
+  /// No description provided for @confirmRelapse.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Relapse'**
+  String get confirmRelapse;
+
+  /// No description provided for @relapseSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak reset. Don\'t give up!'**
+  String get relapseSuccess;
 }
 
 class _AppLocalizationsDelegate

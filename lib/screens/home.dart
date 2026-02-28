@@ -273,8 +273,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 autofocus: true,
               ),
               const SizedBox(height: 16),
-              const Text('Tags:',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
+              Text(AppLocalizations.of(context)?.tags ?? 'Tags:',
+                  style: const TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
               FutureBuilder<List<Tag>>(
                 future: DatabaseHelper.instance.getAllTags(),
@@ -307,7 +307,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                       }),
                       ActionChip(
                         avatar: const Icon(Icons.add, size: 16),
-                        label: const Text('New tag'),
+                        label: Text(
+                            AppLocalizations.of(context)?.newTag ?? 'New tag'),
                         onPressed: () => _showCreateTagDialog(
                             context, localTags, setModalState),
                       ),
@@ -357,8 +358,10 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               // Recurring vs Single Event Toggle
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Is this a recurring habit?',
-                    style: TextStyle(fontWeight: FontWeight.w500)),
+                title: Text(
+                    AppLocalizations.of(context)?.isRecurring ??
+                        'Is this a recurring habit?',
+                    style: const TextStyle(fontWeight: FontWeight.w500)),
                 value: _isRecurring,
                 onChanged: (bool value) {
                   setModalState(() {
@@ -376,12 +379,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Row(
                     children: [
-                      const Text('Event Date: ',
-                          style: TextStyle(fontWeight: FontWeight.w500)),
+                      Text(
+                          '${AppLocalizations.of(context)?.eventDate ?? 'Event Date'}: ',
+                          style: const TextStyle(fontWeight: FontWeight.w500)),
                       TextButton.icon(
                         icon: const Icon(Icons.calendar_today, size: 18),
                         label: Text(_eventDate == null
-                            ? 'Select Date'
+                            ? (AppLocalizations.of(context)?.selectDate ??
+                                'Select Date')
                             : '${_eventDate!.day}/${_eventDate!.month}/${_eventDate!.year}'),
                         onPressed: () async {
                           final picked = await showDatePicker(
@@ -408,10 +413,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 controller: _costController,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Estimated Cost per Relapse / Duration',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)?.estimatedCostLabel ??
+                      'Estimated Cost per Relapse / Duration',
                   hintText: 'e.g., 5.00',
-                  prefixIcon: Icon(Icons.attach_money),
+                  prefixIcon: const Icon(Icons.attach_money),
                 ),
               ),
 
@@ -549,6 +555,12 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                                 todo: _foundToDo[i],
                                 onEditItem: _editTodo,
                                 onRelapse: _triggerRelapse,
+                                onArchive: (todo) async {
+                                  await _archiveTodo(int.parse(todo.id!));
+                                  if (mounted) {
+                                    _showItemAvoidedSnackBar(todo);
+                                  }
+                                },
                               ),
                             );
                           },
@@ -827,77 +839,88 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           right: 16,
           top: 16,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Oh no! What triggered this?',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Logging your triggers helps you avoid them in the future.',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: noteController,
-              decoration: const InputDecoration(
-                hintText: 'Optional notes...',
-                border: OutlineInputBorder(),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                AppLocalizations.of(context)?.relapseDialogTitle ??
+                    'Oh no! What triggered this?',
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
+              const SizedBox(height: 8),
+              Text(
+                AppLocalizations.of(context)?.relapseDialogSubtitle ??
+                    'Logging your triggers helps you avoid them in the future.',
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: noteController,
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)?.relapseDialogHint ??
+                      'Optional notes...',
+                  border: const OutlineInputBorder(),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final updatedTodo = todo.copyWith(
-                        lastRelapsedAt: DateTime.now(),
-                        relapseCount: todo.relapseCount + 1,
-                      );
-                      await DatabaseHelper.instance.update(updatedTodo);
-
-                      final log = RelapseLog(
-                        todoId: todo.id!,
-                        triggerNote: noteController.text.isNotEmpty
-                            ? noteController.text
-                            : null,
-                      );
-                      await DatabaseHelper.instance.addRelapseLog(log);
-
-                      _fetchTodos();
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Streak reset. Don\'t give up!'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: tdAvoidRed,
-                      foregroundColor: Colors.white,
+                maxLines: 3,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                          AppLocalizations.of(context)?.cancel ?? 'Cancel'),
                     ),
-                    child: const Text('Confirm Relapse'),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-          ],
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final updatedTodo = todo.copyWith(
+                          lastRelapsedAt: DateTime.now(),
+                          relapseCount: todo.relapseCount + 1,
+                        );
+                        await DatabaseHelper.instance.update(updatedTodo);
+
+                        final log = RelapseLog(
+                          todoId: todo.id!,
+                          triggerNote: noteController.text.isNotEmpty
+                              ? noteController.text
+                              : null,
+                        );
+                        await DatabaseHelper.instance.addRelapseLog(log);
+
+                        _fetchTodos();
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(AppLocalizations.of(context)
+                                      ?.relapseSuccess ??
+                                  'Streak reset. Don\'t give up!'),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: tdAvoidRed,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Text(
+                          AppLocalizations.of(context)?.confirmRelapse ??
+                              'Confirm Relapse'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -1009,27 +1032,25 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ),
-          Column(
-            children: [
-              RadioListTile<Locale>(
-                title: Text(l10n?.english ?? 'English'),
-                value: const Locale('en'),
-                groupValue: localeProvider.locale,
-                onChanged: (value) {
-                  if (value != null) localeProvider.setLocale(value);
-                },
-                secondary: const Text('🇺🇸'),
-              ),
-              RadioListTile<Locale>(
-                title: Text(l10n?.french ?? 'Français'),
-                value: const Locale('fr'),
-                groupValue: localeProvider.locale,
-                onChanged: (value) {
-                  if (value != null) localeProvider.setLocale(value);
-                },
-                secondary: const Text('🇫🇷'),
-              ),
-            ],
+          RadioGroup<Locale>(
+            groupValue: localeProvider.locale,
+            onChanged: (value) {
+              if (value != null) localeProvider.setLocale(value);
+            },
+            child: Column(
+              children: [
+                RadioListTile<Locale>(
+                  title: Text(l10n?.english ?? 'English'),
+                  value: const Locale('en'),
+                  secondary: const Text('🇺🇸'),
+                ),
+                RadioListTile<Locale>(
+                  title: Text(l10n?.french ?? 'Français'),
+                  value: const Locale('fr'),
+                  secondary: const Text('🇫🇷'),
+                ),
+              ],
+            ),
           ),
           const Divider(),
           ListTile(
@@ -1063,36 +1084,30 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ),
-          Column(
-            children: [
-              RadioListTile<ThemeModeOption>(
-                title: Text(l10n?.system ?? 'System'),
-                value: ThemeModeOption.system,
-                groupValue: themeProvider.themeModeOption,
-                onChanged: (value) {
-                  if (value != null) themeProvider.setTheme(value);
-                },
-                secondary: const Icon(Icons.brightness_auto),
-              ),
-              RadioListTile<ThemeModeOption>(
-                title: Text(l10n?.light ?? 'Light'),
-                value: ThemeModeOption.light,
-                groupValue: themeProvider.themeModeOption,
-                onChanged: (value) {
-                  if (value != null) themeProvider.setTheme(value);
-                },
-                secondary: const Icon(Icons.brightness_7),
-              ),
-              RadioListTile<ThemeModeOption>(
-                title: Text(l10n?.dark ?? 'Dark'),
-                value: ThemeModeOption.dark,
-                groupValue: themeProvider.themeModeOption,
-                onChanged: (value) {
-                  if (value != null) themeProvider.setTheme(value);
-                },
-                secondary: const Icon(Icons.brightness_2),
-              ),
-            ],
+          RadioGroup<ThemeModeOption>(
+            groupValue: themeProvider.themeModeOption,
+            onChanged: (value) {
+              if (value != null) themeProvider.setTheme(value);
+            },
+            child: Column(
+              children: [
+                RadioListTile<ThemeModeOption>(
+                  title: Text(l10n?.system ?? 'System'),
+                  value: ThemeModeOption.system,
+                  secondary: const Icon(Icons.brightness_auto),
+                ),
+                RadioListTile<ThemeModeOption>(
+                  title: Text(l10n?.light ?? 'Light'),
+                  value: ThemeModeOption.light,
+                  secondary: const Icon(Icons.brightness_7),
+                ),
+                RadioListTile<ThemeModeOption>(
+                  title: Text(l10n?.dark ?? 'Dark'),
+                  value: ThemeModeOption.dark,
+                  secondary: const Icon(Icons.brightness_2),
+                ),
+              ],
+            ),
           ),
           const Divider(),
           ListTile(

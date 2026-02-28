@@ -161,4 +161,95 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get byPriority => 'By Priority';
+
+  @override
+  String get moneySaved => 'Money Saved';
+
+  @override
+  String get tags => 'Tags';
+
+  @override
+  String get newTag => 'New Tag';
+
+  @override
+  String get tagName => 'Tag name';
+
+  @override
+  String get create => 'Create';
+
+  @override
+  String get relapseTrigger => 'Relapse Trigger';
+
+  @override
+  String get triggerNote => 'Trigger Note';
+
+  @override
+  String get badges => 'Badges & Milestones';
+
+  @override
+  String get badge24hTitle => '24h Freedom';
+
+  @override
+  String get badge24hDesc => 'Stayed clean for 24 hours';
+
+  @override
+  String get badge7dTitle => '7 Day Warrior';
+
+  @override
+  String get badge7dDesc => 'Stayed clean for 7 days';
+
+  @override
+  String get badgeBudgetTitle => 'Budget Saver';
+
+  @override
+  String get badgeBudgetDesc => 'Saved over \$50';
+
+  @override
+  String get badgeMegaTitle => 'Mega Saver';
+
+  @override
+  String get badgeMegaDesc => 'Saved over \$200';
+
+  @override
+  String get badgeConsistencyTitle => 'Consistency';
+
+  @override
+  String get badgeConsistencyDesc => '5+ active habits';
+
+  @override
+  String get locked => 'Locked';
+
+  @override
+  String get unlocked => 'Unlocked';
+
+  @override
+  String get byTag => 'By Tag';
+
+  @override
+  String get isRecurring => 'Is this a recurring habit?';
+
+  @override
+  String get eventDate => 'Event Date';
+
+  @override
+  String get selectDate => 'Select Date';
+
+  @override
+  String get estimatedCostLabel => 'Estimated Cost per Relapse/Duration';
+
+  @override
+  String get relapseDialogTitle => 'Oh no! What triggered this?';
+
+  @override
+  String get relapseDialogSubtitle =>
+      'Logging your triggers helps you avoid them in the future.';
+
+  @override
+  String get relapseDialogHint => 'Optional notes...';
+
+  @override
+  String get confirmRelapse => 'Confirm Relapse';
+
+  @override
+  String get relapseSuccess => 'Streak reset. Don\'t give up!';
 }
