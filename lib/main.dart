@@ -17,11 +17,18 @@ void main() async {
   final notificationHelper = NotificationHelper();
   try {
     await notificationHelper.init();
-    await notificationHelper.scheduleDailyCheckInNotification();
   } catch (_) {}
 
   final prefs = await SharedPreferences.getInstance();
   final bool hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+  final bool notificationsEnabled =
+      prefs.getBool('notifications_enabled') ?? true;
+  if (notificationsEnabled) {
+    try {
+      await notificationHelper.scheduleDailyCheckInNotification();
+      await notificationHelper.scheduleWeeklyDigest();
+    } catch (_) {}
+  }
 
   runApp(
     MultiProvider(

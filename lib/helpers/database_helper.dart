@@ -22,7 +22,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -201,6 +201,10 @@ class DatabaseHelper {
       await db.execute(
           'ALTER TABLE todo ADD COLUMN costType INTEGER NOT NULL DEFAULT 0');
     }
+    if (oldVersion < 9) {
+      await db.delete('tags', where: 'id = ?', whereArgs: ['other']);
+      await db.delete('todo_tags', where: 'tagId = ?', whereArgs: ['other']);
+    }
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -364,6 +368,11 @@ class DatabaseHelper {
       orderBy: 'relapsedAt DESC',
     );
     return result.map((json) => RelapseLog.fromMap(json)).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> getAllRelapseLogsRaw() async {
+    final db = await instance.database;
+    return await db.query('relapse_logs', orderBy: 'relapsedAt DESC');
   }
 
   // ─────────────────────────────────────────────────────────────

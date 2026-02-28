@@ -27,6 +27,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   List<Map<String, dynamic>> mostAvoided = [];
   List<Map<String, dynamic>> recentRelapses = [];
 
+  // Relapse pattern data
+  List<int> relapsesByDay = List.filled(7, 0); // index 0=Mon...6=Sun
+  List<MapEntry<String, int>> topTriggerWords = [];
+
   // Badge flags
   bool is24hUnlocked = false;
   bool is7dUnlocked = false;
@@ -55,12 +59,44 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     // Fetch recent relapses with their todo titles
     final db = await DatabaseHelper.instance.database;
     final relapsesResult = await db.rawQuery('''
-      SELECT r.relapsedAt, r.triggerNote, t.todoText 
+      SELECT r.relapsedAt, r.triggerNote, t.todoText
       FROM relapse_logs r
       JOIN todo t ON r.todoId = t.id
       ORDER BY r.relapsedAt DESC
       LIMIT 10
     ''');
+
+    // Compute relapse patterns from all logs
+    final allLogs = await DatabaseHelper.instance.getAllRelapseLogsRaw();
+    final List<int> dayBuckets = List.filled(7, 0); // Mon=0 ... Sun=6
+    final Map<String, int> wordFreq = {};
+    const stopWords = {
+      'i', 'a', 'an', 'the', 'and', 'or', 'but', 'it', 'my', 'me',
+      'was', 'is', 'are', 'of', 'to', 'in', 'on', 'at', 'for', 'by',
+      'with', 'so', 'had', 'felt', 'got', 'just', 'that', 'this', 'when',
+    };
+    for (final log in allLogs) {
+      final dateStr = log['relapsedAt'] as String?;
+      if (dateStr != null) {
+        final date = DateTime.tryParse(dateStr);
+        if (date != null) {
+          // weekday: 1=Mon...7=Sun → index 0=Mon...6=Sun
+          dayBuckets[date.weekday - 1]++;
+        }
+      }
+      final note = (log['triggerNote'] as String? ?? '').toLowerCase();
+      if (note.isNotEmpty) {
+        for (final word in note.split(RegExp(r'\s+'))) {
+          final clean = word.replaceAll(RegExp(r'[^a-z]'), '');
+          if (clean.length > 2 && !stopWords.contains(clean)) {
+            wordFreq[clean] = (wordFreq[clean] ?? 0) + 1;
+          }
+        }
+      }
+    }
+    final sortedWords = wordFreq.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final topWords = sortedWords.take(6).toList();
 
     // Calculate savings by type and find longest streak
     Map<CostType, double> totalSavings = {
@@ -124,6 +160,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       isBudgetUnlocked = currentBudget;
       isMegaUnlocked = currentMega;
       isConsistencyUnlocked = currentConsistency;
+      relapsesByDay = dayBuckets;
+      topTriggerWords = topWords;
       isLoading = false;
     });
   }
@@ -162,6 +200,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     _buildTagPieChart(isDark, l10n),
                     const SizedBox(height: 24),
                     _buildRecentRelapses(isDark, l10n),
+                    const SizedBox(height: 24),
+                    _buildRelapsePatterns(isDark),
                     const SizedBox(height: 24),
                     _buildMostAvoidedList(l10n),
                   ],
@@ -664,6 +704,103 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 isThreeLine: note != null && note.isNotEmpty,
               );
             }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRelapsePatterns(bool isDark) {
+    final totalRelapses = relapsesByDay.fold(0, (a, b) => a + b);
+    if (totalRelapses == 0 && topTriggerWords.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final maxDay = relapsesByDay.fold(0, (a, b) => a > b ? a : b);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Relapse Patterns',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            if (totalRelapses > 0) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Most Relapse-Prone Days',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 140,
+                child: BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: maxDay > 0 ? maxDay * 1.3 : 1,
+                    barGroups: relapsesByDay.asMap().entries.map((e) {
+                      return BarChartGroupData(
+                        x: e.key,
+                        barRods: [
+                          BarChartRodData(
+                            toY: e.value.toDouble(),
+                            color: tdAvoidRed,
+                            width: 18,
+                            borderRadius:
+                                const BorderRadius.vertical(top: Radius.circular(4)),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) => Text(
+                            dayLabels[value.toInt()],
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                        ),
+                      ),
+                      leftTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                    ),
+                    gridData: const FlGridData(show: false),
+                    borderData: FlBorderData(show: false),
+                  ),
+                ),
+              ),
+            ],
+            if (topTriggerWords.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Common Trigger Words',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: topTriggerWords.map((entry) {
+                  return Chip(
+                    label: Text('${entry.key} (${entry.value})'),
+                    backgroundColor: tdAvoidRed.withAlpha(30),
+                    side: BorderSide(color: tdAvoidRed.withAlpha(100)),
+                    labelStyle:
+                        const TextStyle(color: tdAvoidRed, fontSize: 12),
+                  );
+                }).toList(),
+              ),
+            ],
           ],
         ),
       ),

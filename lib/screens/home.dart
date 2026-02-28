@@ -6,6 +6,7 @@ import '../model/tag.dart';
 import '../model/relapse_log.dart';
 import '../constants/colors.dart';
 import '../constants/themes.dart';
+import '../constants/tips.dart';
 import '../widgets/todo_item.dart';
 import '../helpers/database_helper.dart';
 import '../helpers/notification_helper.dart';
@@ -59,6 +60,9 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   TodoPriority _selectedPriority = TodoPriority.medium;
   List<Tag> _allTags = [];
 
+  // Notification setting
+  bool _notificationsEnabled = true;
+
   // Phase 1 New Fields
   bool _isRecurring = true;
   DateTime? _eventDate;
@@ -76,9 +80,31 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     );
     _fetchTodos();
     _fetchTags();
+    _loadNotificationPref();
+
+    // Handle "I slipped up" notification action
+    NotificationHelper().onNotificationAction = (payload) {
+      if (mounted && _foundToDo.isNotEmpty) {
+        _triggerRelapse(_foundToDo.first);
+      }
+    };
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkCoachMarks();
+      // Handle case where app was launched via notification action
+      if (NotificationHelper().pendingRelapseAction) {
+        NotificationHelper().clearPendingRelapseAction();
+        if (_foundToDo.isNotEmpty) {
+          _triggerRelapse(_foundToDo.first);
+        }
+      }
+    });
+  }
+
+  Future<void> _loadNotificationPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
     });
   }
 
@@ -283,9 +309,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     );
 
     final newId = await DatabaseHelper.instance.create(newTodo);
-    if (_reminderDateTime != null) {
-      await NotificationHelper()
-          .scheduleReminder(newId, todo, _reminderDateTime!);
+    if (_reminderDateTime != null && _notificationsEnabled) {
+      if (_selectedType == AvoidType.event) {
+        await NotificationHelper()
+            .scheduleReminder(newId, todo, _reminderDateTime!);
+      } else {
+        await NotificationHelper()
+            .scheduleDailyItemReminder(newId, todo, _reminderDateTime!);
+      }
     }
     _todoController.clear();
     _costController.clear();
@@ -303,6 +334,28 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       _reminderDateTime = null;
     });
     _fetchTodos();
+    _showTagTipIfRelevant(_selectedTagIds);
+  }
+
+  void _showTagTipIfRelevant(List<String> tagIds) {
+    final relevantIds = ['health', 'productivity', 'social'];
+    final matchedId =
+        tagIds.firstWhere((id) => relevantIds.contains(id), orElse: () => '');
+    if (matchedId.isEmpty) return;
+    final tip = getTipForTagId(matchedId);
+    if (tip != null && mounted) {
+      Future.delayed(const Duration(milliseconds: 400), () {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('💡 $tip'),
+              duration: const Duration(seconds: 6),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      });
+    }
   }
 
   Future<void> _archiveTodo(int id) async {
@@ -339,6 +392,19 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     Future.delayed(snackBarDuration, () {
       if (!mounted) return;
       snackBarController.close();
+
+      final streakDays =
+          DateTime.now().difference(todo.lastRelapsedAt).inDays;
+      final tip = getTipForStreak(streakDays);
+      if (tip != null && mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('💡 $tip'),
+            duration: const Duration(seconds: 6),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     });
   }
 
@@ -642,6 +708,43 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                             );
                           });
                         }
+                      }
+                    },
+                    trailing: _reminderDateTime != null
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () => setModalState(() {
+                              _reminderDateTime = null;
+                            }),
+                          )
+                        : null,
+                  ),
+                ],
+
+                if (_selectedType != AvoidType.event) ...[
+                  const SizedBox(height: 16),
+                  const Text('Daily Reminder Time:',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.alarm),
+                    title: Text(_reminderDateTime == null
+                        ? 'Set Daily Reminder'
+                        : 'Every day at ${_reminderDateTime!.hour.toString().padLeft(2, '0')}:${_reminderDateTime!.minute.toString().padLeft(2, '0')}'),
+                    onTap: () async {
+                      final time = await showTimePicker(
+                        context: context,
+                        initialTime: _reminderDateTime != null
+                            ? TimeOfDay.fromDateTime(_reminderDateTime!)
+                            : const TimeOfDay(hour: 20, minute: 0),
+                      );
+                      if (time != null) {
+                        final now = DateTime.now();
+                        setModalState(() {
+                          _reminderDateTime = DateTime(
+                              now.year, now.month, now.day, time.hour, time.minute);
+                        });
                       }
                     },
                     trailing: _reminderDateTime != null
@@ -1320,6 +1423,42 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                         : null,
                   ),
                 ],
+                if (editType != AvoidType.event) ...[
+                  const SizedBox(height: 16),
+                  const Text('Daily Reminder Time:',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.alarm),
+                    title: Text(editReminderDateTime == null
+                        ? 'Set Daily Reminder'
+                        : 'Every day at ${editReminderDateTime!.hour.toString().padLeft(2, '0')}:${editReminderDateTime!.minute.toString().padLeft(2, '0')}'),
+                    onTap: () async {
+                      final time = await showTimePicker(
+                        context: context,
+                        initialTime: editReminderDateTime != null
+                            ? TimeOfDay.fromDateTime(editReminderDateTime!)
+                            : const TimeOfDay(hour: 20, minute: 0),
+                      );
+                      if (time != null) {
+                        final now = DateTime.now();
+                        setModalState(() {
+                          editReminderDateTime = DateTime(
+                              now.year, now.month, now.day, time.hour, time.minute);
+                        });
+                      }
+                    },
+                    trailing: editReminderDateTime != null
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () => setModalState(() {
+                              editReminderDateTime = null;
+                            }),
+                          )
+                        : null,
+                  ),
+                ],
                 const SizedBox(height: 16),
                 const Text('Tags:',
                     style: TextStyle(fontWeight: FontWeight.w500)),
@@ -1558,11 +1697,20 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                             reminderDateTime: editReminderDateTime,
                           );
                           await DatabaseHelper.instance.update(updatedTodo);
-                          if (editReminderDateTime != null) {
-                            await NotificationHelper().scheduleReminder(
-                                todo.id!,
-                                updatedTodo.todoText!,
-                                editReminderDateTime!);
+                          if (editReminderDateTime != null &&
+                              _notificationsEnabled) {
+                            if (editType == AvoidType.event) {
+                              await NotificationHelper().scheduleReminder(
+                                  todo.id!,
+                                  updatedTodo.todoText!,
+                                  editReminderDateTime!);
+                            } else {
+                              await NotificationHelper()
+                                  .scheduleDailyItemReminder(
+                                      todo.id!,
+                                      updatedTodo.todoText!,
+                                      editReminderDateTime!);
+                            }
                           } else if (todo.reminderDateTime != null) {
                             await NotificationHelper().cancelReminder(todo.id!);
                           }
@@ -1670,6 +1818,22 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                               duration: const Duration(seconds: 2),
                             ),
                           );
+                          final tip = getTipForRelapse();
+                          if (tip != null && mounted) {
+                            final messenger = ScaffoldMessenger.of(
+                                this.context);
+                            Future.delayed(const Duration(seconds: 2), () {
+                              if (mounted) {
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text('💡 $tip'),
+                                    duration: const Duration(seconds: 6),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            });
+                          }
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -1736,7 +1900,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       leading: Builder(
         builder: (context) => IconButton(
           key: _menuKey,
-          icon: const Icon(Icons.menu),
+          icon: const Icon(Icons.settings),
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
       ),
@@ -1881,6 +2045,30 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 ),
               ],
             ),
+          ),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              'Notifications',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.notifications_outlined),
+            title: const Text('Enable Notifications'),
+            value: _notificationsEnabled,
+            onChanged: (val) async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('notifications_enabled', val);
+              setState(() => _notificationsEnabled = val);
+              if (val) {
+                await NotificationHelper().scheduleDailyCheckInNotification();
+                await NotificationHelper().scheduleWeeklyDigest();
+              } else {
+                await NotificationHelper().cancelAllNotifications();
+              }
+            },
           ),
           const Divider(),
           ListTile(
