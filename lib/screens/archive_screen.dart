@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../model/todo.dart';
+import '../model/tag.dart';
 import '../constants/themes.dart';
 import '../helpers/database_helper.dart';
 import '../l10n/app_localizations.dart';
@@ -13,6 +14,7 @@ class ArchiveScreen extends StatefulWidget {
 
 class _ArchiveScreenState extends State<ArchiveScreen> {
   List<ToDo> archivedTodos = [];
+  List<Tag> allTags = [];
   bool isLoading = true;
 
   @override
@@ -24,8 +26,10 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   Future<void> _loadArchivedTodos() async {
     setState(() => isLoading = true);
     final todos = await DatabaseHelper.instance.readArchivedTodos();
+    final tags = await DatabaseHelper.instance.getAllTags();
     setState(() {
       archivedTodos = todos;
+      allTags = tags;
       isLoading = false;
     });
   }
@@ -36,7 +40,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     if (mounted) {
       final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n?.itemRestored ?? 'Item restored to active list')),
+        SnackBar(
+            content:
+                Text(l10n?.itemRestored ?? 'Item restored to active list')),
       );
     }
   }
@@ -47,7 +53,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n?.deletePermanently ?? 'Delete Permanently'),
-        content: Text(l10n?.deleteConfirmation ?? 'This action cannot be undone. Are you sure?'),
+        content: Text(l10n?.deleteConfirmation ??
+            'This action cannot be undone. Are you sure?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -55,7 +62,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n?.delete ?? 'Delete', style: const TextStyle(color: Colors.red)),
+            child: Text(l10n?.delete ?? 'Delete',
+                style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -69,20 +77,6 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
-  }
-
-  String _getCategoryLabel(TodoCategory category) {
-    final l10n = AppLocalizations.of(context);
-    switch (category) {
-      case TodoCategory.health:
-        return l10n?.health ?? 'Health';
-      case TodoCategory.productivity:
-        return l10n?.productivity ?? 'Productivity';
-      case TodoCategory.social:
-        return l10n?.social ?? 'Social';
-      case TodoCategory.other:
-        return l10n?.other ?? 'Other';
-    }
   }
 
   String _getPriorityLabel(TodoPriority priority) {
@@ -178,10 +172,10 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                               ],
                             ),
                             const SizedBox(height: 4),
+                            _buildTagChips(todo.tagIds),
+                            const SizedBox(height: 4),
                             Row(
                               children: [
-                                _buildCategoryChip(todo.category),
-                                const SizedBox(width: 8),
                                 _buildPriorityChip(todo.priority),
                               ],
                             ),
@@ -196,9 +190,11 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                               tooltip: l10n?.restore ?? 'Restore',
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete_forever, color: Colors.red),
+                              icon: const Icon(Icons.delete_forever,
+                                  color: Colors.red),
                               onPressed: () => _deletePermanently(todo),
-                              tooltip: l10n?.deletePermanently ?? 'Delete permanently',
+                              tooltip: l10n?.deletePermanently ??
+                                  'Delete permanently',
                             ),
                           ],
                         ),
@@ -209,31 +205,31 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     );
   }
 
-  Widget _buildCategoryChip(TodoCategory category) {
-    String label = _getCategoryLabel(category);
-    Color color;
-    switch (category) {
-      case TodoCategory.health:
-        color = AppThemes.categoryHealth;
-        break;
-      case TodoCategory.productivity:
-        color = AppThemes.categoryProductivity;
-        break;
-      case TodoCategory.social:
-        color = AppThemes.categorySocial;
-        break;
-      case TodoCategory.other:
-        color = AppThemes.categoryOther;
-        break;
-    }
-    return Chip(
-      label: Text(
-        label,
-        style: const TextStyle(fontSize: 10, color: Colors.white),
-      ),
-      backgroundColor: color,
-      padding: EdgeInsets.zero,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  Widget _buildTagChips(List<String> tagIds) {
+    if (tagIds.isEmpty) return const SizedBox.shrink();
+    final tagMap = {for (final t in allTags) t.id: t};
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      children: tagIds.where((id) => tagMap.containsKey(id)).map((id) {
+        final tag = tagMap[id]!;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: tag.color.withAlpha(51),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: tag.color.withAlpha(120)),
+          ),
+          child: Text(
+            tag.name,
+            style: TextStyle(
+              fontSize: 10,
+              color: tag.color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 

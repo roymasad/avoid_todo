@@ -5,11 +5,21 @@ import 'package:provider/provider.dart';
 import './screens/home.dart';
 import './providers/theme_provider.dart';
 import './providers/locale_provider.dart';
+import './helpers/notification_helper.dart';
 import './constants/themes.dart';
 import 'package:avoid_todo/l10n/app_localizations.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  final notificationHelper = NotificationHelper();
+  try {
+    await notificationHelper.init();
+    await notificationHelper.scheduleDailyCheckInNotification();
+  } catch (_) {
+    // Notification scheduling is non-critical; continue if it fails
+  }
+
   runApp(
     MultiProvider(
       providers: [
@@ -29,7 +39,7 @@ class MyApp extends StatelessWidget {
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
     );
-    
+
     return Consumer2<ThemeProvider, LocaleProvider>(
       builder: (context, themeProvider, localeProvider, child) {
         return MaterialApp(

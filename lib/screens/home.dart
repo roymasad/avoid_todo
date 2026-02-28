@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:provider/provider.dart';
 import '../model/todo.dart';
+import '../model/tag.dart';
+import '../model/relapse_log.dart';
 import '../constants/colors.dart';
 import '../constants/themes.dart';
 import '../widgets/todo_item.dart';
@@ -24,12 +26,18 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   late List<ToDo> _foundToDo = [];
   final _todoController = TextEditingController();
   final _searchController = TextEditingController();
+  final _costController = TextEditingController();
   late ConfettiController _confettiController;
   late AnimationController _animationController;
 
   // Filters
-  TodoCategory? _selectedCategory;
+  List<String> _selectedTagIds = [];
   TodoPriority _selectedPriority = TodoPriority.medium;
+  List<Tag> _allTags = [];
+
+  // Phase 1 New Fields
+  bool _isRecurring = true;
+  DateTime? _eventDate;
 
   @override
   void initState() {
@@ -41,6 +49,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       duration: const Duration(milliseconds: 300),
     );
     _fetchTodos();
+    _fetchTags();
   }
 
   @override
@@ -49,6 +58,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     _animationController.dispose();
     _todoController.dispose();
     _searchController.dispose();
+    _costController.dispose();
     super.dispose();
   }
 
@@ -60,20 +70,39 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     });
   }
 
+  Future<void> _fetchTags() async {
+    final tags = await DatabaseHelper.instance.getAllTags();
+    setState(() => _allTags = tags);
+  }
+
   Future<void> _addTodo(String todo) async {
     if (todo.isEmpty) return;
+    if (!_isRecurring && _eventDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select an event date.')),
+      );
+      return;
+    }
 
     final newTodo = ToDo(
       todoText: todo,
-      category: _selectedCategory ?? TodoCategory.other,
+      tagIds: List.from(_selectedTagIds),
       priority: _selectedPriority,
       orderIndex: todosList.length,
+      isRecurring: _isRecurring,
+      eventDate: _eventDate,
+      estimatedCost: double.tryParse(_costController.text),
     );
 
     await DatabaseHelper.instance.create(newTodo);
     _todoController.clear();
-    _selectedCategory = null;
-    _selectedPriority = TodoPriority.medium;
+    _costController.clear();
+    setState(() {
+      _selectedTagIds = [];
+      _selectedPriority = TodoPriority.medium;
+      _isRecurring = true;
+      _eventDate = null;
+    });
     _fetchTodos();
   }
 
@@ -113,20 +142,6 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     });
   }
 
-  String _getCategoryLabel(TodoCategory category) {
-    final l10n = AppLocalizations.of(context);
-    switch (category) {
-      case TodoCategory.health:
-        return l10n?.health ?? 'Health';
-      case TodoCategory.productivity:
-        return l10n?.productivity ?? 'Productivity';
-      case TodoCategory.social:
-        return l10n?.social ?? 'Social';
-      case TodoCategory.other:
-        return l10n?.other ?? 'Other';
-    }
-  }
-
   String _getPriorityLabel(TodoPriority priority) {
     final l10n = AppLocalizations.of(context);
     switch (priority) {
@@ -137,6 +152,89 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       case TodoPriority.low:
         return l10n?.low ?? 'Low';
     }
+  }
+
+  Future<void> _showCreateTagDialog(
+    BuildContext ctx,
+    List<Tag> localTags,
+    void Function(VoidCallback) setModalState,
+  ) async {
+    final nameController = TextEditingController();
+    int selectedColor = Tag.palette.first;
+
+    await showDialog(
+      context: ctx,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('New Tag'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Tag name'),
+                autofocus: true,
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: Tag.palette.map((colorVal) {
+                  final isSelected = selectedColor == colorVal;
+                  return GestureDetector(
+                    onTap: () => setDialogState(() => selectedColor = colorVal),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Color(colorVal),
+                        shape: BoxShape.circle,
+                        border: isSelected
+                            ? Border.all(width: 3, color: Colors.white)
+                            : null,
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                    color: Color(colorVal).withAlpha(120),
+                                    blurRadius: 6)
+                              ]
+                            : null,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final name = nameController.text.trim();
+                if (name.isEmpty) return;
+                final newTag = Tag(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  name: name,
+                  colorValue: selectedColor,
+                );
+                await DatabaseHelper.instance.createTag(newTag);
+                await _fetchTags();
+                setModalState(() => localTags.add(newTag));
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: tdAvoidRed,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Create'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showAddTodoDialog() {
@@ -175,42 +273,47 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 autofocus: true,
               ),
               const SizedBox(height: 16),
-              Text(AppLocalizations.of(context)?.category ?? 'Category:',
-                  style: const TextStyle(fontWeight: FontWeight.w500)),
+              const Text('Tags:',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: TodoCategory.values.map((category) {
-                  final isSelected = _selectedCategory == category;
-                  Color color;
-                  switch (category) {
-                    case TodoCategory.health:
-                      color = AppThemes.categoryHealth;
-                      break;
-                    case TodoCategory.productivity:
-                      color = AppThemes.categoryProductivity;
-                      break;
-                    case TodoCategory.social:
-                      color = AppThemes.categorySocial;
-                      break;
-                    case TodoCategory.other:
-                      color = AppThemes.categoryOther;
-                      break;
-                  }
-                  return ChoiceChip(
-                    label: Text(_getCategoryLabel(category)),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setModalState(() {
-                        _selectedCategory = selected ? category : null;
-                      });
-                    },
-                    selectedColor: color,
-                    labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : null,
-                    ),
+              FutureBuilder<List<Tag>>(
+                future: DatabaseHelper.instance.getAllTags(),
+                builder: (context, snapshot) {
+                  final localTags = snapshot.data ?? _allTags;
+                  return Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      ...localTags.map((tag) {
+                        final isSelected = _selectedTagIds.contains(tag.id);
+                        return FilterChip(
+                          label: Text(tag.name),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setModalState(() {
+                              if (selected) {
+                                _selectedTagIds.add(tag.id);
+                              } else {
+                                _selectedTagIds.remove(tag.id);
+                              }
+                            });
+                          },
+                          selectedColor: tag.color.withAlpha(180),
+                          checkmarkColor: Colors.white,
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : null,
+                          ),
+                        );
+                      }),
+                      ActionChip(
+                        avatar: const Icon(Icons.add, size: 16),
+                        label: const Text('New tag'),
+                        onPressed: () => _showCreateTagDialog(
+                            context, localTags, setModalState),
+                      ),
+                    ],
                   );
-                }).toList(),
+                },
               ),
               const SizedBox(height: 16),
               Text(AppLocalizations.of(context)?.priority ?? 'Priority:',
@@ -249,6 +352,69 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   );
                 }).toList(),
               ),
+              const SizedBox(height: 16),
+
+              // Recurring vs Single Event Toggle
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Is this a recurring habit?',
+                    style: TextStyle(fontWeight: FontWeight.w500)),
+                value: _isRecurring,
+                onChanged: (bool value) {
+                  setModalState(() {
+                    _isRecurring = value;
+                    if (value) {
+                      _eventDate = null; // Clear date if switching back
+                    }
+                  });
+                },
+                activeThumbColor: tdAvoidRed,
+              ),
+
+              if (!_isRecurring)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Row(
+                    children: [
+                      const Text('Event Date: ',
+                          style: TextStyle(fontWeight: FontWeight.w500)),
+                      TextButton.icon(
+                        icon: const Icon(Icons.calendar_today, size: 18),
+                        label: Text(_eventDate == null
+                            ? 'Select Date'
+                            : '${_eventDate!.day}/${_eventDate!.month}/${_eventDate!.year}'),
+                        onPressed: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate:
+                                DateTime.now().add(const Duration(days: 1)),
+                            firstDate: DateTime.now(),
+                            lastDate:
+                                DateTime.now().add(const Duration(days: 365)),
+                          );
+                          if (picked != null) {
+                            setModalState(() {
+                              _eventDate = picked;
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+              const SizedBox(height: 16),
+              TextField(
+                controller: _costController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Estimated Cost per Relapse / Duration',
+                  hintText: 'e.g., 5.00',
+                  prefixIcon: Icon(Icons.attach_money),
+                ),
+              ),
+
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -382,6 +548,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                               child: ToDoItem(
                                 todo: _foundToDo[i],
                                 onEditItem: _editTodo,
+                                onRelapse: _triggerRelapse,
                               ),
                             );
                           },
@@ -417,8 +584,13 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   Future<void> _editTodo(ToDo todo) async {
     final textController = TextEditingController(text: todo.todoText);
-    TodoCategory editCategory = todo.category;
+    final costController =
+        TextEditingController(text: todo.estimatedCost?.toString() ?? '');
+    List<String> editTagIds = List.from(todo.tagIds);
     TodoPriority editPriority = todo.priority;
+    bool editIsRecurring = todo.isRecurring;
+    DateTime? editEventDate = todo.eventDate;
+    final localTags = List<Tag>.from(_allTags);
 
     await showModalBottomSheet(
       context: context,
@@ -453,47 +625,41 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 autofocus: true,
               ),
               const SizedBox(height: 16),
-              const Text('Category:',
+              const Text('Tags:',
                   style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
-                children: TodoCategory.values.map((category) {
-                  final isSelected = editCategory == category;
-                  Color color;
-                  String label;
-                  switch (category) {
-                    case TodoCategory.health:
-                      color = AppThemes.categoryHealth;
-                      label = 'Health';
-                      break;
-                    case TodoCategory.productivity:
-                      color = AppThemes.categoryProductivity;
-                      label = 'Productivity';
-                      break;
-                    case TodoCategory.social:
-                      color = AppThemes.categorySocial;
-                      label = 'Social';
-                      break;
-                    case TodoCategory.other:
-                      color = AppThemes.categoryOther;
-                      label = 'Other';
-                      break;
-                  }
-                  return ChoiceChip(
-                    label: Text(label),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setModalState(() {
-                        editCategory = category;
-                      });
-                    },
-                    selectedColor: color,
-                    labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : null,
-                    ),
-                  );
-                }).toList(),
+                runSpacing: 4,
+                children: [
+                  ...localTags.map((tag) {
+                    final isSelected = editTagIds.contains(tag.id);
+                    return FilterChip(
+                      label: Text(tag.name),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setModalState(() {
+                          if (selected) {
+                            editTagIds.add(tag.id);
+                          } else {
+                            editTagIds.remove(tag.id);
+                          }
+                        });
+                      },
+                      selectedColor: tag.color.withAlpha(180),
+                      checkmarkColor: Colors.white,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : null,
+                      ),
+                    );
+                  }),
+                  ActionChip(
+                    avatar: const Icon(Icons.add, size: 16),
+                    label: const Text('New tag'),
+                    onPressed: () =>
+                        _showCreateTagDialog(context, localTags, setModalState),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               Text(AppLocalizations.of(context)?.priority ?? 'Priority:',
@@ -536,6 +702,64 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   );
                 }).toList(),
               ),
+              const SizedBox(height: 16),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Is this a recurring habit?',
+                    style: TextStyle(fontWeight: FontWeight.w500)),
+                value: editIsRecurring,
+                onChanged: (bool value) {
+                  setModalState(() {
+                    editIsRecurring = value;
+                    if (value) {
+                      editEventDate = null;
+                    }
+                  });
+                },
+                activeThumbColor: tdAvoidRed,
+              ),
+              if (!editIsRecurring)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Row(
+                    children: [
+                      const Text('Event Date: ',
+                          style: TextStyle(fontWeight: FontWeight.w500)),
+                      TextButton.icon(
+                        icon: const Icon(Icons.calendar_today, size: 18),
+                        label: Text(editEventDate == null
+                            ? 'Select Date'
+                            : '${editEventDate!.day}/${editEventDate!.month}/${editEventDate!.year}'),
+                        onPressed: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: editEventDate ?? DateTime.now(),
+                            firstDate: DateTime.now()
+                                .subtract(const Duration(days: 365)),
+                            lastDate:
+                                DateTime.now().add(const Duration(days: 365)),
+                          );
+                          if (picked != null) {
+                            setModalState(() {
+                              editEventDate = picked;
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: costController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Estimated Cost per Relapse / Duration',
+                  hintText: 'e.g., 5.00',
+                  prefixIcon: Icon(Icons.attach_money),
+                ),
+              ),
               const SizedBox(height: 24),
               Row(
                 children: [
@@ -550,10 +774,21 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
+                        if (!editIsRecurring && editEventDate == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Please select an event date.')),
+                          );
+                          return;
+                        }
+
                         final updatedTodo = todo.copyWith(
                           todoText: textController.text,
-                          category: editCategory,
+                          tagIds: editTagIds,
                           priority: editPriority,
+                          isRecurring: editIsRecurring,
+                          eventDate: editEventDate,
+                          estimatedCost: double.tryParse(costController.text),
                         );
                         await DatabaseHelper.instance.update(updatedTodo);
                         _fetchTodos();
@@ -571,6 +806,98 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               const SizedBox(height: 16),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _triggerRelapse(ToDo todo) async {
+    final noteController = TextEditingController();
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 16,
+          right: 16,
+          top: 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Oh no! What triggered this?',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Logging your triggers helps you avoid them in the future.',
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: noteController,
+              decoration: const InputDecoration(
+                hintText: 'Optional notes...',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final updatedTodo = todo.copyWith(
+                        lastRelapsedAt: DateTime.now(),
+                        relapseCount: todo.relapseCount + 1,
+                      );
+                      await DatabaseHelper.instance.update(updatedTodo);
+
+                      final log = RelapseLog(
+                        todoId: todo.id!,
+                        triggerNote: noteController.text.isNotEmpty
+                            ? noteController.text
+                            : null,
+                      );
+                      await DatabaseHelper.instance.addRelapseLog(log);
+
+                      _fetchTodos();
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Streak reset. Don\'t give up!'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: tdAvoidRed,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Confirm Relapse'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
         ),
       ),
     );
@@ -682,27 +1009,27 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ),
-          RadioGroup<Locale>(
-            groupValue: localeProvider.locale,
-            onChanged: (value) {
-              if (value != null) {
-                localeProvider.setLocale(value);
-              }
-            },
-            child: Column(
-              children: [
-                RadioListTile<Locale>(
-                  title: Text(l10n?.english ?? 'English'),
-                  value: const Locale('en'),
-                  secondary: const Text('🇺🇸'),
-                ),
-                RadioListTile<Locale>(
-                  title: Text(l10n?.french ?? 'Français'),
-                  value: const Locale('fr'),
-                  secondary: const Text('🇫🇷'),
-                ),
-              ],
-            ),
+          Column(
+            children: [
+              RadioListTile<Locale>(
+                title: Text(l10n?.english ?? 'English'),
+                value: const Locale('en'),
+                groupValue: localeProvider.locale,
+                onChanged: (value) {
+                  if (value != null) localeProvider.setLocale(value);
+                },
+                secondary: const Text('🇺🇸'),
+              ),
+              RadioListTile<Locale>(
+                title: Text(l10n?.french ?? 'Français'),
+                value: const Locale('fr'),
+                groupValue: localeProvider.locale,
+                onChanged: (value) {
+                  if (value != null) localeProvider.setLocale(value);
+                },
+                secondary: const Text('🇫🇷'),
+              ),
+            ],
           ),
           const Divider(),
           ListTile(
@@ -736,32 +1063,36 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ),
-          RadioGroup<ThemeModeOption>(
-            groupValue: themeProvider.themeModeOption,
-            onChanged: (value) {
-              if (value != null) {
-                themeProvider.setTheme(value);
-              }
-            },
-            child: Column(
-              children: [
-                RadioListTile<ThemeModeOption>(
-                  title: Text(l10n?.system ?? 'System'),
-                  value: ThemeModeOption.system,
-                  secondary: const Icon(Icons.brightness_auto),
-                ),
-                RadioListTile<ThemeModeOption>(
-                  title: Text(l10n?.light ?? 'Light'),
-                  value: ThemeModeOption.light,
-                  secondary: const Icon(Icons.brightness_7),
-                ),
-                RadioListTile<ThemeModeOption>(
-                  title: Text(l10n?.dark ?? 'Dark'),
-                  value: ThemeModeOption.dark,
-                  secondary: const Icon(Icons.brightness_2),
-                ),
-              ],
-            ),
+          Column(
+            children: [
+              RadioListTile<ThemeModeOption>(
+                title: Text(l10n?.system ?? 'System'),
+                value: ThemeModeOption.system,
+                groupValue: themeProvider.themeModeOption,
+                onChanged: (value) {
+                  if (value != null) themeProvider.setTheme(value);
+                },
+                secondary: const Icon(Icons.brightness_auto),
+              ),
+              RadioListTile<ThemeModeOption>(
+                title: Text(l10n?.light ?? 'Light'),
+                value: ThemeModeOption.light,
+                groupValue: themeProvider.themeModeOption,
+                onChanged: (value) {
+                  if (value != null) themeProvider.setTheme(value);
+                },
+                secondary: const Icon(Icons.brightness_7),
+              ),
+              RadioListTile<ThemeModeOption>(
+                title: Text(l10n?.dark ?? 'Dark'),
+                value: ThemeModeOption.dark,
+                groupValue: themeProvider.themeModeOption,
+                onChanged: (value) {
+                  if (value != null) themeProvider.setTheme(value);
+                },
+                secondary: const Icon(Icons.brightness_2),
+              ),
+            ],
           ),
           const Divider(),
           ListTile(

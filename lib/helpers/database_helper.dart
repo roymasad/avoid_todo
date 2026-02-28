@@ -1,6 +1,8 @@
-import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
 import '../model/todo.dart';
+import '../model/tag.dart';
+import '../model/relapse_log.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -20,58 +22,223 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 6,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
   }
 
-  Future _createDB(Database db, int version) async {
-    const idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
-    const textType = 'TEXT NOT NULL';
-    const intType = 'INTEGER NOT NULL';
-    const textNullableType = 'TEXT';
+  // ─────────────────────────────────────────────────────────────
+  // Schema creation
+  // ─────────────────────────────────────────────────────────────
 
+  Future _createDB(Database db, int version) async {
     await db.execute('''
     CREATE TABLE todo (
-      id $idType,
-      todoText $textType,
-      category $intType DEFAULT 3,
-      priority $intType DEFAULT 1,
-      orderIndex $intType DEFAULT 0,
-      createdAt $textType,
-      updatedAt $textType,
-      isArchived $intType DEFAULT 0,
-      archivedAt $textNullableType
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      todoText TEXT NOT NULL,
+      priority INTEGER NOT NULL DEFAULT 1,
+      orderIndex INTEGER NOT NULL DEFAULT 0,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      isArchived INTEGER NOT NULL DEFAULT 0,
+      archivedAt TEXT,
+      isRecurring INTEGER NOT NULL DEFAULT 1,
+      eventDate TEXT,
+      lastRelapsedAt TEXT,
+      relapseCount INTEGER NOT NULL DEFAULT 0,
+      estimatedCost REAL
     )
     ''');
+
+    await db.execute('''
+    CREATE TABLE relapse_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      todoId TEXT NOT NULL,
+      relapsedAt TEXT NOT NULL,
+      triggerNote TEXT,
+      FOREIGN KEY (todoId) REFERENCES todo (id) ON DELETE CASCADE
+    )
+    ''');
+
+    await db.execute('''
+    CREATE TABLE tags (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      color INTEGER NOT NULL,
+      isBuiltIn INTEGER NOT NULL DEFAULT 0
+    )
+    ''');
+
+    await db.execute('''
+    CREATE TABLE todo_tags (
+      todoId TEXT NOT NULL,
+      tagId TEXT NOT NULL,
+      PRIMARY KEY (todoId, tagId)
+    )
+    ''');
+
+    await _seedBuiltInTags(db);
   }
 
-  Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      // Migration from v1 to v2: Add new columns
-      await db.execute('ALTER TABLE todo ADD COLUMN category INTEGER NOT NULL DEFAULT 3');
-      await db.execute('ALTER TABLE todo ADD COLUMN priority INTEGER NOT NULL DEFAULT 1');
-      await db.execute('ALTER TABLE todo ADD COLUMN orderIndex INTEGER NOT NULL DEFAULT 0');
-      await db.execute('ALTER TABLE todo ADD COLUMN createdAt TEXT');
-      await db.execute('ALTER TABLE todo ADD COLUMN updatedAt TEXT');
-      await db.execute('ALTER TABLE todo ADD COLUMN isArchived INTEGER NOT NULL DEFAULT 0');
-      await db.execute('ALTER TABLE todo ADD COLUMN archivedAt TEXT');
-      
-      // Set default dates for existing records
-      final now = DateTime.now().toIso8601String();
-      await db.execute('UPDATE todo SET createdAt = ?, updatedAt = ? WHERE createdAt IS NULL', [now, now]);
+  Future _seedBuiltInTags(Database db) async {
+    for (final tag in Tag.builtIns) {
+      await db.insert('tags', tag.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.ignore);
     }
   }
 
-  Future<int> create(ToDo todo) async {
+  // ─────────────────────────────────────────────────────────────
+  // Migrations
+  // ─────────────────────────────────────────────────────────────
+
+  Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute(
+          'ALTER TABLE todo ADD COLUMN category INTEGER NOT NULL DEFAULT 3');
+      await db.execute(
+          'ALTER TABLE todo ADD COLUMN priority INTEGER NOT NULL DEFAULT 1');
+      await db.execute(
+          'ALTER TABLE todo ADD COLUMN orderIndex INTEGER NOT NULL DEFAULT 0');
+      await db.execute('ALTER TABLE todo ADD COLUMN createdAt TEXT');
+      await db.execute('ALTER TABLE todo ADD COLUMN updatedAt TEXT');
+      await db.execute(
+          'ALTER TABLE todo ADD COLUMN isArchived INTEGER NOT NULL DEFAULT 0');
+      await db.execute('ALTER TABLE todo ADD COLUMN archivedAt TEXT');
+
+      final now = DateTime.now().toIso8601String();
+      await db.execute(
+          'UPDATE todo SET createdAt = ?, updatedAt = ? WHERE createdAt IS NULL',
+          [now, now]);
+    }
+
+    if (oldVersion < 3) {
+      await db.execute(
+          'ALTER TABLE todo ADD COLUMN isRecurring INTEGER NOT NULL DEFAULT 1');
+      await db.execute('ALTER TABLE todo ADD COLUMN eventDate TEXT');
+      await db.execute('ALTER TABLE todo ADD COLUMN lastRelapsedAt TEXT');
+      await db.execute(
+          'ALTER TABLE todo ADD COLUMN relapseCount INTEGER NOT NULL DEFAULT 0');
+      await db.execute(
+          'UPDATE todo SET lastRelapsedAt = createdAt WHERE lastRelapsedAt IS NULL');
+    }
+
+    if (oldVersion < 4) {
+      await db.execute('''
+      CREATE TABLE relapse_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        todoId TEXT NOT NULL,
+        relapsedAt TEXT NOT NULL,
+        triggerNote TEXT,
+        FOREIGN KEY (todoId) REFERENCES todo (id) ON DELETE CASCADE
+      )
+      ''');
+    }
+
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE todo ADD COLUMN estimatedCost REAL');
+    }
+
+    if (oldVersion < 6) {
+      // Create tags table
+      await db.execute('''
+      CREATE TABLE IF NOT EXISTS tags (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        color INTEGER NOT NULL,
+        isBuiltIn INTEGER NOT NULL DEFAULT 0
+      )
+      ''');
+
+      // Create junction table
+      await db.execute('''
+      CREATE TABLE IF NOT EXISTS todo_tags (
+        todoId TEXT NOT NULL,
+        tagId TEXT NOT NULL,
+        PRIMARY KEY (todoId, tagId)
+      )
+      ''');
+
+      // Seed built-in tags
+      await _seedBuiltInTags(db);
+
+      // Migrate existing category values to the corresponding built-in tags
+      // category column: 0=health, 1=productivity, 2=social, 3=other
+      final categoryToTagId = ['health', 'productivity', 'social', 'other'];
+      final todos = await db.query('todo', columns: ['id', 'category']);
+      for (final row in todos) {
+        final todoId = row['id'].toString();
+        final catIdx = (row['category'] as int?) ?? 3;
+        final tagId = categoryToTagId[catIdx.clamp(0, 3)];
+        await db.insert(
+          'todo_tags',
+          {'todoId': todoId, 'tagId': tagId},
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
+      }
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Tag CRUD
+  // ─────────────────────────────────────────────────────────────
+
+  Future<List<Tag>> getAllTags() async {
     final db = await instance.database;
-    return await db.insert('todo', todo.toMap());
+    final result = await db.query('tags', orderBy: 'isBuiltIn DESC, name ASC');
+    return result.map((e) => Tag.fromMap(e)).toList();
+  }
+
+  Future<String> createTag(Tag tag) async {
+    final db = await instance.database;
+    await db.insert('tags', tag.toMap());
+    return tag.id;
+  }
+
+  Future<void> deleteTag(String tagId) async {
+    final db = await instance.database;
+    await db.delete('todo_tags', where: 'tagId = ?', whereArgs: [tagId]);
+    await db.delete('tags', where: 'id = ?', whereArgs: [tagId]);
+  }
+
+  Future<List<String>> getTagIdsForTodo(String todoId) async {
+    final db = await instance.database;
+    final result = await db.query(
+      'todo_tags',
+      columns: ['tagId'],
+      where: 'todoId = ?',
+      whereArgs: [todoId],
+    );
+    return result.map((e) => e['tagId'] as String).toList();
+  }
+
+  Future<void> setTagsForTodo(String todoId, List<String> tagIds) async {
+    final db = await instance.database;
+    await db.delete('todo_tags', where: 'todoId = ?', whereArgs: [todoId]);
+    for (final tagId in tagIds) {
+      await db.insert(
+        'todo_tags',
+        {'todoId': todoId, 'tagId': tagId},
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // ToDo CRUD
+  // ─────────────────────────────────────────────────────────────
+
+  Future<String> create(ToDo todo) async {
+    final db = await instance.database;
+    final id = await db.insert('todo', todo.toMap());
+    if (todo.tagIds.isNotEmpty) {
+      await setTagsForTodo(id.toString(), todo.tagIds);
+    }
+    return id.toString();
   }
 
   Future<List<ToDo>> readAllTodos({bool includeArchived = false}) async {
     final db = await instance.database;
-
     final whereClause = includeArchived ? null : 'isArchived = 0';
     final result = await db.query(
       'todo',
@@ -79,49 +246,49 @@ class DatabaseHelper {
       orderBy: 'orderIndex ASC, createdAt DESC',
     );
 
-    return result.map((json) => ToDo.fromMap(json)).toList();
+    final todos = <ToDo>[];
+    for (final row in result) {
+      final id = row['id'].toString();
+      final tagIds = await getTagIdsForTodo(id);
+      todos.add(ToDo.fromMap(row, tagIds: tagIds));
+    }
+    return todos;
   }
 
   Future<List<ToDo>> readArchivedTodos() async {
     final db = await instance.database;
-
     final result = await db.query(
       'todo',
       where: 'isArchived = 1',
       orderBy: 'archivedAt DESC',
     );
 
-    return result.map((json) => ToDo.fromMap(json)).toList();
-  }
-
-  Future<List<ToDo>> readTodosByCategory(TodoCategory category) async {
-    final db = await instance.database;
-
-    final result = await db.query(
-      'todo',
-      where: 'category = ? AND isArchived = 0',
-      whereArgs: [category.index],
-      orderBy: 'orderIndex ASC',
-    );
-
-    return result.map((json) => ToDo.fromMap(json)).toList();
+    final todos = <ToDo>[];
+    for (final row in result) {
+      final id = row['id'].toString();
+      final tagIds = await getTagIdsForTodo(id);
+      todos.add(ToDo.fromMap(row, tagIds: tagIds));
+    }
+    return todos;
   }
 
   Future<int> update(ToDo todo) async {
     final db = await instance.database;
     final updatedTodo = todo.copyWith(updatedAt: DateTime.now());
-
-    return db.update(
+    final result = await db.update(
       'todo',
       updatedTodo.toMap(),
       where: 'id = ?',
       whereArgs: [todo.id],
     );
+    if (todo.id != null) {
+      await setTagsForTodo(todo.id!, todo.tagIds);
+    }
+    return result;
   }
 
   Future<int> archiveTodo(int id) async {
     final db = await instance.database;
-
     return db.update(
       'todo',
       {
@@ -136,7 +303,6 @@ class DatabaseHelper {
 
   Future<int> restoreTodo(int id) async {
     final db = await instance.database;
-
     return db.update(
       'todo',
       {
@@ -151,40 +317,62 @@ class DatabaseHelper {
 
   Future<int> delete(int id) async {
     final db = await instance.database;
-
-    return await db.delete(
-      'todo',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db
+        .delete('todo_tags', where: 'todoId = ?', whereArgs: [id.toString()]);
+    return await db.delete('todo', where: 'id = ?', whereArgs: [id]);
   }
 
-  // Statistics Queries
+  // ─────────────────────────────────────────────────────────────
+  // Relapse logs
+  // ─────────────────────────────────────────────────────────────
+
+  Future<int> addRelapseLog(RelapseLog log) async {
+    final db = await instance.database;
+    return await db.insert('relapse_logs', log.toMap());
+  }
+
+  Future<List<RelapseLog>> getRelapseLogs(String todoId) async {
+    final db = await instance.database;
+    final result = await db.query(
+      'relapse_logs',
+      where: 'todoId = ?',
+      whereArgs: [todoId],
+      orderBy: 'relapsedAt DESC',
+    );
+    return result.map((json) => RelapseLog.fromMap(json)).toList();
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Statistics queries
+  // ─────────────────────────────────────────────────────────────
+
   Future<int> getTotalAvoidedCount() async {
     final db = await instance.database;
-    final result = await db.rawQuery('SELECT COUNT(*) as count FROM todo WHERE isArchived = 1');
+    final result = await db
+        .rawQuery('SELECT COUNT(*) as count FROM todo WHERE isArchived = 1');
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
   Future<int> getActiveCount() async {
     final db = await instance.database;
-    final result = await db.rawQuery('SELECT COUNT(*) as count FROM todo WHERE isArchived = 0');
+    final result = await db
+        .rawQuery('SELECT COUNT(*) as count FROM todo WHERE isArchived = 0');
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
-  Future<Map<TodoCategory, int>> getCategoryBreakdown() async {
+  Future<Map<String, int>> getTagBreakdown() async {
     final db = await instance.database;
     final result = await db.rawQuery('''
-      SELECT category, COUNT(*) as count 
-      FROM todo 
-      WHERE isArchived = 1 
-      GROUP BY category
+      SELECT t.id, t.name, COUNT(tt.todoId) as count
+      FROM tags t
+      LEFT JOIN todo_tags tt ON t.id = tt.tagId
+      LEFT JOIN todo td ON tt.todoId = td.id AND td.isArchived = 1
+      GROUP BY t.id, t.name
+      HAVING count > 0
     ''');
-
-    final Map<TodoCategory, int> breakdown = {};
+    final Map<String, int> breakdown = {};
     for (final row in result) {
-      final category = TodoCategory.values[row['category'] as int];
-      breakdown[category] = row['count'] as int;
+      breakdown[row['name'] as String] = row['count'] as int;
     }
     return breakdown;
   }
@@ -206,7 +394,8 @@ class DatabaseHelper {
     return breakdown;
   }
 
-  Future<List<Map<String, dynamic>>> getMostAvoidedItems({int limit = 5}) async {
+  Future<List<Map<String, dynamic>>> getMostAvoidedItems(
+      {int limit = 5}) async {
     final db = await instance.database;
     final result = await db.rawQuery('''
       SELECT todoText, COUNT(*) as avoidCount 
@@ -238,7 +427,6 @@ class DatabaseHelper {
 
   Future<int> updateOrderIndex(int id, int newIndex) async {
     final db = await instance.database;
-
     return db.update(
       'todo',
       {'orderIndex': newIndex, 'updatedAt': DateTime.now().toIso8601String()},
