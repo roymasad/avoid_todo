@@ -34,7 +34,7 @@ class _ToDoItemState extends State<ToDoItem> {
   void initState() {
     super.initState();
     if (widget.todo.isRecurring && !widget.todo.isArchived) {
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
         if (mounted) setState(() {});
       });
     }
@@ -45,7 +45,7 @@ class _ToDoItemState extends State<ToDoItem> {
     super.didUpdateWidget(oldWidget);
     if (widget.todo.isRecurring && !widget.todo.isArchived) {
       _timer?.cancel();
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
         if (mounted) setState(() {});
       });
     } else {
@@ -105,21 +105,20 @@ class _ToDoItemState extends State<ToDoItem> {
 
   String _formatStreak(DateTime start) {
     final duration = DateTime.now().difference(start);
-    if (duration.isNegative) return "0s";
+    if (duration.isNegative) return 'Just now';
 
     final days = duration.inDays;
     final hours = duration.inHours % 24;
     final minutes = duration.inMinutes % 60;
-    final seconds = duration.inSeconds % 60;
 
     if (days > 0) {
       return '${days}d ${hours}h';
     } else if (hours > 0) {
       return '${hours}h ${minutes}m';
     } else if (minutes > 0) {
-      return '${minutes}m ${seconds}s';
+      return '${minutes}m';
     } else {
-      return '${seconds}s';
+      return 'Just now';
     }
   }
 

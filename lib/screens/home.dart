@@ -69,6 +69,9 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   CostType _selectedCostType = CostType.money;
   SortOption _selectedSortOption = SortOption.latest;
 
+  // Stats card
+  int _weeklyAvoided = 0;
+
   @override
   void initState() {
     super.initState();
@@ -273,7 +276,9 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   Future<void> _fetchTodos() async {
     final todos = await DatabaseHelper.instance.readAllTodos();
+    final weekly = await DatabaseHelper.instance.getThisWeekArchivedCount();
     todosList = todos;
+    setState(() => _weeklyAvoided = weekly);
     _runFilter(_searchController.text);
   }
 
@@ -522,6 +527,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   void _showAddTodoDialog() {
     final locationController = TextEditingController(text: _locationName);
+    bool showAdvanced = false;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -571,11 +577,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                       switch (type) {
                         case AvoidType.generic:
                           icon = Icons.block;
-                          label = 'Generic';
+                          label = 'Habit';
                           break;
                         case AvoidType.people:
                           icon = Icons.person;
-                          label = 'People';
+                          label = 'Person';
                           break;
                         case AvoidType.event:
                           icon = Icons.event;
@@ -899,78 +905,98 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                     ),
                   ),
 
-                const Text('Cost Type:',
-                    style: TextStyle(fontWeight: FontWeight.w500)),
-                const SizedBox(height: 8),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: CostType.values.map((type) {
-                      final isSelected = _selectedCostType == type;
-                      IconData icon;
-                      String label;
-                      switch (type) {
-                        case CostType.money:
-                          icon = Icons.attach_money;
-                          label = 'Money';
-                          break;
-                        case CostType.mood:
-                          icon = Icons.mood;
-                          label = 'Mood';
-                          break;
-                        case CostType.health:
-                          icon = Icons.health_and_safety;
-                          label = 'Health';
-                          break;
-                        case CostType.time:
-                          icon = Icons.timer;
-                          label = 'Time';
-                          break;
-                        case CostType.goodwill:
-                          icon = Icons.handshake;
-                          label = 'Goodwill';
-                          break;
-                        case CostType.patience:
-                          icon = Icons.hourglass_empty;
-                          label = 'Patience';
-                          break;
-                      }
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: ChoiceChip(
-                          avatar: Icon(icon, size: 16),
-                          label: Text(label),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            if (selected) {
-                              setModalState(() {
-                                _selectedCostType = type;
-                              });
-                            }
-                          },
-                          // Use a different color for cost types to distinguish
-                          selectedColor: Colors.blue.withAlpha(200),
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : null,
+                // Advanced options toggle
+                TextButton.icon(
+                  onPressed: () =>
+                      setModalState(() => showAdvanced = !showAdvanced),
+                  icon: Icon(
+                    showAdvanced ? Icons.expand_less : Icons.expand_more,
+                    size: 18,
+                  ),
+                  label: Text(showAdvanced
+                      ? 'Advanced options'
+                      : 'Advanced options (cost tracking)'),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    foregroundColor:
+                        Theme.of(context).colorScheme.onSurface.withAlpha(150),
+                  ),
+                ),
+
+                if (showAdvanced) ...[
+                  const SizedBox(height: 8),
+                  const Text('Cost Type:',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: CostType.values.map((type) {
+                        final isSelected = _selectedCostType == type;
+                        IconData icon;
+                        String label;
+                        switch (type) {
+                          case CostType.money:
+                            icon = Icons.attach_money;
+                            label = 'Money';
+                            break;
+                          case CostType.mood:
+                            icon = Icons.mood;
+                            label = 'Mood';
+                            break;
+                          case CostType.health:
+                            icon = Icons.health_and_safety;
+                            label = 'Health';
+                            break;
+                          case CostType.time:
+                            icon = Icons.timer;
+                            label = 'Time';
+                            break;
+                          case CostType.goodwill:
+                            icon = Icons.handshake;
+                            label = 'Goodwill';
+                            break;
+                          case CostType.patience:
+                            icon = Icons.hourglass_empty;
+                            label = 'Patience';
+                            break;
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: ChoiceChip(
+                            avatar: Icon(icon, size: 16),
+                            label: Text(label),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              if (selected) {
+                                setModalState(() {
+                                  _selectedCostType = type;
+                                });
+                              }
+                            },
+                            selectedColor: Colors.blue.withAlpha(200),
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.white : null,
+                            ),
                           ),
-                        ),
-                      );
-                    }).toList(),
+                        );
+                      }).toList(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _costController,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(
-                    labelText:
-                        AppLocalizations.of(context)?.estimatedCostLabel ??
-                            'Cost Amount (per relapse/duration)',
-                    hintText: 'e.g., 5.0',
-                    prefixIcon: Icon(_getCostIcon(_selectedCostType)),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _costController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText:
+                          AppLocalizations.of(context)?.estimatedCostLabel ??
+                              'Cost Amount (per relapse/duration)',
+                      hintText: 'e.g., 5.0',
+                      prefixIcon: Icon(_getCostIcon(_selectedCostType)),
+                    ),
                   ),
-                ),
+                ],
 
                 const SizedBox(height: 24),
                 SizedBox(
@@ -1100,7 +1126,71 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                     ),
                   ],
                 ),
-                const SizedBox(height: 15),
+                if (_foundToDo.isNotEmpty || _weeklyAvoided > 0) ...[
+                  const SizedBox(height: 10),
+                  GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const StatisticsScreen()),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isDark
+                                ? Colors.black.withAlpha(40)
+                                : Colors.grey.withAlpha(40),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.bolt,
+                              size: 18, color: Colors.orange),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${_foundToDo.length} active',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? AppThemes.darkTextSecondary
+                                  : AppThemes.lightTextSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          const Icon(Icons.check_circle_outline,
+                              size: 18, color: Colors.green),
+                          const SizedBox(width: 6),
+                          Text(
+                            '$_weeklyAvoided avoided this week',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? AppThemes.darkTextSecondary
+                                  : AppThemes.lightTextSecondary,
+                            ),
+                          ),
+                          const Spacer(),
+                          Icon(Icons.chevron_right,
+                              size: 18,
+                              color: isDark
+                                  ? AppThemes.darkTextSecondary
+                                  : AppThemes.lightTextSecondary),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
                 Expanded(
                   child: _foundToDo.isEmpty
                       ? Center(
@@ -1125,6 +1215,28 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                                       : AppThemes.lightTextSecondary,
                                 ),
                               ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Tap + to track your first habit to avoid',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: (isDark
+                                          ? AppThemes.darkTextSecondary
+                                          : AppThemes.lightTextSecondary)
+                                      .withAlpha(180),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              TextButton.icon(
+                                icon: const Icon(Icons.archive_outlined,
+                                    size: 16),
+                                label: const Text('View Archive →'),
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const ArchiveScreen()),
+                                ),
+                              ),
                             ],
                           ),
                         )
@@ -1134,7 +1246,9 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           itemBuilder: (context, i) {
                             return Dismissible(
                               key: ValueKey(_foundToDo[i].id),
-                              direction: DismissDirection.startToEnd,
+                              direction: _foundToDo[i].isRecurring
+                                  ? DismissDirection.horizontal
+                                  : DismissDirection.startToEnd,
                               background: Container(
                                 alignment: Alignment.centerLeft,
                                 padding: const EdgeInsets.only(left: 20),
@@ -1159,6 +1273,33 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                                   ],
                                 ),
                               ),
+                              secondaryBackground: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 20),
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                  color: tdAvoidRed.withAlpha(200),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.restore, color: Colors.white),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'Relapse',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              confirmDismiss: (direction) async {
+                                if (direction == DismissDirection.endToStart) {
+                                  _triggerRelapse(_foundToDo[i]);
+                                  return false;
+                                }
+                                return true;
+                              },
                               onDismissed: (_) async {
                                 final todo = _foundToDo[i];
                                 await _archiveTodo(int.parse(todo.id!));
@@ -1220,6 +1361,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     bool editIsRecurring = todo.isRecurring;
     DateTime? editEventDate = todo.eventDate;
     AvoidType editType = todo.avoidType;
+    bool editShowAdvanced = todo.estimatedCost != null;
     String? editContactId = todo.contactId;
     String? editLocationName = todo.locationName;
     double? editLatitude = todo.latitude;
@@ -1275,11 +1417,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                       switch (type) {
                         case AvoidType.generic:
                           icon = Icons.block;
-                          label = 'Generic';
+                          label = 'Habit';
                           break;
                         case AvoidType.people:
                           icon = Icons.person;
-                          label = 'People';
+                          label = 'Person';
                           break;
                         case AvoidType.event:
                           icon = Icons.event;
@@ -1589,75 +1731,96 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                       ],
                     ),
                   ),
-                const Text('Cost Type:',
-                    style: TextStyle(fontWeight: FontWeight.w500)),
-                const SizedBox(height: 8),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: CostType.values.map((type) {
-                      final isSelected = editCostType == type;
-                      IconData icon;
-                      String label;
-                      switch (type) {
-                        case CostType.money:
-                          icon = Icons.attach_money;
-                          label = 'Money';
-                          break;
-                        case CostType.mood:
-                          icon = Icons.mood;
-                          label = 'Mood';
-                          break;
-                        case CostType.health:
-                          icon = Icons.health_and_safety;
-                          label = 'Health';
-                          break;
-                        case CostType.time:
-                          icon = Icons.timer;
-                          label = 'Time';
-                          break;
-                        case CostType.goodwill:
-                          icon = Icons.handshake;
-                          label = 'Goodwill';
-                          break;
-                        case CostType.patience:
-                          icon = Icons.hourglass_empty;
-                          label = 'Patience';
-                          break;
-                      }
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: ChoiceChip(
-                          avatar: Icon(icon, size: 16),
-                          label: Text(label),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            if (selected) {
-                              setModalState(() {
-                                editCostType = type;
-                              });
-                            }
-                          },
-                          selectedColor: Colors.blue.withAlpha(200),
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : null,
+                // Advanced options toggle (edit form)
+                TextButton.icon(
+                  onPressed: () => setModalState(
+                      () => editShowAdvanced = !editShowAdvanced),
+                  icon: Icon(
+                    editShowAdvanced ? Icons.expand_less : Icons.expand_more,
+                    size: 18,
+                  ),
+                  label: Text(editShowAdvanced
+                      ? 'Advanced options'
+                      : 'Advanced options (cost tracking)'),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    foregroundColor:
+                        Theme.of(context).colorScheme.onSurface.withAlpha(150),
+                  ),
+                ),
+
+                if (editShowAdvanced) ...[
+                  const SizedBox(height: 8),
+                  const Text('Cost Type:',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: CostType.values.map((type) {
+                        final isSelected = editCostType == type;
+                        IconData icon;
+                        String label;
+                        switch (type) {
+                          case CostType.money:
+                            icon = Icons.attach_money;
+                            label = 'Money';
+                            break;
+                          case CostType.mood:
+                            icon = Icons.mood;
+                            label = 'Mood';
+                            break;
+                          case CostType.health:
+                            icon = Icons.health_and_safety;
+                            label = 'Health';
+                            break;
+                          case CostType.time:
+                            icon = Icons.timer;
+                            label = 'Time';
+                            break;
+                          case CostType.goodwill:
+                            icon = Icons.handshake;
+                            label = 'Goodwill';
+                            break;
+                          case CostType.patience:
+                            icon = Icons.hourglass_empty;
+                            label = 'Patience';
+                            break;
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: ChoiceChip(
+                            avatar: Icon(icon, size: 16),
+                            label: Text(label),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              if (selected) {
+                                setModalState(() {
+                                  editCostType = type;
+                                });
+                              }
+                            },
+                            selectedColor: Colors.blue.withAlpha(200),
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.white : null,
+                            ),
                           ),
-                        ),
-                      );
-                    }).toList(),
+                        );
+                      }).toList(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: costController,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(
-                    labelText: 'Cost Amount (per relapse/duration)',
-                    hintText: 'e.g., 5.0',
-                    prefixIcon: Icon(_getCostIcon(editCostType)),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: costController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: 'Cost Amount (per relapse/duration)',
+                      hintText: 'e.g., 5.0',
+                      prefixIcon: Icon(_getCostIcon(editCostType)),
+                    ),
                   ),
-                ),
+                ],
                 const SizedBox(height: 24),
                 Row(
                   children: [

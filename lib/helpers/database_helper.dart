@@ -458,6 +458,18 @@ class DatabaseHelper {
     return result.reversed.toList();
   }
 
+  Future<int> getThisWeekArchivedCount() async {
+    final db = await instance.database;
+    final cutoff = DateTime.now()
+        .subtract(const Duration(days: 7))
+        .toIso8601String();
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as c FROM todo WHERE isArchived = 1 AND archivedAt >= ?',
+      [cutoff],
+    );
+    return (result.first['c'] as int?) ?? 0;
+  }
+
   Future<int> updateOrderIndex(int id, int newIndex) async {
     final db = await instance.database;
     return db.update(
