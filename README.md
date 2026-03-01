@@ -33,6 +33,7 @@ storeFile=../upload-keystore.jks
 1. Bump app version in `pubspec.yaml`:
    `version: 1.0.1+2`
 2. Run release build:
+   `flutter build appbundle --release 2>&1`
    `flutter build appbundle --release`
 3. Upload generated bundle to Play Console:
    `build/app/outputs/bundle/release/app-release.aab`
@@ -53,8 +54,9 @@ storeFile=../upload-keystore.jks
 2. Ensure Apple signing is valid in Xcode:
    `ios/Runner.xcworkspace -> Runner target -> Signing & Capabilities -> Team + Automatically manage signing`
 3. Build/export IPA:
+   `flutter build ipa --release 2>&1`
    `flutter build ipa --release --build-name 1.0.1 --build-number 2`
-4. Upload in App Store Connect:
+4. Upload in App Store Connect: (archive first)
    `My Apps -> Your App -> TestFlight/App Store -> Add build -> Submit for review`
 
 ### If CLI build fails with signing/profile errors
@@ -70,6 +72,14 @@ storeFile=../upload-keystore.jks
 ## License
 
 MIT
+
+## Updates and localization
+`flutter pub get && flutter gen-l10n`
+
+## Testing
+`flutter devices`
+`flutter run -d `
+
 
 ## Todo
 
