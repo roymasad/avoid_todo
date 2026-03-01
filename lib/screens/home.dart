@@ -54,6 +54,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   DateTime? _reminderDateTime;
 
   List<TargetFocus> targets = [];
+  bool _coachMarkScheduled = false;
 
   // Filters
   List<String> _selectedTagIds = [];
@@ -96,7 +97,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     };
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkCoachMarks();
+      // _checkCoachMarks() moved to didChangeDependencies so it waits for
+      // the route's slide-in animation to complete before reading widget positions.
       // Handle case where app was launched via notification action
       if (NotificationHelper().pendingRelapseAction) {
         NotificationHelper().clearPendingRelapseAction();
@@ -105,6 +107,33 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         }
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_coachMarkScheduled) return;
+    _coachMarkScheduled = true;
+
+    final route = ModalRoute.of(context);
+    if (route?.animation == null ||
+        route!.animation!.status == AnimationStatus.completed) {
+      // No navigation animation in progress (second launch / root widget)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _checkCoachMarks();
+      });
+    } else {
+      // First launch: slide-in animation still running — wait for it to finish
+      // so widget positions are correct when tutorial_coach_mark reads them.
+      late AnimationStatusListener listener;
+      listener = (AnimationStatus status) {
+        if (status == AnimationStatus.completed) {
+          route.animation!.removeStatusListener(listener);
+          if (mounted) _checkCoachMarks();
+        }
+      };
+      route.animation!.addStatusListener(listener);
+    }
   }
 
   Future<void> _loadNotificationPref() async {
