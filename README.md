@@ -1,6 +1,6 @@
 # Avoid ToDo App
 
-A basic to-do app with a twist built with Flutter. 
+A cool to-do app with a twist built with Flutter. 
 List the things you need to avoid doing!
 Based on this tutorial
 - [Flutter ToDo App Tutorial for Beginners](https://youtu.be/K4P5DZ9TRns)
@@ -69,9 +69,6 @@ storeFile=../upload-keystore.jks
 5. Archive and upload from Xcode:
    `Product -> Archive -> Distribute App -> App Store Connect -> Upload`.
 
-## License
-
-MIT
 
 ## Updates and localization
 `flutter pub get && flutter gen-l10n`
@@ -81,9 +78,4 @@ MIT
 `flutter run -d `
 
 
-## Todo
 
-* Add automatic and manual dark/white theme support
-* Add Archive tab of things done
-* Add optional time/calendar for some things to avoid
-* Add french localization
