@@ -174,7 +174,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       TargetFocus(
         identify: "menu",
         keyTarget: _menuKey,
-
+        enableOverlayTab: true,
         contents: [
           TargetContent(
             align: ContentAlign.bottom,
@@ -214,6 +214,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       TargetFocus(
         identify: "search",
         keyTarget: _searchKey,
+        enableOverlayTab: true,
         contents: [
           TargetContent(
             align: ContentAlign.bottom,
@@ -253,6 +254,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       TargetFocus(
         identify: "add",
         keyTarget: _addKey,
+        enableOverlayTab: true,
         contents: [
           TargetContent(
             align: ContentAlign.top,
