@@ -77,5 +77,7 @@ storeFile=../upload-keystore.jks
 `flutter devices`
 `flutter run -d `
 
+`flutter emulators`
+`flutter emulators --launch `
 
 
