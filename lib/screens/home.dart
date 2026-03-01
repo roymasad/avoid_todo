@@ -20,7 +20,6 @@ import 'map_picker_screen.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
-import 'package:permission_handler/permission_handler.dart';
 // Note: Map implementation uses simple location names for now.
 
 enum SortOption { latest, oldest, avoidType, costType, priority }
@@ -72,6 +71,9 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   // Stats card
   int _weeklyAvoided = 0;
 
+  // Bottom nav
+  int _selectedIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -120,24 +122,17 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   }
 
   void _showCoachMarks() {
-    final l10n = AppLocalizations.of(context);
     _initTargets();
     TutorialCoachMark(
       targets: targets,
       colorShadow: tdAvoidRed,
-      textSkip: l10n?.skip ?? "SKIP",
+      hideSkip: true,
       paddingFocus: 10,
       opacityShadow: 0.7,
       onFinish: () {
         SharedPreferences.getInstance().then((prefs) {
           prefs.setBool('hasSeenCoachMarks', true);
         });
-      },
-      onSkip: () {
-        SharedPreferences.getInstance().then((prefs) {
-          prefs.setBool('hasSeenCoachMarks', true);
-        });
-        return true;
       },
     ).show(context: context);
   }
@@ -149,7 +144,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       TargetFocus(
         identify: "menu",
         keyTarget: _menuKey,
-        alignSkip: Alignment.topRight,
+
         contents: [
           TargetContent(
             align: ContentAlign.bottom,
@@ -291,7 +286,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     if (todo.isEmpty) return;
     if (!_isRecurring && _eventDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select an event date.')),
+        SnackBar(content: Text(AppLocalizations.of(context)?.selectEventDateError ?? 'Please select an event date.')),
       );
       return;
     }
@@ -564,8 +559,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   autofocus: true,
                 ),
                 const SizedBox(height: 16),
-                const Text('Avoid Type:',
-                    style: TextStyle(fontWeight: FontWeight.w500)),
+                Text(AppLocalizations.of(context)?.avoidTypeLabel ?? 'Avoid Type:',
+                    style: const TextStyle(fontWeight: FontWeight.w500)),
                 const SizedBox(height: 8),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -617,20 +612,18 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
                 if (_selectedType == AvoidType.people) ...[
                   const SizedBox(height: 16),
-                  const Text('Associated Person:',
-                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  Text(AppLocalizations.of(context)?.associatedPerson ?? 'Associated Person:',
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
                     onPressed: () async {
-                      if (await Permission.contacts.request().isGranted) {
-                        final contact =
-                            await FlutterContacts.openExternalPick();
-                        if (contact != null) {
-                          setModalState(() {
-                            _selectedContactId = contact.id;
-                            _todoController.text = contact.displayName;
-                          });
-                        }
+                      final contact =
+                          await FlutterContacts.openExternalPick();
+                      if (contact != null) {
+                        setModalState(() {
+                          _selectedContactId = contact.id;
+                          _todoController.text = contact.displayName;
+                        });
                       }
                     },
                     icon: const Icon(Icons.contact_phone),
@@ -642,8 +635,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
                 if (_selectedType == AvoidType.place) ...[
                   const SizedBox(height: 16),
-                  const Text('Avoid Location:',
-                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  Text(AppLocalizations.of(context)?.avoidLocation ?? 'Avoid Location:',
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   TextField(
                     controller: locationController,
@@ -675,20 +668,20 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                       }
                     },
                     icon: const Icon(Icons.map),
-                    label: const Text('Pick on Map'),
+                    label: Text(AppLocalizations.of(context)?.pickOnMap ?? 'Pick on Map'),
                   ),
                 ],
 
                 if (_selectedType == AvoidType.event) ...[
                   const SizedBox(height: 16),
-                  const Text('Event Reminder:',
-                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  Text(AppLocalizations.of(context)?.eventReminderLabel ?? 'Event Reminder:',
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.alarm),
                     title: Text(_reminderDateTime == null
-                        ? 'Set Reminder'
+                        ? (AppLocalizations.of(context)?.setReminder ?? 'Set Reminder')
                         : '${_reminderDateTime!.day}/${_reminderDateTime!.month} ${_reminderDateTime!.hour}:${_reminderDateTime!.minute}'),
                     onTap: () async {
                       final date = await showDatePicker(
@@ -729,14 +722,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
                 if (_selectedType != AvoidType.event) ...[
                   const SizedBox(height: 16),
-                  const Text('Daily Reminder Time:',
-                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  Text(AppLocalizations.of(context)?.dailyReminderLabel ?? 'Daily Reminder Time:',
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.alarm),
                     title: Text(_reminderDateTime == null
-                        ? 'Set Daily Reminder'
+                        ? (AppLocalizations.of(context)?.setDailyReminder ?? 'Set Daily Reminder')
                         : 'Every day at ${_reminderDateTime!.hour.toString().padLeft(2, '0')}:${_reminderDateTime!.minute.toString().padLeft(2, '0')}'),
                     onTap: () async {
                       final time = await showTimePicker(
@@ -925,32 +918,32 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
                 if (showAdvanced) ...[
                   const SizedBox(height: 8),
-                  const Text('Cost Type:',
-                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  Text(AppLocalizations.of(context)?.costTypeLabel ?? 'Cost Type:',
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: CostType.values.map((type) {
+                      children: CostType.values.where((t) => t != CostType.goodwill && t != CostType.patience).map((type) {
                         final isSelected = _selectedCostType == type;
                         IconData icon;
                         String label;
                         switch (type) {
                           case CostType.money:
                             icon = Icons.attach_money;
-                            label = 'Money';
+                            label = AppLocalizations.of(context)?.costMoney ?? 'Money';
                             break;
                           case CostType.mood:
                             icon = Icons.mood;
-                            label = 'Mood';
+                            label = AppLocalizations.of(context)?.costMood ?? 'Mood';
                             break;
                           case CostType.health:
                             icon = Icons.health_and_safety;
-                            label = 'Health';
+                            label = AppLocalizations.of(context)?.health ?? 'Health';
                             break;
                           case CostType.time:
                             icon = Icons.timer;
-                            label = 'Time';
+                            label = AppLocalizations.of(context)?.costTime ?? 'Time';
                             break;
                           case CostType.goodwill:
                             icon = Icons.handshake;
@@ -1068,12 +1061,47 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
+    return PopScope(
+      canPop: _selectedIndex == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) setState(() => _selectedIndex = 0);
+      },
+      child: Scaffold(
       backgroundColor:
           isDark ? AppThemes.darkBackground : AppThemes.lightBackground,
       appBar: _buildAppBar(),
-      drawer: _buildDrawer(themeProvider),
-      body: Stack(
+      endDrawer: _selectedIndex == 0 ? _buildDrawer(themeProvider) : null,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (i) {
+          if (i == 2 && _selectedIndex == 2) {
+            // Already on archive, refresh
+          }
+          setState(() => _selectedIndex = i);
+          if (i == 0) _fetchTodos();
+        },
+        destinations: [
+          NavigationDestination(
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home),
+            label: AppLocalizations.of(context)?.navHome ?? 'Home',
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.bar_chart_outlined),
+            selectedIcon: const Icon(Icons.bar_chart),
+            label: AppLocalizations.of(context)?.statistics ?? 'Statistics',
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.archive_outlined),
+            selectedIcon: const Icon(Icons.archive),
+            label: AppLocalizations.of(context)?.archive ?? 'Archive',
+          ),
+        ],
+      ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          Stack(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(
@@ -1099,29 +1127,30 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                             _runFilter(_searchController.text);
                           });
                         },
-                        itemBuilder: (BuildContext context) =>
-                            <PopupMenuEntry<SortOption>>[
-                          const PopupMenuItem<SortOption>(
+                        itemBuilder: (BuildContext context) {
+                          final l10n = AppLocalizations.of(context);
+                          return <PopupMenuEntry<SortOption>>[
+                          PopupMenuItem<SortOption>(
                             value: SortOption.latest,
-                            child: Text('Latest'),
+                            child: Text(l10n?.sortLatest ?? 'Latest'),
                           ),
-                          const PopupMenuItem<SortOption>(
+                          PopupMenuItem<SortOption>(
                             value: SortOption.oldest,
-                            child: Text('Oldest'),
+                            child: Text(l10n?.sortOldest ?? 'Oldest'),
                           ),
-                          const PopupMenuItem<SortOption>(
+                          PopupMenuItem<SortOption>(
                             value: SortOption.avoidType,
-                            child: Text('Avoid Type'),
+                            child: Text(l10n?.sortAvoidType ?? 'Avoid Type'),
                           ),
-                          const PopupMenuItem<SortOption>(
+                          PopupMenuItem<SortOption>(
                             value: SortOption.costType,
-                            child: Text('Cost Type'),
+                            child: Text(l10n?.sortCostType ?? 'Cost Type'),
                           ),
-                          const PopupMenuItem<SortOption>(
+                          PopupMenuItem<SortOption>(
                             value: SortOption.priority,
-                            child: Text('Priority'),
+                            child: Text(l10n?.priority ?? 'Priority'),
                           ),
-                        ],
+                        ];},
                       ),
                     ),
                   ],
@@ -1166,19 +1195,35 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                             ),
                           ),
                           const SizedBox(width: 16),
-                          const Icon(Icons.check_circle_outline,
-                              size: 18, color: Colors.green),
-                          const SizedBox(width: 6),
-                          Text(
-                            '$_weeklyAvoided avoided this week',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? AppThemes.darkTextSecondary
-                                  : AppThemes.lightTextSecondary,
+                          if (_weeklyAvoided > 0) ...[
+                            const Icon(Icons.check_circle_outline,
+                                size: 18, color: Colors.green),
+                            const SizedBox(width: 6),
+                            Text(
+                              '$_weeklyAvoided avoided this week',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark
+                                    ? AppThemes.darkTextSecondary
+                                    : AppThemes.lightTextSecondary,
+                              ),
                             ),
-                          ),
+                          ] else ...[
+                            const Icon(Icons.electric_bolt,
+                                size: 18, color: Colors.orange),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Keep going!',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark
+                                    ? AppThemes.darkTextSecondary
+                                    : AppThemes.lightTextSecondary,
+                              ),
+                            ),
+                          ],
                           const Spacer(),
                           Icon(Icons.chevron_right,
                               size: 18,
@@ -1342,12 +1387,19 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        key: _addKey,
-        onPressed: _showAddTodoDialog,
-        icon: const Icon(Icons.add),
-        label: const Text('Add'),
+          const StatisticsScreen(embedded: true),
+          const ArchiveScreen(embedded: true),
+        ],
       ),
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton.extended(
+              key: _addKey,
+              onPressed: _showAddTodoDialog,
+              icon: const Icon(Icons.add),
+              label: const Text('Add'),
+            )
+          : null,
+    ),
     );
   }
 
@@ -1404,8 +1456,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   autofocus: true,
                 ),
                 const SizedBox(height: 16),
-                const Text('Avoid Type:',
-                    style: TextStyle(fontWeight: FontWeight.w500)),
+                Text(AppLocalizations.of(context)?.avoidTypeLabel ?? 'Avoid Type:',
+                    style: const TextStyle(fontWeight: FontWeight.w500)),
                 const SizedBox(height: 8),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -1456,20 +1508,18 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 ),
                 if (editType == AvoidType.people) ...[
                   const SizedBox(height: 16),
-                  const Text('Associated Person:',
-                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  Text(AppLocalizations.of(context)?.associatedPerson ?? 'Associated Person:',
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
                     onPressed: () async {
-                      if (await Permission.contacts.request().isGranted) {
-                        final contact =
-                            await FlutterContacts.openExternalPick();
-                        if (contact != null) {
-                          setModalState(() {
-                            editContactId = contact.id;
-                            textController.text = contact.displayName;
-                          });
-                        }
+                      final contact =
+                          await FlutterContacts.openExternalPick();
+                      if (contact != null) {
+                        setModalState(() {
+                          editContactId = contact.id;
+                          textController.text = contact.displayName;
+                        });
                       }
                     },
                     icon: const Icon(Icons.contact_phone),
@@ -1480,8 +1530,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 ],
                 if (editType == AvoidType.place) ...[
                   const SizedBox(height: 16),
-                  const Text('Avoid Location:',
-                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  Text(AppLocalizations.of(context)?.avoidLocation ?? 'Avoid Location:',
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   TextField(
                     controller: locationController,
@@ -1513,19 +1563,19 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                       }
                     },
                     icon: const Icon(Icons.map),
-                    label: const Text('Pick on Map'),
+                    label: Text(AppLocalizations.of(context)?.pickOnMap ?? 'Pick on Map'),
                   ),
                 ],
                 if (editType == AvoidType.event) ...[
                   const SizedBox(height: 16),
-                  const Text('Event Reminder:',
-                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  Text(AppLocalizations.of(context)?.eventReminderLabel ?? 'Event Reminder:',
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.alarm),
                     title: Text(editReminderDateTime == null
-                        ? 'Set Reminder'
+                        ? (AppLocalizations.of(context)?.setReminder ?? 'Set Reminder')
                         : '${editReminderDateTime!.day}/${editReminderDateTime!.month} ${editReminderDateTime!.hour}:${editReminderDateTime!.minute}'),
                     onTap: () async {
                       final date = await showDatePicker(
@@ -1567,14 +1617,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 ],
                 if (editType != AvoidType.event) ...[
                   const SizedBox(height: 16),
-                  const Text('Daily Reminder Time:',
-                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  Text(AppLocalizations.of(context)?.dailyReminderLabel ?? 'Daily Reminder Time:',
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.alarm),
                     title: Text(editReminderDateTime == null
-                        ? 'Set Daily Reminder'
+                        ? (AppLocalizations.of(context)?.setDailyReminder ?? 'Set Daily Reminder')
                         : 'Every day at ${editReminderDateTime!.hour.toString().padLeft(2, '0')}:${editReminderDateTime!.minute.toString().padLeft(2, '0')}'),
                     onTap: () async {
                       final time = await showTimePicker(
@@ -1751,32 +1801,32 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
                 if (editShowAdvanced) ...[
                   const SizedBox(height: 8),
-                  const Text('Cost Type:',
-                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  Text(AppLocalizations.of(context)?.costTypeLabel ?? 'Cost Type:',
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: CostType.values.map((type) {
+                      children: CostType.values.where((t) => t != CostType.goodwill && t != CostType.patience).map((type) {
                         final isSelected = editCostType == type;
                         IconData icon;
                         String label;
                         switch (type) {
                           case CostType.money:
                             icon = Icons.attach_money;
-                            label = 'Money';
+                            label = AppLocalizations.of(context)?.costMoney ?? 'Money';
                             break;
                           case CostType.mood:
                             icon = Icons.mood;
-                            label = 'Mood';
+                            label = AppLocalizations.of(context)?.costMood ?? 'Mood';
                             break;
                           case CostType.health:
                             icon = Icons.health_and_safety;
-                            label = 'Health';
+                            label = AppLocalizations.of(context)?.health ?? 'Health';
                             break;
                           case CostType.time:
                             icon = Icons.timer;
-                            label = 'Time';
+                            label = AppLocalizations.of(context)?.costTime ?? 'Time';
                             break;
                           case CostType.goodwill:
                             icon = Icons.handshake;
@@ -1815,7 +1865,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
                     decoration: InputDecoration(
-                      labelText: 'Cost Amount (per relapse/duration)',
+                      labelText: AppLocalizations.of(context)?.estimatedCostLabel ?? 'Cost Amount (per relapse/duration)',
                       hintText: 'e.g., 5.0',
                       prefixIcon: Icon(_getCostIcon(editCostType)),
                     ),
@@ -1837,9 +1887,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                         onPressed: () async {
                           if (!editIsRecurring && editEventDate == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content:
-                                      Text('Please select an event date.')),
+                              SnackBar(content: Text(AppLocalizations.of(context)?.selectEventDateError ?? 'Please select an event date.')),
                             );
                             return;
                           }
@@ -2059,27 +2107,49 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   }
 
   AppBar _buildAppBar() {
-    return AppBar(
-      leading: Builder(
-        builder: (context) => IconButton(
-          key: _menuKey,
-          icon: const Icon(Icons.settings),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+    if (_selectedIndex == 1) {
+      return AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => setState(() => _selectedIndex = 0),
         ),
-      ),
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          SizedBox(
-            height: 40,
-            width: 40,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Image.asset('assets/images/avoid_logo.png'),
-            ),
+        title: const Text('Statistics'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => setState(() {}),
           ),
         ],
+      );
+    }
+    if (_selectedIndex == 2) {
+      return AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            _fetchTodos();
+            setState(() => _selectedIndex = 0);
+          },
+        ),
+        title: const Text('Archive'),
+      );
+    }
+    return AppBar(
+      automaticallyImplyLeading: false,
+      titleSpacing: 20,
+      title: const Text(
+        'Avoid To Do',
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
       ),
+      actions: [
+        Builder(
+          builder: (context) => IconButton(
+            key: _menuKey,
+            icon: const Icon(Icons.settings, color: Colors.red),
+            onPressed: () => Scaffold.of(context).openEndDrawer(),
+          ),
+        ),
+      ],
     );
   }
 
@@ -2092,8 +2162,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         padding: EdgeInsets.zero,
         children: <Widget>[
           DrawerHeader(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
+            decoration: const BoxDecoration(
+              color: tdAvoidRed,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2151,30 +2221,6 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 ),
               ],
             ),
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.archive),
-            title: Text(l10n?.archive ?? 'Archive'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ArchiveScreen()),
-              ).then((_) => _fetchTodos());
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.bar_chart),
-            title: Text(l10n?.statistics ?? 'Statistics'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const StatisticsScreen()),
-              );
-            },
           ),
           const Divider(),
           Padding(
@@ -2256,8 +2302,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 builder: (BuildContext context) {
                   return AlertDialog(
                     title: Text(l10n?.appTitle ?? 'Avoid Todo App'),
-                    content: Text(l10n?.aboutDescription ??
-                        'Never forget what you need to avoid anymore.'),
+                    content: Text('${l10n?.aboutDescription ?? 'Never forget what you need to avoid anymore.'}\n\nVersion 1.0.2 (build 3)'),
                     actions: [
                       TextButton(
                         child: Text(l10n?.close ?? 'Close'),

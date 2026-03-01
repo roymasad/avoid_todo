@@ -8,7 +8,8 @@ import '../constants/colors.dart';
 import '../l10n/app_localizations.dart';
 
 class StatisticsScreen extends StatefulWidget {
-  const StatisticsScreen({super.key});
+  const StatisticsScreen({super.key, this.embedded = false});
+  final bool embedded;
 
   @override
   State<StatisticsScreen> createState() => _StatisticsScreenState();
@@ -171,28 +172,21 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n?.statistics ?? 'Statistics'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadStatistics,
-          ),
-        ],
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadStatistics,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildOverviewCards(l10n),
-                    const SizedBox(height: 24),
+    final body = isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : RefreshIndicator(
+            onRefresh: _loadStatistics,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildOverviewCards(l10n),
+                  const SizedBox(height: 24),
+                  if (totalAvoided == 0 && recentRelapses.isEmpty)
+                    _buildZeroState()
+                  else ...[
                     _buildBadgesSection(l10n),
                     const SizedBox(height: 24),
                     _buildWeeklyChart(isDark, l10n),
@@ -205,9 +199,23 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     const SizedBox(height: 24),
                     _buildMostAvoidedList(l10n),
                   ],
-                ),
+                ],
               ),
             ),
+          );
+
+    if (widget.embedded) return body;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n?.statistics ?? 'Statistics'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadStatistics,
+          ),
+        ],
+      ),
+      body: body,
     );
   }
 
@@ -241,75 +249,73 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 1.2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemCount: CostType.values.length,
-          itemBuilder: (context, index) {
-            final type = CostType.values[index];
-            final amount = savingsByType[type] ?? 0.0;
-            final hasThisTask = hasTaskType[type] ?? false;
-
-            if (amount <= 0 && !hasThisTask && type != CostType.money) {
-              return const SizedBox.shrink();
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final cards = <Widget>[];
+            for (final type in CostType.values) {
+              final amount = savingsByType[type] ?? 0.0;
+              final hasThisTask = hasTaskType[type] ?? false;
+              if (amount <= 0 && !hasThisTask && type != CostType.money && type != CostType.time) {
+                continue;
+              }
+              IconData icon;
+              String label;
+              Color color;
+              String prefix = "";
+              String suffix = "";
+              switch (type) {
+                case CostType.money:
+                  icon = Icons.attach_money;
+                  label = l10n?.costMoney ?? 'Money';
+                  color = Colors.amber.shade700;
+                  prefix = "\$";
+                  break;
+                case CostType.mood:
+                  icon = Icons.mood;
+                  label = l10n?.costMood ?? 'Mood';
+                  color = Colors.blue.shade600;
+                  suffix = " pts";
+                  break;
+                case CostType.health:
+                  icon = Icons.health_and_safety;
+                  label = l10n?.health ?? 'Health';
+                  color = Colors.green.shade600;
+                  suffix = " pts";
+                  break;
+                case CostType.time:
+                  icon = Icons.timer;
+                  label = l10n?.costTime ?? 'Time';
+                  color = Colors.orange.shade700;
+                  suffix = " hrs";
+                  break;
+                case CostType.goodwill:
+                  icon = Icons.handshake;
+                  label = 'Goodwill';
+                  color = Colors.purple.shade600;
+                  suffix = " pts";
+                  break;
+                case CostType.patience:
+                  icon = Icons.hourglass_empty;
+                  label = 'Patience';
+                  color = Colors.teal.shade600;
+                  suffix = " pts";
+                  break;
+              }
+              final cardWidth = (constraints.maxWidth - 12) / 2;
+              cards.add(SizedBox(
+                width: cardWidth,
+                child: _buildStatCard(
+                  label,
+                  "$prefix${amount.toStringAsFixed(amount == amount.toInt() ? 0 : 1)}$suffix",
+                  icon,
+                  color,
+                ),
+              ));
             }
-
-            IconData icon;
-            String label;
-            Color color;
-            String prefix = "";
-            String suffix = "";
-
-            switch (type) {
-              case CostType.money:
-                icon = Icons.attach_money;
-                label = 'Money';
-                color = Colors.amber.shade700;
-                prefix = "\$";
-                break;
-              case CostType.mood:
-                icon = Icons.mood;
-                label = 'Mood';
-                color = Colors.blue.shade600;
-                suffix = " pts";
-                break;
-              case CostType.health:
-                icon = Icons.health_and_safety;
-                label = 'Health';
-                color = Colors.green.shade600;
-                suffix = " pts";
-                break;
-              case CostType.time:
-                icon = Icons.timer;
-                label = 'Time';
-                color = Colors.orange.shade700;
-                suffix = " hrs";
-                break;
-              case CostType.goodwill:
-                icon = Icons.handshake;
-                label = 'Goodwill';
-                color = Colors.purple.shade600;
-                suffix = " pts";
-                break;
-              case CostType.patience:
-                icon = Icons.hourglass_empty;
-                label = 'Patience';
-                color = Colors.teal.shade600;
-                suffix = " pts";
-                break;
-            }
-
-            return _buildStatCard(
-              label,
-              "$prefix${amount.toStringAsFixed(amount == amount.toInt() ? 0 : 1)}$suffix",
-              icon,
-              color,
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: cards,
             );
           },
         ),
@@ -337,6 +343,31 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             Text(
               title,
               style: const TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildZeroState() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🎯', style: TextStyle(fontSize: 48)),
+            const SizedBox(height: 16),
+            const Text(
+              'Nothing here yet',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Swipe right on a habit to mark it as avoided — your stats will appear here.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -679,9 +710,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Recent Relapses & Triggers', // Consider adding to l10n
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              l10n?.recentRelapsesTriggers ?? 'Recent Relapses & Triggers',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             ...recentRelapses.map((data) {

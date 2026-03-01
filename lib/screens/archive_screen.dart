@@ -6,7 +6,8 @@ import '../helpers/database_helper.dart';
 import '../l10n/app_localizations.dart';
 
 class ArchiveScreen extends StatefulWidget {
-  const ArchiveScreen({super.key});
+  const ArchiveScreen({super.key, this.embedded = false});
+  final bool embedded;
 
   @override
   State<ArchiveScreen> createState() => _ArchiveScreenState();
@@ -96,11 +97,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n?.archive ?? 'Archive'),
-      ),
-      body: isLoading
+    final body = isLoading
           ? const Center(child: CircularProgressIndicator())
           : archivedTodos.isEmpty
               ? Center(
@@ -201,7 +198,12 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                       ),
                     );
                   },
-                ),
+                );
+
+    if (widget.embedded) return body;
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n?.archive ?? 'Archive')),
+      body: body,
     );
   }
 

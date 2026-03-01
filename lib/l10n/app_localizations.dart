@@ -763,6 +763,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Savings by Item Type'**
   String get savingsSummary;
+
+  /// No description provided for @navHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get navHome;
+
+  /// No description provided for @costTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost Type:'**
+  String get costTypeLabel;
+
+  /// No description provided for @costMoney.
+  ///
+  /// In en, this message translates to:
+  /// **'Money'**
+  String get costMoney;
+
+  /// No description provided for @costMood.
+  ///
+  /// In en, this message translates to:
+  /// **'Mood'**
+  String get costMood;
+
+  /// No description provided for @costTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get costTime;
+
+  /// No description provided for @streakLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get streakLabel;
+
+  /// No description provided for @slipButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Slip'**
+  String get slipButton;
+
+  /// No description provided for @justNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get justNow;
+
+  /// No description provided for @sortLatest.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest'**
+  String get sortLatest;
+
+  /// No description provided for @sortOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest'**
+  String get sortOldest;
+
+  /// No description provided for @sortAvoidType.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid Type'**
+  String get sortAvoidType;
+
+  /// No description provided for @sortCostType.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost Type'**
+  String get sortCostType;
+
+  /// No description provided for @avoidTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid Type:'**
+  String get avoidTypeLabel;
+
+  /// No description provided for @associatedPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Associated Person:'**
+  String get associatedPerson;
+
+  /// No description provided for @avoidLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid Location:'**
+  String get avoidLocation;
+
+  /// No description provided for @pickOnMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick on Map'**
+  String get pickOnMap;
+
+  /// No description provided for @eventReminderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Event Reminder:'**
+  String get eventReminderLabel;
+
+  /// No description provided for @dailyReminderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Reminder Time:'**
+  String get dailyReminderLabel;
+
+  /// No description provided for @setReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Reminder'**
+  String get setReminder;
+
+  /// No description provided for @setDailyReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Daily Reminder'**
+  String get setDailyReminder;
+
+  /// No description provided for @selectEventDateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select an event date.'**
+  String get selectEventDateError;
+
+  /// No description provided for @recentRelapsesTriggers.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Relapses & Triggers'**
+  String get recentRelapsesTriggers;
 }
 
 class _AppLocalizationsDelegate

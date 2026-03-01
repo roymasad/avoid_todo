@@ -58,6 +58,11 @@ class NotificationHelper {
         }
       },
     );
+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
   }
 
   Future<void> scheduleDailyCheckInNotification() async {

@@ -353,4 +353,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get savingsSummary => 'Savings by Item Type';
+
+  @override
+  String get navHome => 'Home';
+
+  @override
+  String get costTypeLabel => 'Cost Type:';
+
+  @override
+  String get costMoney => 'Money';
+
+  @override
+  String get costMood => 'Mood';
+
+  @override
+  String get costTime => 'Time';
+
+  @override
+  String get streakLabel => 'Streak';
+
+  @override
+  String get slipButton => 'Slip';
+
+  @override
+  String get justNow => 'Just now';
+
+  @override
+  String get sortLatest => 'Latest';
+
+  @override
+  String get sortOldest => 'Oldest';
+
+  @override
+  String get sortAvoidType => 'Avoid Type';
+
+  @override
+  String get sortCostType => 'Cost Type';
+
+  @override
+  String get avoidTypeLabel => 'Avoid Type:';
+
+  @override
+  String get associatedPerson => 'Associated Person:';
+
+  @override
+  String get avoidLocation => 'Avoid Location:';
+
+  @override
+  String get pickOnMap => 'Pick on Map';
+
+  @override
+  String get eventReminderLabel => 'Event Reminder:';
+
+  @override
+  String get dailyReminderLabel => 'Daily Reminder Time:';
+
+  @override
+  String get setReminder => 'Set Reminder';
+
+  @override
+  String get setDailyReminder => 'Set Daily Reminder';
+
+  @override
+  String get selectEventDateError => 'Please select an event date.';
+
+  @override
+  String get recentRelapsesTriggers => 'Recent Relapses & Triggers';
 }

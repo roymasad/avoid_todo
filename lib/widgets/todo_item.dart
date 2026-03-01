@@ -103,9 +103,10 @@ class _ToDoItemState extends State<ToDoItem> {
     }
   }
 
-  String _formatStreak(DateTime start) {
+  String _formatStreak(DateTime start, BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final duration = DateTime.now().difference(start);
-    if (duration.isNegative) return 'Just now';
+    if (duration.isNegative) return l10n?.justNow ?? 'Just now';
 
     final days = duration.inDays;
     final hours = duration.inHours % 24;
@@ -118,7 +119,7 @@ class _ToDoItemState extends State<ToDoItem> {
     } else if (minutes > 0) {
       return '${minutes}m';
     } else {
-      return 'Just now';
+      return l10n?.justNow ?? 'Just now';
     }
   }
 
@@ -227,14 +228,14 @@ class _ToDoItemState extends State<ToDoItem> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      _formatStreak(widget.todo.lastRelapsedAt),
+                      _formatStreak(widget.todo.lastRelapsedAt, context),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: isDark ? Colors.white : Colors.black87,
                       ),
                     ),
                     Text(
-                      'Streak',
+                      AppLocalizations.of(context)?.streakLabel ?? 'Streak',
                       style: TextStyle(
                         fontSize: 10,
                         color: isDark ? Colors.white54 : Colors.black54,
@@ -269,17 +270,26 @@ class _ToDoItemState extends State<ToDoItem> {
                 },
                 borderRadius: BorderRadius.circular(5),
                 child: Container(
-                  padding: const EdgeInsets.all(0),
                   margin: const EdgeInsets.symmetric(vertical: 12),
+                  width: 38,
                   height: 35,
-                  width: 35,
                   decoration: BoxDecoration(
                     color: tdAvoidRed.withAlpha(51),
                     borderRadius: BorderRadius.circular(5),
                     border: Border.all(color: tdAvoidRed),
                   ),
-                  child: const Center(
-                    child: Icon(Icons.restore, size: 18, color: tdAvoidRed),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.sentiment_dissatisfied,
+                          size: 16, color: tdAvoidRed),
+                      const SizedBox(height: 1),
+                      Text(
+                        AppLocalizations.of(context)?.slipButton ?? 'Slip',
+                        style: const TextStyle(fontSize: 9, color: tdAvoidRed),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -342,6 +352,7 @@ class _ToDoItemState extends State<ToDoItem> {
     final type = widget.todo.costType;
     IconData icon;
     String prefix = "";
+    String suffix = "";
 
     switch (type) {
       case CostType.money:
@@ -350,18 +361,23 @@ class _ToDoItemState extends State<ToDoItem> {
         break;
       case CostType.mood:
         icon = Icons.mood;
+        suffix = " pts";
         break;
       case CostType.health:
         icon = Icons.health_and_safety;
+        suffix = " pts";
         break;
       case CostType.time:
         icon = Icons.timer;
+        suffix = " hrs";
         break;
       case CostType.goodwill:
         icon = Icons.handshake;
+        suffix = " pts";
         break;
       case CostType.patience:
         icon = Icons.hourglass_empty;
+        suffix = " pts";
         break;
     }
 
@@ -377,7 +393,7 @@ class _ToDoItemState extends State<ToDoItem> {
           Icon(icon, size: 12, color: Colors.blue),
           const SizedBox(width: 4),
           Text(
-            "$prefix${cost.toStringAsFixed(cost == cost.toInt() ? 0 : 1)}",
+            "$prefix${cost.toStringAsFixed(cost == cost.toInt() ? 0 : 1)}$suffix",
             style: const TextStyle(
               fontSize: 11,
               color: Colors.blue,

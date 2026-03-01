@@ -356,4 +356,71 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get savingsSummary => 'Économies par type d\'article';
+
+  @override
+  String get navHome => 'Accueil';
+
+  @override
+  String get costTypeLabel => 'Type de coût :';
+
+  @override
+  String get costMoney => 'Argent';
+
+  @override
+  String get costMood => 'Humeur';
+
+  @override
+  String get costTime => 'Temps';
+
+  @override
+  String get streakLabel => 'Série';
+
+  @override
+  String get slipButton => 'Rechute';
+
+  @override
+  String get justNow => 'À l\'instant';
+
+  @override
+  String get sortLatest => 'Plus récent';
+
+  @override
+  String get sortOldest => 'Plus ancien';
+
+  @override
+  String get sortAvoidType => 'Type d\'évitement';
+
+  @override
+  String get sortCostType => 'Type de coût';
+
+  @override
+  String get avoidTypeLabel => 'Type d\'évitement :';
+
+  @override
+  String get associatedPerson => 'Personne associée :';
+
+  @override
+  String get avoidLocation => 'Lieu à éviter :';
+
+  @override
+  String get pickOnMap => 'Choisir sur la carte';
+
+  @override
+  String get eventReminderLabel => 'Rappel d\'événement :';
+
+  @override
+  String get dailyReminderLabel => 'Heure du rappel quotidien :';
+
+  @override
+  String get setReminder => 'Définir un rappel';
+
+  @override
+  String get setDailyReminder => 'Rappel quotidien';
+
+  @override
+  String get selectEventDateError =>
+      'Veuillez sélectionner une date d\'événement.';
+
+  @override
+  String get recentRelapsesTriggers => 'Rechutes récentes & déclencheurs';
 }
