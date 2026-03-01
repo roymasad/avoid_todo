@@ -10,10 +10,10 @@ class ArchiveScreen extends StatefulWidget {
   final bool embedded;
 
   @override
-  State<ArchiveScreen> createState() => _ArchiveScreenState();
+  State<ArchiveScreen> createState() => ArchiveScreenState();
 }
 
-class _ArchiveScreenState extends State<ArchiveScreen> {
+class ArchiveScreenState extends State<ArchiveScreen> {
   List<ToDo> archivedTodos = [];
   List<Tag> allTags = [];
   bool isLoading = true;
@@ -23,6 +23,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     super.initState();
     _loadArchivedTodos();
   }
+
+  void refresh() => _loadArchivedTodos();
 
   Future<void> _loadArchivedTodos() async {
     setState(() => isLoading = true);

@@ -105,7 +105,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     };
     Map<CostType, bool> hasType = {for (var t in CostType.values) t: false};
     Duration longestStreak = Duration.zero;
-    final allTodos = await DatabaseHelper.instance.readAllTodos();
+    final allTodos = await DatabaseHelper.instance.readAllTodos(includeArchived: true);
 
     for (var todo in allTodos) {
       hasType[todo.costType] = true;
@@ -117,8 +117,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         final endTime = todo.isArchived ? todo.updatedAt : DateTime.now();
         final streak = endTime.difference(todo.lastRelapsedAt);
 
-        if (streak.inDays > 0) {
-          saving = streak.inDays * todo.estimatedCost!;
+        // For archived (avoided) todos, credit at least 1 day since the
+        // user successfully avoided the item. For active todos use fractional days.
+        final double streakDays = todo.isArchived
+            ? (streak.inDays >= 1 ? streak.inDays.toDouble() : 1.0)
+            : streak.inHours / 24.0;
+        if (streakDays > 0) {
+          saving = streakDays * todo.estimatedCost!;
         }
 
         // Update longest streak (only for active items)
@@ -255,7 +260,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             for (final type in CostType.values) {
               final amount = savingsByType[type] ?? 0.0;
               final hasThisTask = hasTaskType[type] ?? false;
-              if (amount <= 0 && !hasThisTask && type != CostType.money && type != CostType.time) {
+              if (amount <= 0 && !hasThisTask &&
+                  type != CostType.money && type != CostType.time &&
+                  type != CostType.mood && type != CostType.health) {
                 continue;
               }
               IconData icon;

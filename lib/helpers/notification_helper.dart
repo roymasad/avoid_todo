@@ -63,6 +63,11 @@ class NotificationHelper {
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
         ?.requestNotificationsPermission();
+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestExactAlarmsPermission();
   }
 
   Future<void> scheduleDailyCheckInNotification() async {
@@ -130,14 +135,26 @@ class NotificationHelper {
     final scheduledDate = tz.TZDateTime.from(reminderTime, tz.local);
     if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return;
 
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      id: notificationId,
-      title: 'Reminder: Avoid $title',
-      body: 'This is your scheduled reminder to avoid this.',
-      scheduledDate: scheduledDate,
-      notificationDetails: platformChannelSpecifics,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-    );
+    try {
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        id: notificationId,
+        title: 'Reminder: Avoid $title',
+        body: 'This is your scheduled reminder to avoid this.',
+        scheduledDate: scheduledDate,
+        notificationDetails: platformChannelSpecifics,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+    } catch (_) {
+      // Exact alarms not permitted — fall back to inexact
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        id: notificationId,
+        title: 'Reminder: Avoid $title',
+        body: 'This is your scheduled reminder to avoid this.',
+        scheduledDate: scheduledDate,
+        notificationDetails: platformChannelSpecifics,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+    }
   }
 
   Future<void> cancelReminder(String id) async {

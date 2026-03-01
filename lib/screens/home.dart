@@ -44,6 +44,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   final GlobalKey _menuKey = GlobalKey();
   final GlobalKey _searchKey = GlobalKey();
   final GlobalKey _addKey = GlobalKey();
+  final GlobalKey<ArchiveScreenState> _archiveKey = GlobalKey<ArchiveScreenState>();
 
   AvoidType _selectedType = AvoidType.generic;
   String? _selectedContactId;
@@ -617,6 +618,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
                     onPressed: () async {
+                      final granted = await FlutterContacts.requestPermission(readonly: true);
+                      if (!granted) return;
                       final contact =
                           await FlutterContacts.openExternalPick();
                       if (contact != null) {
@@ -1074,11 +1077,9 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (i) {
-          if (i == 2 && _selectedIndex == 2) {
-            // Already on archive, refresh
-          }
           setState(() => _selectedIndex = i);
           if (i == 0) _fetchTodos();
+          if (i == 2) _archiveKey.currentState?.refresh();
         },
         destinations: [
           NavigationDestination(
@@ -1388,7 +1389,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         ],
       ),
           const StatisticsScreen(embedded: true),
-          const ArchiveScreen(embedded: true),
+          ArchiveScreen(key: _archiveKey, embedded: true),
         ],
       ),
       floatingActionButton: _selectedIndex == 0
@@ -1513,6 +1514,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
                     onPressed: () async {
+                      final granted = await FlutterContacts.requestPermission(readonly: true);
+                      if (!granted) return;
                       final contact =
                           await FlutterContacts.openExternalPick();
                       if (contact != null) {
