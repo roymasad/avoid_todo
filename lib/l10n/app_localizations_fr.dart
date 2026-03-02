@@ -423,4 +423,48 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get recentRelapsesTriggers => 'Rechutes récentes & déclencheurs';
+
+  @override
+  String get ratingDialogTitle => 'Vous aimez Avoid Todo ?';
+
+  @override
+  String get ratingDialogSubtitle =>
+      'Touchez une étoile pour noter votre expérience';
+
+  @override
+  String get ratingDialogNotNow => 'Plus tard';
+
+  @override
+  String get ratingDialogContinue => 'Continuer';
+
+  @override
+  String get ratingHighTitle => 'Merci !';
+
+  @override
+  String get ratingHighBody =>
+      'Pourriez-vous nous noter ? Ça nous aide vraiment !';
+
+  @override
+  String get ratingHighRateNow => 'Noter maintenant';
+
+  @override
+  String get ratingHighNoThanks => 'Non merci';
+
+  @override
+  String get ratingLowTitle => 'Aidez-nous à nous améliorer';
+
+  @override
+  String get ratingLowBody => 'Que pouvons-nous faire mieux ?';
+
+  @override
+  String get ratingLowHint => 'Votre avis...';
+
+  @override
+  String get ratingLowSend => 'Envoyer';
+
+  @override
+  String get ratingLowSkip => 'Ignorer';
+
+  @override
+  String get ratingThanks => 'Merci pour votre retour !';
 }

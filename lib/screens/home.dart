@@ -20,6 +20,8 @@ import 'map_picker_screen.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
+import '../helpers/rating_helper.dart';
+import '../widgets/rating_dialog.dart';
 // Note: Map implementation uses simple location names for now.
 
 enum SortOption { latest, oldest, avoidType, costType, priority }
@@ -147,8 +149,22 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     final prefs = await SharedPreferences.getInstance();
     final bool hasSeenCoachMarks = prefs.getBool('hasSeenCoachMarks') ?? false;
     if (!hasSeenCoachMarks) {
-      _showCoachMarks();
+      _showCoachMarks(); // rating check fires inside onFinish callback
+    } else {
+      _checkRatingPrompt(); // coach marks already done, safe to check now
     }
+  }
+
+  Future<void> _checkRatingPrompt() async {
+    final shouldShow = await RatingHelper.shouldShowRatingDialog();
+    if (!shouldShow || !mounted) return;
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const RatingDialog(),
+    );
   }
 
   void _showCoachMarks() {
@@ -163,6 +179,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         SharedPreferences.getInstance().then((prefs) {
           prefs.setBool('hasSeenCoachMarks', true);
         });
+        _checkRatingPrompt();
       },
     ).show(context: context);
   }

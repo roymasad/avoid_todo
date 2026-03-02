@@ -132,5 +132,20 @@
   "setReminder": "Set Reminder",
   "setDailyReminder": "Set Daily Reminder",
   "selectEventDateError": "Please select an event date.",
-  "recentRelapsesTriggers": "Recent Relapses & Triggers"
+  "recentRelapsesTriggers": "Recent Relapses & Triggers",
+
+  "ratingDialogTitle": "Enjoying Avoid Todo?",
+  "ratingDialogSubtitle": "Tap a star to rate your experience",
+  "ratingDialogNotNow": "Not now",
+  "ratingDialogContinue": "Continue",
+  "ratingHighTitle": "Thank you!",
+  "ratingHighBody": "Would you mind rating us? It really helps!",
+  "ratingHighRateNow": "Rate Now",
+  "ratingHighNoThanks": "No thanks",
+  "ratingLowTitle": "Help us improve",
+  "ratingLowBody": "What can we do better?",
+  "ratingLowHint": "Your feedback...",
+  "ratingLowSend": "Send",
+  "ratingLowSkip": "Skip",
+  "ratingThanks": "Thank you for your feedback!"
 }

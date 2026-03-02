@@ -71,11 +71,13 @@ storeFile=../upload-keystore.jks
 
 
 ## Updates and localization
-`flutter pub get && flutter gen-l10n`
+`flutter pub get`
+`flutter gen-l10n` (redudant now, it is integrated with the build)
 
 ## Testing
 `flutter devices`
 `flutter run -d `
+`flutter run --release -d `
 
 `flutter emulators`
 `flutter emulators --launch `

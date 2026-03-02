@@ -132,5 +132,20 @@
   "setReminder": "Définir un rappel",
   "setDailyReminder": "Rappel quotidien",
   "selectEventDateError": "Veuillez sélectionner une date d'événement.",
-  "recentRelapsesTriggers": "Rechutes récentes & déclencheurs"
+  "recentRelapsesTriggers": "Rechutes récentes & déclencheurs",
+
+  "ratingDialogTitle": "Vous aimez Avoid Todo ?",
+  "ratingDialogSubtitle": "Touchez une étoile pour noter votre expérience",
+  "ratingDialogNotNow": "Plus tard",
+  "ratingDialogContinue": "Continuer",
+  "ratingHighTitle": "Merci !",
+  "ratingHighBody": "Pourriez-vous nous noter ? Ça nous aide vraiment !",
+  "ratingHighRateNow": "Noter maintenant",
+  "ratingHighNoThanks": "Non merci",
+  "ratingLowTitle": "Aidez-nous à nous améliorer",
+  "ratingLowBody": "Que pouvons-nous faire mieux ?",
+  "ratingLowHint": "Votre avis...",
+  "ratingLowSend": "Envoyer",
+  "ratingLowSkip": "Ignorer",
+  "ratingThanks": "Merci pour votre retour !"
 }

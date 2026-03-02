@@ -895,6 +895,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recent Relapses & Triggers'**
   String get recentRelapsesTriggers;
+
+  /// No description provided for @ratingDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enjoying Avoid Todo?'**
+  String get ratingDialogTitle;
+
+  /// No description provided for @ratingDialogSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a star to rate your experience'**
+  String get ratingDialogSubtitle;
+
+  /// No description provided for @ratingDialogNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get ratingDialogNotNow;
+
+  /// No description provided for @ratingDialogContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get ratingDialogContinue;
+
+  /// No description provided for @ratingHighTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you!'**
+  String get ratingHighTitle;
+
+  /// No description provided for @ratingHighBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Would you mind rating us? It really helps!'**
+  String get ratingHighBody;
+
+  /// No description provided for @ratingHighRateNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate Now'**
+  String get ratingHighRateNow;
+
+  /// No description provided for @ratingHighNoThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'No thanks'**
+  String get ratingHighNoThanks;
+
+  /// No description provided for @ratingLowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Help us improve'**
+  String get ratingLowTitle;
+
+  /// No description provided for @ratingLowBody.
+  ///
+  /// In en, this message translates to:
+  /// **'What can we do better?'**
+  String get ratingLowBody;
+
+  /// No description provided for @ratingLowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your feedback...'**
+  String get ratingLowHint;
+
+  /// No description provided for @ratingLowSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get ratingLowSend;
+
+  /// No description provided for @ratingLowSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get ratingLowSkip;
+
+  /// No description provided for @ratingThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you for your feedback!'**
+  String get ratingThanks;
 }
 
 class _AppLocalizationsDelegate

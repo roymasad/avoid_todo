@@ -419,4 +419,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recentRelapsesTriggers => 'Recent Relapses & Triggers';
+
+  @override
+  String get ratingDialogTitle => 'Enjoying Avoid Todo?';
+
+  @override
+  String get ratingDialogSubtitle => 'Tap a star to rate your experience';
+
+  @override
+  String get ratingDialogNotNow => 'Not now';
+
+  @override
+  String get ratingDialogContinue => 'Continue';
+
+  @override
+  String get ratingHighTitle => 'Thank you!';
+
+  @override
+  String get ratingHighBody => 'Would you mind rating us? It really helps!';
+
+  @override
+  String get ratingHighRateNow => 'Rate Now';
+
+  @override
+  String get ratingHighNoThanks => 'No thanks';
+
+  @override
+  String get ratingLowTitle => 'Help us improve';
+
+  @override
+  String get ratingLowBody => 'What can we do better?';
+
+  @override
+  String get ratingLowHint => 'Your feedback...';
+
+  @override
+  String get ratingLowSend => 'Send';
+
+  @override
+  String get ratingLowSkip => 'Skip';
+
+  @override
+  String get ratingThanks => 'Thank you for your feedback!';
 }
