@@ -57,6 +57,8 @@ dependencies:
   url_launcher: ^6.3.1
   permission_handler: ^11.3.1
   http: ^1.2.1
+  purchases_flutter: ^9.12.3
+  purchases_ui_flutter: ^9.12.3
 
 flutter_launcher_icons:
   android: "launcher_icon"
