@@ -22,7 +22,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 9,
+      version: 10,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -82,6 +82,15 @@ class DatabaseHelper {
       todoId TEXT NOT NULL,
       tagId TEXT NOT NULL,
       PRIMARY KEY (todoId, tagId)
+    )
+    ''');
+
+    await db.execute('''
+    CREATE TABLE xp_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      source TEXT NOT NULL,
+      amount INTEGER NOT NULL,
+      earnedAt TEXT NOT NULL
     )
     ''');
 
@@ -204,6 +213,16 @@ class DatabaseHelper {
     if (oldVersion < 9) {
       await db.delete('tags', where: 'id = ?', whereArgs: ['other']);
       await db.delete('todo_tags', where: 'tagId = ?', whereArgs: ['other']);
+    }
+    if (oldVersion < 10) {
+      await db.execute('''
+      CREATE TABLE IF NOT EXISTS xp_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        source TEXT NOT NULL,
+        amount INTEGER NOT NULL,
+        earnedAt TEXT NOT NULL
+      )
+      ''');
     }
   }
 
@@ -478,6 +497,37 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // XP events
+  // ─────────────────────────────────────────────────────────────
+
+  /// Persists an XP award event.
+  Future<void> awardXp(String source, int amount) async {
+    final db = await instance.database;
+    await db.insert('xp_events', {
+      'source': source,
+      'amount': amount,
+      'earnedAt': DateTime.now().toIso8601String(),
+    });
+  }
+
+  /// Returns the sum of all awarded XP.
+  Future<int> getTotalXp() async {
+    final db = await instance.database;
+    final result =
+        await db.rawQuery('SELECT COALESCE(SUM(amount), 0) as total FROM xp_events');
+    return (result.first['total'] as num?)?.toInt() ?? 0;
+  }
+
+  /// Returns true if an event with exactly [source] has already been recorded.
+  /// Used to guard once-per-todo milestone awards (e.g. "streak_7d:42").
+  Future<bool> hasXpSourceKey(String source) async {
+    final db = await instance.database;
+    final result = await db.rawQuery(
+        'SELECT COUNT(*) as c FROM xp_events WHERE source = ?', [source]);
+    return ((result.first['c'] as int?) ?? 0) > 0;
   }
 
   Future close() async {

@@ -13,6 +13,8 @@ import '../helpers/notification_helper.dart';
 import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/purchase_provider.dart';
+import '../providers/xp_provider.dart';
+import '../helpers/xp_helper.dart';
 import '../l10n/app_localizations.dart';
 import 'archive_screen.dart';
 import 'statistics_screen.dart';
@@ -93,6 +95,9 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     _loadNotificationPref();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PurchaseProvider>().refresh();
+      context.read<XpProvider>().load().then((_) {
+        if (mounted) context.read<XpProvider>().awardDailyLoginIfNeeded();
+      });
     });
 
     // Handle "I slipped up" notification action
@@ -328,6 +333,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     todosList = todos;
     setState(() => _weeklyAvoided = weekly);
     _runFilter(_searchController.text);
+    // Check streak milestones and award XP if any thresholds just crossed
+    if (mounted) {
+      final rawTodos = todos.map((t) => t.toMap()).toList();
+      context.read<XpProvider>().awardStreakMilestonesIfNeeded(rawTodos);
+    }
   }
 
   Future<void> _fetchTags() async {
@@ -415,6 +425,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     await DatabaseHelper.instance.archiveTodo(id);
     await NotificationHelper().cancelReminder(id.toString());
     _confettiController.play();
+    context.read<XpProvider>().award(XpHelper.sourceArchive, XpHelper.xpArchive);
     _fetchTodos();
   }
 
@@ -1234,57 +1245,127 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           ),
                         ],
                       ),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Icon(Icons.bolt,
-                              size: 18, color: Colors.orange),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${_foundToDo.length} active',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? AppThemes.darkTextSecondary
-                                  : AppThemes.lightTextSecondary,
-                            ),
+                          Row(
+                            children: [
+                              const Icon(Icons.bolt,
+                                  size: 18, color: Colors.orange),
+                              const SizedBox(width: 6),
+                              Text(
+                                '${_foundToDo.length} active',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? AppThemes.darkTextSecondary
+                                      : AppThemes.lightTextSecondary,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              if (_weeklyAvoided > 0) ...[
+                                const Icon(Icons.check_circle_outline,
+                                    size: 18, color: Colors.green),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '$_weeklyAvoided avoided this week',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? AppThemes.darkTextSecondary
+                                        : AppThemes.lightTextSecondary,
+                                  ),
+                                ),
+                              ] else ...[
+                                const Icon(Icons.electric_bolt,
+                                    size: 18, color: Colors.orange),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Keep going!',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? AppThemes.darkTextSecondary
+                                        : AppThemes.lightTextSecondary,
+                                  ),
+                                ),
+                              ],
+                              const Spacer(),
+                              Icon(Icons.chevron_right,
+                                  size: 18,
+                                  color: isDark
+                                      ? AppThemes.darkTextSecondary
+                                      : AppThemes.lightTextSecondary),
+                            ],
                           ),
-                          const SizedBox(width: 16),
-                          if (_weeklyAvoided > 0) ...[
-                            const Icon(Icons.check_circle_outline,
-                                size: 18, color: Colors.green),
-                            const SizedBox(width: 6),
-                            Text(
-                              '$_weeklyAvoided avoided this week',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: isDark
-                                    ? AppThemes.darkTextSecondary
-                                    : AppThemes.lightTextSecondary,
-                              ),
-                            ),
-                          ] else ...[
-                            const Icon(Icons.electric_bolt,
-                                size: 18, color: Colors.orange),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Keep going!',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: isDark
-                                    ? AppThemes.darkTextSecondary
-                                    : AppThemes.lightTextSecondary,
-                              ),
-                            ),
-                          ],
-                          const Spacer(),
-                          Icon(Icons.chevron_right,
-                              size: 18,
-                              color: isDark
+                          const SizedBox(height: 8),
+                          Consumer<XpProvider>(
+                            builder: (_, xp, __) {
+                              final isPlus =
+                                  context.read<PurchaseProvider>().isPlus;
+                              final level = xp.levelCapped(isPlus);
+                              final title = xp.titleForLevel(level);
+                              final prog = xp.progress(isPlus);
+                              final atCap =
+                                  !isPlus && level >= XpHelper.maxFreeLevel;
+                              final textColor = isDark
                                   ? AppThemes.darkTextSecondary
-                                  : AppThemes.lightTextSecondary),
+                                  : AppThemes.lightTextSecondary;
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.star_rounded,
+                                          size: 13, color: Colors.amber),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Lv.$level · $title',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: textColor,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      if (atCap)
+                                        Text(
+                                          '⭐ Plus to level up',
+                                          style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.amber),
+                                        )
+                                      else
+                                        Text(
+                                          '${xp.totalXp} / ${xp.xpCeiling(isPlus)} XP',
+                                          style: TextStyle(
+                                              fontSize: 11, color: textColor),
+                                        ),
+                                    ],
+                                  ),
+                                  if (!atCap) ...[
+                                    const SizedBox(height: 4),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(2),
+                                      child: LinearProgressIndicator(
+                                        value: prog,
+                                        backgroundColor: isDark
+                                            ? Colors.white12
+                                            : Colors.black12,
+                                        valueColor:
+                                            const AlwaysStoppedAnimation<Color>(
+                                                Colors.amber),
+                                        minHeight: 4,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              );
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -2006,6 +2087,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   Future<void> _triggerRelapse(ToDo todo) async {
     final noteController = TextEditingController();
+    final xpProvider = context.read<XpProvider>();
 
     await showModalBottomSheet(
       context: context,
@@ -2074,6 +2156,16 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                               : null,
                         );
                         await DatabaseHelper.instance.addRelapseLog(log);
+
+                        // XP: honesty award for logging the relapse
+                        await xpProvider.award(
+                            XpHelper.sourceRelapse, XpHelper.xpRelapse);
+                        // Bonus XP for including a trigger note
+                        if (log.triggerNote != null &&
+                            log.triggerNote!.isNotEmpty) {
+                          await xpProvider.award(XpHelper.sourceTriggerNote,
+                              XpHelper.xpTriggerNote);
+                        }
 
                         _fetchTodos();
                         if (context.mounted) {

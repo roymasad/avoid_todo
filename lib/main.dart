@@ -6,6 +6,7 @@ import './screens/home.dart';
 import './providers/theme_provider.dart';
 import './providers/locale_provider.dart';
 import './providers/purchase_provider.dart';
+import './providers/xp_provider.dart';
 import './helpers/notification_helper.dart';
 import './helpers/purchase_helper.dart';
 import './constants/themes.dart';
@@ -40,6 +41,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => PurchaseProvider()),
+        ChangeNotifierProvider(create: (_) => XpProvider()),
       ],
       child: MyApp(hasSeenOnboarding: hasSeenOnboarding),
     ),

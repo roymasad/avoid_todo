@@ -8,6 +8,8 @@ import '../constants/themes.dart';
 import '../constants/colors.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/purchase_provider.dart';
+import '../providers/xp_provider.dart';
+import '../helpers/xp_helper.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key, this.embedded = false});
@@ -358,6 +360,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   Widget _buildOverviewCards(AppLocalizations? l10n) {
     return Column(
       children: [
+        _buildXpLevelCard(),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
@@ -458,6 +462,119 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildXpLevelCard() {
+    return Consumer<XpProvider>(
+      builder: (context, xp, _) {
+        final isPlus = context.read<PurchaseProvider>().isPlus;
+        final level = xp.levelCapped(isPlus);
+        final title = xp.titleForLevel(level);
+        final prog = xp.progress(isPlus);
+        final atCap = !isPlus && level >= XpHelper.maxFreeLevel;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final xpFloor = xp.xpFloor(isPlus);
+        final xpCeil = xp.xpCeiling(isPlus);
+        final xpInLevel = xp.totalXp - xpFloor;
+        final xpNeeded = xpCeil - xpFloor;
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              children: [
+                // Level badge
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.amber, width: 2),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$level',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.amber,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Level info + progress
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.star_rounded,
+                              size: 14, color: Colors.amber),
+                          const SizedBox(width: 4),
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (atCap) ...[
+                            const Spacer(),
+                            Text(
+                              'Max free level',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.amber.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      if (atCap)
+                        Text(
+                          'Unlock Plus to continue levelling up',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark
+                                ? Colors.white60
+                                : Colors.black54,
+                          ),
+                        )
+                      else ...[
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(3),
+                          child: LinearProgressIndicator(
+                            value: prog,
+                            backgroundColor:
+                                isDark ? Colors.white12 : Colors.black12,
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                                Colors.amber),
+                            minHeight: 6,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '$xpInLevel / $xpNeeded XP to level ${level + 1}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? Colors.white60 : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
