@@ -1129,10 +1129,6 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (i) {
-          if (i == 1 && !context.read<PurchaseProvider>().isPlus) {
-            _showPlusDialog(context);
-            return;
-          }
           setState(() => _selectedIndex = i);
           if (i == 0) _fetchTodos();
           if (i == 2) _archiveKey.currentState?.refresh();
@@ -1216,10 +1212,6 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   const SizedBox(height: 10),
                   GestureDetector(
                     onTap: () {
-                      if (!context.read<PurchaseProvider>().isPlus) {
-                        _showPlusDialog(context);
-                        return;
-                      }
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -2189,15 +2181,27 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '\$3.99 · One-time purchase',
+              '\$2.99 · One-time purchase',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 12),
-            Text('What you get:'),
-            SizedBox(height: 8),
-            Row(children: [Icon(Icons.bar_chart, size: 18), SizedBox(width: 8), Text('Statistics & insights')]),
-            SizedBox(height: 4),
-            Row(children: [Icon(Icons.new_releases_outlined, size: 18), SizedBox(width: 8), Text('All future Plus features')]),
+            Text('What you unlock:'),
+            SizedBox(height: 10),
+            Row(children: [Text('📅', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Full stats history & heatmap'))]),
+            SizedBox(height: 6),
+            Row(children: [Text('🎯', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Daily commitment flow & goals'))]),
+            SizedBox(height: 6),
+            Row(children: [Text('🔔', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Smart scheduled notifications'))]),
+            SizedBox(height: 6),
+            Row(children: [Text('🏅', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('All achievement medals'))]),
+            SizedBox(height: 6),
+            Row(children: [Text('📈', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('XP levels beyond 20 & titles'))]),
+            SizedBox(height: 6),
+            Row(children: [Text('🏠', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Home screen widget'))]),
+            SizedBox(height: 6),
+            Row(children: [Text('☁️', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Cloud sync across devices'))]),
+            SizedBox(height: 6),
+            Row(children: [Text('📤', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Export your data'))]),
           ],
         ),
         actions: [

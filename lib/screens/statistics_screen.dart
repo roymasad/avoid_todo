@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
 import '../helpers/database_helper.dart';
 import '../model/todo.dart';
 import '../model/tag.dart';
 import '../constants/themes.dart';
 import '../constants/colors.dart';
 import '../l10n/app_localizations.dart';
+import '../providers/purchase_provider.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key, this.embedded = false});
@@ -48,58 +50,71 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   Future<void> _loadStatistics() async {
     setState(() => isLoading = true);
 
+    final isPlus = context.read<PurchaseProvider>().isPlus;
+
+    // Always load — free tier data
     final avoided = await DatabaseHelper.instance.getTotalAvoidedCount();
     final active = await DatabaseHelper.instance.getActiveCount();
-    final tags = await DatabaseHelper.instance.getTagBreakdown();
-    final allTags = await DatabaseHelper.instance.getAllTags();
-    final tagMapData = {for (final t in allTags) t.id: t};
-    final priorities = await DatabaseHelper.instance.getPriorityBreakdown();
     final weekly = await DatabaseHelper.instance.getWeeklyStats();
-    final topAvoided = await DatabaseHelper.instance.getMostAvoidedItems();
 
-    // Fetch recent relapses with their todo titles
+    // Fetch recent relapses — free users get last 5, Plus gets last 10
     final db = await DatabaseHelper.instance.database;
+    final relapseLimit = isPlus ? 10 : 5;
     final relapsesResult = await db.rawQuery('''
       SELECT r.relapsedAt, r.triggerNote, t.todoText
       FROM relapse_logs r
       JOIN todo t ON r.todoId = t.id
       ORDER BY r.relapsedAt DESC
-      LIMIT 10
+      LIMIT $relapseLimit
     ''');
 
-    // Compute relapse patterns from all logs
-    final allLogs = await DatabaseHelper.instance.getAllRelapseLogsRaw();
-    final List<int> dayBuckets = List.filled(7, 0); // Mon=0 ... Sun=6
-    final Map<String, int> wordFreq = {};
-    const stopWords = {
-      'i', 'a', 'an', 'the', 'and', 'or', 'but', 'it', 'my', 'me',
-      'was', 'is', 'are', 'of', 'to', 'in', 'on', 'at', 'for', 'by',
-      'with', 'so', 'had', 'felt', 'got', 'just', 'that', 'this', 'when',
-    };
-    for (final log in allLogs) {
-      final dateStr = log['relapsedAt'] as String?;
-      if (dateStr != null) {
-        final date = DateTime.tryParse(dateStr);
-        if (date != null) {
-          // weekday: 1=Mon...7=Sun → index 0=Mon...6=Sun
-          dayBuckets[date.weekday - 1]++;
+    // Plus-only data
+    Map<String, int> tags = {};
+    Map<String, Tag> tagMapData = {};
+    Map<TodoPriority, int> priorities = {};
+    List<Map<String, dynamic>> topAvoided = [];
+    List<int> dayBuckets = List.filled(7, 0);
+    List<MapEntry<String, int>> topWords = [];
+
+    if (isPlus) {
+      tags = await DatabaseHelper.instance.getTagBreakdown();
+      final allTags = await DatabaseHelper.instance.getAllTags();
+      tagMapData = {for (final t in allTags) t.id: t};
+      priorities = await DatabaseHelper.instance.getPriorityBreakdown();
+      topAvoided = await DatabaseHelper.instance.getMostAvoidedItems();
+
+      // Relapse patterns & trigger words (Plus only)
+      final allLogs = await DatabaseHelper.instance.getAllRelapseLogsRaw();
+      final Map<String, int> wordFreq = {};
+      const stopWords = {
+        'i', 'a', 'an', 'the', 'and', 'or', 'but', 'it', 'my', 'me',
+        'was', 'is', 'are', 'of', 'to', 'in', 'on', 'at', 'for', 'by',
+        'with', 'so', 'had', 'felt', 'got', 'just', 'that', 'this', 'when',
+      };
+      for (final log in allLogs) {
+        final dateStr = log['relapsedAt'] as String?;
+        if (dateStr != null) {
+          final date = DateTime.tryParse(dateStr);
+          if (date != null) {
+            dayBuckets[date.weekday - 1]++;
+          }
         }
-      }
-      final note = (log['triggerNote'] as String? ?? '').toLowerCase();
-      if (note.isNotEmpty) {
-        for (final word in note.split(RegExp(r'\s+'))) {
-          final clean = word.replaceAll(RegExp(r'[^a-z]'), '');
-          if (clean.length > 2 && !stopWords.contains(clean)) {
-            wordFreq[clean] = (wordFreq[clean] ?? 0) + 1;
+        final note = (log['triggerNote'] as String? ?? '').toLowerCase();
+        if (note.isNotEmpty) {
+          for (final word in note.split(RegExp(r'\s+'))) {
+            final clean = word.replaceAll(RegExp(r'[^a-z]'), '');
+            if (clean.length > 2 && !stopWords.contains(clean)) {
+              wordFreq[clean] = (wordFreq[clean] ?? 0) + 1;
+            }
           }
         }
       }
+      final sortedWords = wordFreq.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      topWords = sortedWords.take(6).toList();
     }
-    final sortedWords = wordFreq.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final topWords = sortedWords.take(6).toList();
 
-    // Calculate savings by type and find longest streak
+    // Calculate savings by type and find longest streak (always loaded for overview cards + badges)
     Map<CostType, double> totalSavings = {
       for (var t in CostType.values) t: 0.0
     };
@@ -113,25 +128,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
       double saving = 0.0;
       if (todo.isRecurring) {
-        // Savings for current/last streak
         final endTime = todo.isArchived ? todo.updatedAt : DateTime.now();
         final streak = endTime.difference(todo.lastRelapsedAt);
-
-        // For archived (avoided) todos, credit at least 1 day since the
-        // user successfully avoided the item. For active todos use fractional days.
         final double streakDays = todo.isArchived
             ? (streak.inDays >= 1 ? streak.inDays.toDouble() : 1.0)
             : streak.inHours / 24.0;
         if (streakDays > 0) {
           saving = streakDays * todo.estimatedCost!;
         }
-
-        // Update longest streak (only for active items)
         if (!todo.isArchived && streak > longestStreak) {
           longestStreak = streak;
         }
       } else {
-        // One-time item saved if archived
         if (todo.isArchived) {
           saving = todo.estimatedCost!;
         }
@@ -176,6 +184,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
+    final isPlus = context.watch<PurchaseProvider>().isPlus;
 
     final body = isLoading
         ? const Center(child: CircularProgressIndicator())
@@ -187,22 +196,53 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // FREE: overview cards always visible
                   _buildOverviewCards(l10n),
                   const SizedBox(height: 24),
                   if (totalAvoided == 0 && recentRelapses.isEmpty)
                     _buildZeroState()
                   else ...[
+                    // FREE: badges always visible
                     _buildBadgesSection(l10n),
                     const SizedBox(height: 24),
+                    // FREE: weekly chart (7-day window, no history needed)
                     _buildWeeklyChart(isDark, l10n),
                     const SizedBox(height: 24),
-                    _buildTagPieChart(isDark, l10n),
-                    const SizedBox(height: 24),
+                    // FREE: recent relapses (last 5)
                     _buildRecentRelapses(isDark, l10n),
                     const SizedBox(height: 24),
-                    _buildRelapsePatterns(isDark),
+                    // PLUS: tag breakdown
+                    if (isPlus)
+                      _buildTagPieChart(isDark, l10n)
+                    else
+                      _buildLockedSection(
+                        'Tag breakdown',
+                        'See which habit categories you struggle with most.',
+                        Icons.pie_chart_outline,
+                        context,
+                      ),
                     const SizedBox(height: 24),
-                    _buildMostAvoidedList(l10n),
+                    // PLUS: relapse patterns by day
+                    if (isPlus)
+                      _buildRelapsePatterns(isDark)
+                    else
+                      _buildLockedSection(
+                        'Relapse patterns',
+                        'Discover which days of the week are your hardest.',
+                        Icons.bar_chart_outlined,
+                        context,
+                      ),
+                    const SizedBox(height: 24),
+                    // PLUS: most avoided list
+                    if (isPlus)
+                      _buildMostAvoidedList(l10n)
+                    else
+                      _buildLockedSection(
+                        'Most avoided items',
+                        'Track your biggest wins over time.',
+                        Icons.emoji_events_outlined,
+                        context,
+                      ),
                   ],
                 ],
               ),
@@ -221,6 +261,97 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         ],
       ),
       body: body,
+    );
+  }
+
+  Widget _buildLockedSection(
+    String title,
+    String description,
+    IconData icon,
+    BuildContext context,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 28, color: Theme.of(context).colorScheme.outline),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          FilledButton.tonal(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Row(
+                    children: [
+                      Icon(Icons.star, color: Colors.amber),
+                      SizedBox(width: 8),
+                      Text('Unlock Avoid Plus'),
+                    ],
+                  ),
+                  content: const Text(
+                    '\$2.99 · One-time purchase\n\nUnlock full stats history, relapse patterns, tag breakdown, trigger words, goals, smart notifications, and more.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Maybe later'),
+                    ),
+                    FilledButton(
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        await context.read<PurchaseProvider>().purchasePlus();
+                      },
+                      child: const Text('Unlock — \$2.99'),
+                    ),
+                  ],
+                ),
+              );
+            },
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.lock_outline, size: 14),
+                SizedBox(width: 4),
+                Text('Plus', style: TextStyle(fontSize: 13)),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
