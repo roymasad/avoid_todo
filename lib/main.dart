@@ -5,7 +5,9 @@ import 'package:provider/provider.dart';
 import './screens/home.dart';
 import './providers/theme_provider.dart';
 import './providers/locale_provider.dart';
+import './providers/purchase_provider.dart';
 import './helpers/notification_helper.dart';
+import './helpers/purchase_helper.dart';
 import './constants/themes.dart';
 import './screens/onboarding_screen.dart';
 import 'package:avoid_todo/l10n/app_localizations.dart';
@@ -13,6 +15,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await PurchaseHelper.init();
 
   final notificationHelper = NotificationHelper();
   try {
@@ -35,6 +39,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(create: (_) => PurchaseProvider()),
       ],
       child: MyApp(hasSeenOnboarding: hasSeenOnboarding),
     ),

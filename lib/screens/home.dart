@@ -12,6 +12,7 @@ import '../helpers/database_helper.dart';
 import '../helpers/notification_helper.dart';
 import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/purchase_provider.dart';
 import '../l10n/app_localizations.dart';
 import 'archive_screen.dart';
 import 'statistics_screen.dart';
@@ -90,6 +91,9 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     _fetchTodos();
     _fetchTags();
     _loadNotificationPref();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PurchaseProvider>().refresh();
+    });
 
     // Handle "I slipped up" notification action
     NotificationHelper().onNotificationAction = (payload) {
@@ -1125,6 +1129,10 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (i) {
+          if (i == 1 && !context.read<PurchaseProvider>().isPlus) {
+            _showPlusDialog(context);
+            return;
+          }
           setState(() => _selectedIndex = i);
           if (i == 0) _fetchTodos();
           if (i == 2) _archiveKey.currentState?.refresh();
@@ -1207,11 +1215,17 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 if (_foundToDo.isNotEmpty || _weeklyAvoided > 0) ...[
                   const SizedBox(height: 10),
                   GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const StatisticsScreen()),
-                    ),
+                    onTap: () {
+                      if (!context.read<PurchaseProvider>().isPlus) {
+                        _showPlusDialog(context);
+                        return;
+                      }
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const StatisticsScreen()),
+                      );
+                    },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 10),
@@ -2157,6 +2171,69 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     );
   }
 
+  void _showPlusDialog(BuildContext context) {
+    final purchase = context.read<PurchaseProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.star, color: Colors.amber),
+            SizedBox(width: 8),
+            Text('Unlock Avoid Plus'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '\$3.99 · One-time purchase',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 12),
+            Text('What you get:'),
+            SizedBox(height: 8),
+            Row(children: [Icon(Icons.bar_chart, size: 18), SizedBox(width: 8), Text('Statistics & insights')]),
+            SizedBox(height: 4),
+            Row(children: [Icon(Icons.new_releases_outlined, size: 18), SizedBox(width: 8), Text('All future Plus features')]),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final restored = await purchase.restorePurchases();
+              if (mounted) {
+                messenger.showSnackBar(SnackBar(
+                  content: Text(restored ? 'Purchase restored!' : 'No purchase found to restore.'),
+                ));
+              }
+            },
+            child: const Text('Restore Purchase'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final success = await purchase.purchasePlus();
+              if (mounted && !success) {
+                messenger.showSnackBar(
+                  const SnackBar(content: Text('Purchase failed or was cancelled.')),
+                );
+              }
+            },
+            child: const Text('Unlock Now'),
+          ),
+        ],
+      ),
+    );
+  }
+
   AppBar _buildAppBar() {
     if (_selectedIndex == 1) {
       return AppBar(
@@ -2193,6 +2270,16 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
       ),
       actions: [
+        Consumer<PurchaseProvider>(
+          builder: (context, purchase, _) {
+            if (purchase.isPlus) return const SizedBox.shrink();
+            return IconButton(
+              icon: const Icon(Icons.star_outline, color: Colors.amber),
+              tooltip: 'Unlock Plus',
+              onPressed: () => _showPlusDialog(context),
+            );
+          },
+        ),
         Builder(
           builder: (context) => IconButton(
             key: _menuKey,
