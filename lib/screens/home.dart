@@ -15,6 +15,9 @@ import '../providers/locale_provider.dart';
 import '../providers/purchase_provider.dart';
 import '../providers/xp_provider.dart';
 import '../helpers/xp_helper.dart';
+import '../providers/goal_provider.dart';
+import '../helpers/goal_helper.dart';
+import '../model/goal.dart';
 import '../l10n/app_localizations.dart';
 import 'archive_screen.dart';
 import 'statistics_screen.dart';
@@ -77,6 +80,10 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   // Stats card
   int _weeklyAvoided = 0;
+  double _monthlyMoneySavings = 0.0;
+
+  // Goals section
+  bool _goalsExpanded = false;
 
   // Bottom nav
   int _selectedIndex = 0;
@@ -330,13 +337,64 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   Future<void> _fetchTodos() async {
     final todos = await DatabaseHelper.instance.readAllTodos();
     final weekly = await DatabaseHelper.instance.getThisWeekArchivedCount();
+    final monthlySavings =
+        await DatabaseHelper.instance.getThisMonthMoneySavings();
     todosList = todos;
-    setState(() => _weeklyAvoided = weekly);
+    setState(() {
+      _weeklyAvoided = weekly;
+      _monthlyMoneySavings = monthlySavings;
+    });
     _runFilter(_searchController.text);
+
+    if (!mounted) return;
+
     // Check streak milestones and award XP if any thresholds just crossed
-    if (mounted) {
-      final rawTodos = todos.map((t) => t.toMap()).toList();
-      context.read<XpProvider>().awardStreakMilestonesIfNeeded(rawTodos);
+    final rawTodos = todos.map((t) => t.toMap()).toList();
+    context.read<XpProvider>().awardStreakMilestonesIfNeeded(rawTodos);
+
+    // Load goals and check for completions
+    final isPlus = context.read<PurchaseProvider>().isPlus;
+    final newlyCompleted = await context.read<GoalProvider>().load(
+          activeTodos: todos,
+          monthlySavings: monthlySavings,
+          isPlus: isPlus,
+        );
+
+    // Award XP for completed goals (Plus only)
+    if (mounted && isPlus && newlyCompleted.isNotEmpty) {
+      final xp = context.read<XpProvider>();
+      for (final goal in newlyCompleted) {
+        final xpAmount =
+            goal.type == GoalType.savingsMonth ? 100 : 50;
+        await xp.award('goal_complete:${goal.id}', xpAmount);
+      }
+      // Show celebration for each completed goal
+      for (final goal in newlyCompleted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  '🎯 Goal complete! "${GoalHelper.description(goal)}"'),
+              duration: const Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } else if (mounted && !isPlus && newlyCompleted.isNotEmpty) {
+      // Free users: celebration but no XP
+      for (final goal in newlyCompleted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  '🎯 Goal complete! "${GoalHelper.description(goal)}"'),
+              duration: const Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -347,6 +405,23 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   Future<void> _addTodo(String todo) async {
     if (todo.isEmpty) return;
+
+    // Free tier: maximum 10 active todos
+    final isPlus = context.read<PurchaseProvider>().isPlus;
+    if (!isPlus && todosList.length >= 10) {
+      // Don't pop here — the call-site already calls Navigator.pop after _addTodo.
+      // Schedule the dialog for the next frame so it shows AFTER the sheet is gone,
+      // not before (otherwise the call-site's pop would dismiss the dialog).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _showPlusDialog(context,
+              subtitle:
+                  'Free plan is limited to 10 active habits. Upgrade to Plus for unlimited.');
+        }
+      });
+      return;
+    }
+
     if (!_isRecurring && _eventDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context)?.selectEventDateError ?? 'Please select an event date.')),
@@ -1371,6 +1446,23 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                     ),
                   ),
                 ],
+                // ── Goals section ──────────────────────────────────
+                Consumer<GoalProvider>(
+                  builder: (_, goalProvider, __) {
+                    final goals = goalProvider.goals;
+                    final isPlus = context.read<PurchaseProvider>().isPlus;
+                    if (goals.isEmpty && !isPlus) {
+                      return const SizedBox.shrink();
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 10),
+                        _buildGoalsSection(goals, isPlus, isDark),
+                      ],
+                    );
+                  },
+                ),
                 const SizedBox(height: 10),
                 Expanded(
                   child: _foundToDo.isEmpty
@@ -2255,7 +2347,447 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     );
   }
 
-  void _showPlusDialog(BuildContext context) {
+  // ─────────────────────────────────────────────────────────────
+  // Goals UI
+  // ─────────────────────────────────────────────────────────────
+
+  Widget _buildGoalsSection(
+      List<Goal> goals, bool isPlus, bool isDark) {
+    final textSecondary = isDark
+        ? AppThemes.darkTextSecondary
+        : AppThemes.lightTextSecondary;
+
+    // ── Collapsed strip ──────────────────────────────────────────
+    if (!_goalsExpanded) {
+      // Pick the first goal for the inline summary
+      final first = goals.isNotEmpty ? goals.first : null;
+      final prog = first != null
+          ? GoalHelper.progress(first, todosList, _monthlyMoneySavings)
+          : 0.0;
+      final label = first != null
+          ? GoalHelper.progressLabel(first, todosList, _monthlyMoneySavings)
+          : '';
+      final desc = first != null
+          ? GoalHelper.description(first)
+          : (isPlus ? 'Tap to add a goal' : '');
+
+      return GestureDetector(
+        onTap: () => setState(() => _goalsExpanded = true),
+        child: Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+                color: Colors.teal.withValues(alpha: 0.22)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.flag_rounded, size: 14, color: Colors.teal),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  desc,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (first != null) ...[
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 60,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(2),
+                    child: LinearProgressIndicator(
+                      value: prog,
+                      backgroundColor:
+                          isDark ? Colors.white12 : Colors.black12,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                          prog >= 1.0 ? Colors.green : Colors.teal),
+                      minHeight: 4,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 11, color: textSecondary),
+                ),
+              ],
+              const SizedBox(width: 6),
+              Icon(Icons.expand_more,
+                  size: 16, color: textSecondary),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // ── Expanded view ────────────────────────────────────────────
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header row with collapse button
+        Row(
+          children: [
+            const Icon(Icons.flag_rounded, size: 16, color: Colors.teal),
+            const SizedBox(width: 6),
+            Text(
+              isPlus
+                  ? 'Goals${goals.isNotEmpty ? ' (${goals.length})' : ''}'
+                  : 'Your Goal',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: textSecondary,
+              ),
+            ),
+            const Spacer(),
+            if (isPlus)
+              GestureDetector(
+                onTap: () => _showAddGoalSheet(context),
+                child: Row(
+                  children: [
+                    Icon(Icons.add_circle_outline,
+                        size: 16, color: Colors.teal),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Add Goal',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.teal,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => setState(() => _goalsExpanded = false),
+              child:
+                  Icon(Icons.expand_less, size: 18, color: textSecondary),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Cards
+        if (goals.isEmpty && isPlus)
+          _buildEmptyGoalCard(isDark)
+        else if (goals.length == 1)
+          _buildGoalCard(goals.first, isPlus, isDark)
+        else
+          SizedBox(
+            height: 96,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: goals.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (_, i) => SizedBox(
+                  width: 280,
+                  child: _buildGoalCard(goals[i], isPlus, isDark)),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildGoalCard(Goal goal, bool isPlus, bool isDark) {
+    final prog = GoalHelper.progress(goal, todosList, _monthlyMoneySavings);
+    final label =
+        GoalHelper.progressLabel(goal, todosList, _monthlyMoneySavings);
+    final desc = GoalHelper.description(goal);
+    final isDone = prog >= 1.0;
+    final progressColor = isDone ? Colors.green : Colors.teal;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDone
+              ? Colors.green.withValues(alpha: 0.4)
+              : Colors.teal.withValues(alpha: 0.25),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black.withAlpha(30) : Colors.grey.withAlpha(30),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                isDone ? '✅' : '🎯',
+                style: const TextStyle(fontSize: 13),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  desc,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isDone
+                        ? Colors.green
+                        : (isDark
+                            ? AppThemes.darkTextSecondary
+                            : AppThemes.lightTextSecondary),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (isPlus)
+                GestureDetector(
+                  onTap: () {
+                    if (goal.id != null) {
+                      context.read<GoalProvider>().removeGoal(goal.id!);
+                    }
+                  },
+                  child: Icon(Icons.close, size: 14,
+                      color: isDark
+                          ? AppThemes.darkTextSecondary
+                          : AppThemes.lightTextSecondary),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: prog,
+              backgroundColor: isDark ? Colors.white12 : Colors.black12,
+              valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+              minHeight: 4,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: isDone
+                  ? Colors.green
+                  : (isDark
+                      ? AppThemes.darkTextSecondary
+                      : AppThemes.lightTextSecondary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyGoalCard(bool isDark) {
+    return GestureDetector(
+      onTap: () => _showAddGoalSheet(context),
+      child: Container(
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+              color: Colors.teal.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.add_circle_outline,
+                color: Colors.teal, size: 20),
+            const SizedBox(width: 10),
+            Text(
+              'Tap to add a goal',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.teal,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddGoalSheet(BuildContext context) {
+    GoalType _type = GoalType.streak;
+    ToDo? _selectedTodo =
+        todosList.isNotEmpty ? todosList.first : null;
+    final _targetController = TextEditingController(text: '7');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Add a Goal',
+                style:
+                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              // Goal type selector
+              Row(
+                children: [
+                  Expanded(
+                    child: _typeChip(
+                      label: '🏃 Streak',
+                      selected: _type == GoalType.streak,
+                      onTap: () =>
+                          setSheetState(() => _type = GoalType.streak),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _typeChip(
+                      label: '💰 Monthly Savings',
+                      selected: _type == GoalType.savingsMonth,
+                      onTap: () => setSheetState(
+                          () => _type = GoalType.savingsMonth),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Habit picker (streak only)
+              if (_type == GoalType.streak && todosList.isNotEmpty) ...[
+                const Text('Habit',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<ToDo>(
+                  value: _selectedTodo,
+                  decoration: const InputDecoration(
+                      border: OutlineInputBorder(), isDense: true),
+                  items: todosList
+                      .map((t) => DropdownMenuItem(
+                            value: t,
+                            child: Text(t.todoText ?? '',
+                                overflow: TextOverflow.ellipsis),
+                          ))
+                      .toList(),
+                  onChanged: (val) =>
+                      setSheetState(() => _selectedTodo = val),
+                ),
+                const SizedBox(height: 16),
+              ],
+              // Target value
+              Text(
+                _type == GoalType.streak
+                    ? 'Target streak (days)'
+                    : 'Target savings (\$)',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _targetController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                    border: OutlineInputBorder(), isDense: true),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () {
+                        final target =
+                            double.tryParse(_targetController.text);
+                        if (target == null || target <= 0) return;
+                        final goal = Goal(
+                          type: _type,
+                          todoId: _type == GoalType.streak
+                              ? _selectedTodo?.id
+                              : null,
+                          todoText: _type == GoalType.streak
+                              ? _selectedTodo?.todoText
+                              : null,
+                          targetValue: target,
+                          createdAt: DateTime.now(),
+                        );
+                        context.read<GoalProvider>().addGoal(goal);
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text('Create Goal'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _typeChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected
+              ? Colors.teal.withValues(alpha: 0.15)
+              : Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color:
+                selected ? Colors.teal : Colors.grey.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: selected ? Colors.teal : null,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showPlusDialog(BuildContext context, {String? subtitle}) {
     final purchase = context.read<PurchaseProvider>();
     final messenger = ScaffoldMessenger.of(context);
     showDialog(
@@ -2272,6 +2804,17 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (subtitle != null) ...[
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.orange.shade700,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             Text(
               '${purchase.plusPriceString ?? '\$2.99'} · One-time purchase',
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -2279,6 +2822,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
             SizedBox(height: 12),
             Text('What you unlock:'),
             SizedBox(height: 10),
+            Row(children: [Text('♾️', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Unlimited active habits (free: 10)'))]),
+            SizedBox(height: 6),
             Row(children: [Text('📅', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Full stats history & heatmap'))]),
             SizedBox(height: 6),
             Row(children: [Text('🎯', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Daily commitment flow & goals'))]),

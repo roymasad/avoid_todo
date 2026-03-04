@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import '../model/todo.dart';
 import '../model/tag.dart';
 import '../model/relapse_log.dart';
+import '../model/goal.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -22,7 +23,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 10,
+      version: 11,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -91,6 +92,20 @@ class DatabaseHelper {
       source TEXT NOT NULL,
       amount INTEGER NOT NULL,
       earnedAt TEXT NOT NULL
+    )
+    ''');
+
+    await db.execute('''
+    CREATE TABLE goals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL,
+      todoId TEXT,
+      todoText TEXT,
+      targetValue REAL NOT NULL,
+      isActive INTEGER NOT NULL DEFAULT 1,
+      isPreset INTEGER NOT NULL DEFAULT 0,
+      completedAt TEXT,
+      createdAt TEXT NOT NULL
     )
     ''');
 
@@ -221,6 +236,21 @@ class DatabaseHelper {
         source TEXT NOT NULL,
         amount INTEGER NOT NULL,
         earnedAt TEXT NOT NULL
+      )
+      ''');
+    }
+    if (oldVersion < 11) {
+      await db.execute('''
+      CREATE TABLE IF NOT EXISTS goals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        type TEXT NOT NULL,
+        todoId TEXT,
+        todoText TEXT,
+        targetValue REAL NOT NULL,
+        isActive INTEGER NOT NULL DEFAULT 1,
+        isPreset INTEGER NOT NULL DEFAULT 0,
+        completedAt TEXT,
+        createdAt TEXT NOT NULL
       )
       ''');
     }
@@ -497,6 +527,71 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Goals
+  // ─────────────────────────────────────────────────────────────
+
+  Future<int> createGoal(Goal goal) async {
+    final db = await instance.database;
+    return await db.insert('goals', goal.toMap());
+  }
+
+  /// Returns all currently active goals, newest first.
+  Future<List<Goal>> getActiveGoals() async {
+    final db = await instance.database;
+    final result = await db.query(
+      'goals',
+      where: 'isActive = 1',
+      orderBy: 'createdAt DESC',
+    );
+    return result.map(Goal.fromMap).toList();
+  }
+
+  /// Marks a goal as completed (still active so it stays visible until dismissed).
+  Future<void> completeGoal(int id) async {
+    final db = await instance.database;
+    await db.update(
+      'goals',
+      {
+        'completedAt': DateTime.now().toIso8601String(),
+        'isActive': 0,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// Permanently removes a goal (user dismissed it).
+  Future<void> deleteGoal(int id) async {
+    final db = await instance.database;
+    await db.delete('goals', where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// True if there is already an active preset goal in the DB.
+  Future<bool> hasActivePresetGoal() async {
+    final db = await instance.database;
+    final result = await db.rawQuery(
+        'SELECT COUNT(*) as c FROM goals WHERE isActive = 1 AND isPreset = 1');
+    return ((result.first['c'] as int?) ?? 0) > 0;
+  }
+
+  /// Sum of money saved (costType = 0) from habits archived this calendar month.
+  Future<double> getThisMonthMoneySavings() async {
+    final db = await instance.database;
+    final now = DateTime.now();
+    final monthStart =
+        DateTime(now.year, now.month, 1).toIso8601String();
+    final result = await db.rawQuery('''
+      SELECT COALESCE(SUM(estimatedCost), 0) as total
+      FROM todo
+      WHERE isArchived = 1
+        AND archivedAt >= ?
+        AND costType = 0
+        AND estimatedCost IS NOT NULL
+    ''', [monthStart]);
+    return (result.first['total'] as num?)?.toDouble() ?? 0.0;
   }
 
   // ─────────────────────────────────────────────────────────────
