@@ -497,10 +497,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   }
 
   Future<void> _archiveTodo(int id) async {
+    final xpProvider = context.read<XpProvider>();
     await DatabaseHelper.instance.archiveTodo(id);
     await NotificationHelper().cancelReminder(id.toString());
     _confettiController.play();
-    context.read<XpProvider>().award(XpHelper.sourceArchive, XpHelper.xpArchive);
+    xpProvider.award(XpHelper.sourceArchive, XpHelper.xpArchive);
     _fetchTodos();
   }
 
@@ -1407,7 +1408,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                                       ),
                                       const Spacer(),
                                       if (atCap)
-                                        Text(
+                                        const Text(
                                           '⭐ Plus to level up',
                                           style: TextStyle(
                                               fontSize: 11,
@@ -2449,11 +2450,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
             if (isPlus)
               GestureDetector(
                 onTap: () => _showAddGoalSheet(context),
-                child: Row(
+                child: const Row(
                   children: [
                     Icon(Icons.add_circle_outline,
                         size: 16, color: Colors.teal),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     Text(
                       'Add Goal',
                       style: TextStyle(
@@ -2600,11 +2601,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           border: Border.all(
               color: Colors.teal.withValues(alpha: 0.25)),
         ),
-        child: Row(
+        child: const Row(
           children: [
             Icon(Icons.add_circle_outline,
                 color: Colors.teal, size: 20),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Text(
               'Tap to add a goal',
               style: TextStyle(
@@ -2620,10 +2621,10 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   }
 
   void _showAddGoalSheet(BuildContext context) {
-    GoalType _type = GoalType.streak;
-    ToDo? _selectedTodo =
+    GoalType type = GoalType.streak;
+    ToDo? selectedTodo =
         todosList.isNotEmpty ? todosList.first : null;
-    final _targetController = TextEditingController(text: '7');
+    final targetController = TextEditingController(text: '7');
 
     showModalBottomSheet(
       context: context,
@@ -2655,30 +2656,30 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   Expanded(
                     child: _typeChip(
                       label: '🏃 Streak',
-                      selected: _type == GoalType.streak,
+                      selected: type == GoalType.streak,
                       onTap: () =>
-                          setSheetState(() => _type = GoalType.streak),
+                          setSheetState(() => type = GoalType.streak),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _typeChip(
                       label: '💰 Monthly Savings',
-                      selected: _type == GoalType.savingsMonth,
+                      selected: type == GoalType.savingsMonth,
                       onTap: () => setSheetState(
-                          () => _type = GoalType.savingsMonth),
+                          () => type = GoalType.savingsMonth),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               // Habit picker (streak only)
-              if (_type == GoalType.streak && todosList.isNotEmpty) ...[
+              if (type == GoalType.streak && todosList.isNotEmpty) ...[
                 const Text('Habit',
                     style: TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<ToDo>(
-                  value: _selectedTodo,
+                  initialValue: selectedTodo,
                   decoration: const InputDecoration(
                       border: OutlineInputBorder(), isDense: true),
                   items: todosList
@@ -2689,20 +2690,20 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           ))
                       .toList(),
                   onChanged: (val) =>
-                      setSheetState(() => _selectedTodo = val),
+                      setSheetState(() => selectedTodo = val),
                 ),
                 const SizedBox(height: 16),
               ],
               // Target value
               Text(
-                _type == GoalType.streak
+                type == GoalType.streak
                     ? 'Target streak (days)'
                     : 'Target savings (\$)',
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 6),
               TextField(
-                controller: _targetController,
+                controller: targetController,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                     border: OutlineInputBorder(), isDense: true),
@@ -2721,15 +2722,15 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                     child: FilledButton(
                       onPressed: () {
                         final target =
-                            double.tryParse(_targetController.text);
+                            double.tryParse(targetController.text);
                         if (target == null || target <= 0) return;
                         final goal = Goal(
-                          type: _type,
-                          todoId: _type == GoalType.streak
-                              ? _selectedTodo?.id
+                          type: type,
+                          todoId: type == GoalType.streak
+                              ? selectedTodo?.id
                               : null,
-                          todoText: _type == GoalType.streak
-                              ? _selectedTodo?.todoText
+                          todoText: type == GoalType.streak
+                              ? selectedTodo?.todoText
                               : null,
                           targetValue: target,
                           createdAt: DateTime.now(),
@@ -2816,26 +2817,26 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               '${purchase.plusPriceString ?? '\$2.99'} · One-time purchase',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 12),
-            Text('What you unlock:'),
-            SizedBox(height: 10),
-            Row(children: [Text('♾️', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Unlimited active habits (free: 10)'))]),
-            SizedBox(height: 6),
-            Row(children: [Text('📅', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Full stats history & heatmap'))]),
-            SizedBox(height: 6),
-            Row(children: [Text('🎯', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Daily commitment flow & goals'))]),
-            SizedBox(height: 6),
-            Row(children: [Text('🔔', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Smart scheduled notifications'))]),
-            SizedBox(height: 6),
-            Row(children: [Text('🏅', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('All achievement medals'))]),
-            SizedBox(height: 6),
-            Row(children: [Text('📈', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('XP levels beyond 20 & titles'))]),
-            SizedBox(height: 6),
-            Row(children: [Text('🏠', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Home screen widget'))]),
-            SizedBox(height: 6),
-            Row(children: [Text('☁️', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Cloud sync across devices'))]),
-            SizedBox(height: 6),
-            Row(children: [Text('📤', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Export your data'))]),
+            const SizedBox(height: 12),
+            const Text('What you unlock:'),
+            const SizedBox(height: 10),
+            const Row(children: [Text('♾️', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Unlimited active habits (free: 10)'))]),
+            const SizedBox(height: 6),
+            const Row(children: [Text('📅', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Full stats history & heatmap'))]),
+            const SizedBox(height: 6),
+            const Row(children: [Text('🎯', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Daily commitment flow & goals'))]),
+            const SizedBox(height: 6),
+            const Row(children: [Text('🔔', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Smart scheduled notifications'))]),
+            const SizedBox(height: 6),
+            const Row(children: [Text('🏅', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('All achievement medals'))]),
+            const SizedBox(height: 6),
+            const Row(children: [Text('📈', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('XP levels beyond 20 & titles'))]),
+            const SizedBox(height: 6),
+            const Row(children: [Text('🏠', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Home screen widget'))]),
+            const SizedBox(height: 6),
+            const Row(children: [Text('☁️', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Cloud sync across devices'))]),
+            const SizedBox(height: 6),
+            const Row(children: [Text('📤', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Export your data'))]),
           ],
         ),
         actions: [
