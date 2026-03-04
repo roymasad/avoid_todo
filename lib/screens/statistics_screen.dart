@@ -319,8 +319,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       Text('Unlock Avoid Plus'),
                     ],
                   ),
-                  content: const Text(
-                    '\$2.99 · One-time purchase\n\nUnlock full stats history, relapse patterns, tag breakdown, trigger words, goals, smart notifications, and more.',
+                  content: Text(
+                    '${context.read<PurchaseProvider>().plusPriceString ?? '\$2.99'} · One-time purchase\n\nUnlock full stats history, relapse patterns, tag breakdown, trigger words, goals, smart notifications, and more.',
                   ),
                   actions: [
                     TextButton(
@@ -332,7 +332,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                         Navigator.pop(ctx);
                         await context.read<PurchaseProvider>().purchasePlus();
                       },
-                      child: const Text('Unlock — \$2.99'),
+                      child: Text('Unlock — ${context.read<PurchaseProvider>().plusPriceString ?? '\$2.99'}'),
                     ),
                   ],
                 ),

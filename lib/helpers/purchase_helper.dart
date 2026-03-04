@@ -36,6 +36,17 @@ class PurchaseHelper {
     }
   }
 
+  /// Returns the localized price string for the Plus product (e.g. "$2.99").
+  /// Falls back to null if the offering cannot be fetched.
+  static Future<String?> fetchPlusPrice() async {
+    try {
+      final offerings = await Purchases.getOfferings();
+      return offerings.current?.lifetime?.storeProduct.priceString;
+    } catch (_) {
+      return null;
+    }
+  }
+
   static Future<bool> restorePurchases() async {
     try {
       final customerInfo = await Purchases.restorePurchases();

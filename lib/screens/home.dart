@@ -2176,13 +2176,13 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
             Text('Unlock Avoid Plus'),
           ],
         ),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '\$2.99 · One-time purchase',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              '${purchase.plusPriceString ?? '\$2.99'} · One-time purchase',
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 12),
             Text('What you unlock:'),
