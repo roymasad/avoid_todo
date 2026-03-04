@@ -2318,15 +2318,12 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       child: TextField(
         controller: _searchController,
         onChanged: (value) => _runFilter(value),
+        textAlignVertical: TextAlignVertical.center,
         decoration: InputDecoration(
           contentPadding: const EdgeInsets.all(0),
           prefixIcon: const Icon(
             Icons.search,
             size: 20,
-          ),
-          prefixIconConstraints: const BoxConstraints(
-            maxHeight: 20,
-            minWidth: 25,
           ),
           border: InputBorder.none,
           hintText: AppLocalizations.of(context)?.search ?? 'Search',
