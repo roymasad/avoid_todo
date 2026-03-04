@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:provider/provider.dart';
@@ -39,7 +40,7 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
+class _HomeState extends State<Home> with TickerProviderStateMixin {
   List<ToDo> todosList = [];
   late List<ToDo> _foundToDo = [];
   final _todoController = TextEditingController();
@@ -47,6 +48,10 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   final _costController = TextEditingController();
   late ConfettiController _confettiController;
   late AnimationController _animationController;
+  late AnimationController _swipeHintController;
+  late Animation<Offset> _swipeHintAnimation;
+  bool _swipeHintPlayed = false;
+  Timer? _swipeHintTimer;
 
   // Coach Marks Keys
   final GlobalKey _menuKey = GlobalKey();
@@ -97,6 +102,34 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
+    _swipeHintController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 750),
+    );
+    _swipeHintAnimation = TweenSequence<Offset>([
+      // Nudge right → peek green (archive)
+      TweenSequenceItem(
+        tween: Tween<Offset>(begin: Offset.zero, end: const Offset(0.03, 0))
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 25,
+      ),
+      TweenSequenceItem(
+        tween: Tween<Offset>(begin: const Offset(0.03, 0), end: Offset.zero)
+            .chain(CurveTween(curve: Curves.easeIn)),
+        weight: 20,
+      ),
+      // Nudge left → peek red (relapse)
+      TweenSequenceItem(
+        tween: Tween<Offset>(begin: Offset.zero, end: const Offset(-0.025, 0))
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 25,
+      ),
+      TweenSequenceItem(
+        tween: Tween<Offset>(begin: const Offset(-0.025, 0), end: Offset.zero)
+            .chain(CurveTween(curve: Curves.easeIn)),
+        weight: 30,
+      ),
+    ]).animate(_swipeHintController);
     _fetchTodos();
     _fetchTags();
     _loadNotificationPref();
@@ -328,6 +361,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   void dispose() {
     _confettiController.dispose();
     _animationController.dispose();
+    _swipeHintController.dispose();
+    _swipeHintTimer?.cancel();
     _todoController.dispose();
     _searchController.dispose();
     _costController.dispose();
@@ -345,6 +380,17 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       _monthlyMoneySavings = monthlySavings;
     });
     _runFilter(_searchController.text);
+
+    // Play swipe hint animation after first load, then repeat every 30 s
+    if (!_swipeHintPlayed && _foundToDo.isNotEmpty) {
+      _swipeHintPlayed = true;
+      Future.delayed(const Duration(milliseconds: 700), () {
+        if (mounted) _swipeHintController.forward(from: 0);
+      });
+      _swipeHintTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+        if (mounted) _swipeHintController.forward(from: 0);
+      });
+    }
 
     if (!mounted) return;
 
@@ -1518,11 +1564,9 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           itemCount: _foundToDo.length,
                           itemBuilder: (context, i) {
-                            return Dismissible(
+                            final dismissible = Dismissible(
                               key: ValueKey(_foundToDo[i].id),
-                              direction: _foundToDo[i].isRecurring
-                                  ? DismissDirection.horizontal
-                                  : DismissDirection.startToEnd,
+                              direction: DismissDirection.horizontal,
                               background: Container(
                                 alignment: Alignment.centerLeft,
                                 padding: const EdgeInsets.only(left: 20),
@@ -1584,14 +1628,75 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                               child: ToDoItem(
                                 todo: _foundToDo[i],
                                 onEditItem: _editTodo,
-                                onRelapse: _triggerRelapse,
-                                onArchive: (todo) async {
-                                  await _archiveTodo(int.parse(todo.id!));
-                                  if (mounted) {
-                                    _showItemAvoidedSnackBar(todo);
-                                  }
-                                },
                               ),
+                            );
+
+                            // For the first item: wrap in an AnimatedBuilder
+                            // that renders real green/red hint backgrounds and
+                            // translates the card so they peek through.
+                            if (i != 0) return dismissible;
+                            return AnimatedBuilder(
+                              animation: _swipeHintController,
+                              builder: (context, _) {
+                                final dx = _swipeHintAnimation.value.dx;
+                                final pixelDx = dx *
+                                    MediaQuery.of(context).size.width;
+                                final showGreen = dx > 0.001;
+                                final showRed = dx < -0.001;
+                                return Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    if (showGreen || showRed)
+                                      Positioned.fill(
+                                        child: Container(
+                                          margin: const EdgeInsets.only(
+                                              bottom: 12),
+                                          decoration: BoxDecoration(
+                                            color: showGreen
+                                                ? Colors.green
+                                                : tdAvoidRed.withAlpha(200),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          alignment: showGreen
+                                              ? Alignment.centerLeft
+                                              : Alignment.centerRight,
+                                          padding: EdgeInsets.only(
+                                            left: showGreen ? 20 : 0,
+                                            right: showRed ? 20 : 0,
+                                          ),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                showGreen
+                                                    ? Icons.archive
+                                                    : Icons.restore,
+                                                color: Colors.white,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                showGreen
+                                                    ? (AppLocalizations.of(
+                                                                context)
+                                                            ?.avoidedLabel ??
+                                                        'Avoided!')
+                                                    : 'Relapse',
+                                                style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    Transform.translate(
+                                      offset: Offset(pixelDx, 0),
+                                      child: dismissible,
+                                    ),
+                                  ],
+                                );
+                              },
                             );
                           },
                         ),

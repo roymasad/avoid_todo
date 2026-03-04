@@ -12,15 +12,11 @@ import 'package:url_launcher/url_launcher.dart';
 class ToDoItem extends StatefulWidget {
   final ToDo todo;
   final Function(ToDo) onEditItem;
-  final Function(ToDo)? onRelapse;
-  final Function(ToDo)? onArchive;
 
   const ToDoItem({
     super.key,
     required this.todo,
     required this.onEditItem,
-    this.onRelapse,
-    this.onArchive,
   });
 
   @override
@@ -263,53 +259,6 @@ class _ToDoItemState extends State<ToDoItem> {
                   ? AppThemes.darkTextSecondary
                   : AppThemes.lightTextSecondary,
             ),
-            if (widget.todo.isRecurring && !widget.todo.isArchived)
-              InkWell(
-                onTap: () {
-                  widget.onRelapse?.call(widget.todo);
-                },
-                borderRadius: BorderRadius.circular(5),
-                child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 12),
-                  width: 38,
-                  height: 35,
-                  decoration: BoxDecoration(
-                    color: tdAvoidRed.withAlpha(51),
-                    borderRadius: BorderRadius.circular(5),
-                    border: Border.all(color: tdAvoidRed),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.sentiment_dissatisfied,
-                          size: 16, color: tdAvoidRed),
-                      const SizedBox(height: 1),
-                      Text(
-                        AppLocalizations.of(context)?.slipButton ?? 'Slip',
-                        style: const TextStyle(fontSize: 9, color: tdAvoidRed),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            if (!widget.todo.isRecurring && !widget.todo.isArchived)
-              Container(
-                padding: const EdgeInsets.all(0),
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                height: 35,
-                width: 35,
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: IconButton(
-                  color: Colors.white,
-                  iconSize: 18,
-                  icon: const Icon(Icons.check),
-                  onPressed: () => widget.onArchive?.call(widget.todo),
-                ),
-              ),
           ],
         ),
       ),
