@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:provider/provider.dart';
 import '../model/todo.dart';
 import '../model/tag.dart';
@@ -43,6 +44,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> with TickerProviderStateMixin {
   List<ToDo> todosList = [];
   late List<ToDo> _foundToDo = [];
+  bool _isLoading = true;
   final _todoController = TextEditingController();
   final _searchController = TextEditingController();
   final _costController = TextEditingController();
@@ -378,6 +380,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     setState(() {
       _weeklyAvoided = weekly;
       _monthlyMoneySavings = monthlySavings;
+      _isLoading = false;
     });
     _runFilter(_searchController.text);
 
@@ -1512,7 +1515,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                 ),
                 const SizedBox(height: 10),
                 Expanded(
-                  child: _foundToDo.isEmpty
+                  child: _isLoading
+                      ? _buildShimmerList(isDark)
+                      : _foundToDo.isEmpty
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -2407,6 +2412,28 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               ),
               const SizedBox(height: 16),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShimmerList(bool isDark) {
+    final baseColor = isDark ? Colors.grey[850]! : Colors.grey[300]!;
+    final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[100]!;
+    return Shimmer.fromColors(
+      baseColor: baseColor,
+      highlightColor: highlightColor,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 5,
+        itemBuilder: (_, __) => Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          height: 90,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
           ),
         ),
       ),
