@@ -17,13 +17,23 @@ class DatabaseHelper {
     return _database!;
   }
 
+  /// Closes the current connection and clears the cache so the next call to
+  /// [database] opens a fresh connection. Call this before replacing the DB
+  /// file (e.g. during a backup restore).
+  static Future<void> closeAndReset() async {
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+    }
+  }
+
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
     return await openDatabase(
       path,
-      version: 11,
+      version: 12,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -65,7 +75,19 @@ class DatabaseHelper {
       todoId TEXT NOT NULL,
       relapsedAt TEXT NOT NULL,
       triggerNote TEXT,
+      causeTag TEXT,
       FOREIGN KEY (todoId) REFERENCES todo (id) ON DELETE CASCADE
+    )
+    ''');
+
+    await db.execute('''
+    CREATE TABLE milestone_reflections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      todoId TEXT NOT NULL,
+      milestoneDays INTEGER NOT NULL,
+      chipTag TEXT,
+      note TEXT,
+      createdAt TEXT NOT NULL
     )
     ''');
 
@@ -106,6 +128,14 @@ class DatabaseHelper {
       isPreset INTEGER NOT NULL DEFAULT 0,
       completedAt TEXT,
       createdAt TEXT NOT NULL
+    )
+    ''');
+
+    await db.execute('''
+    CREATE TABLE badges (
+      id TEXT PRIMARY KEY,
+      unlockedAt TEXT NOT NULL,
+      notifiedAt TEXT
     )
     ''');
 
@@ -250,6 +280,32 @@ class DatabaseHelper {
         isActive INTEGER NOT NULL DEFAULT 1,
         isPreset INTEGER NOT NULL DEFAULT 0,
         completedAt TEXT,
+        createdAt TEXT NOT NULL
+      )
+      ''');
+    }
+    if (oldVersion < 12) {
+      await db.execute('''
+      CREATE TABLE IF NOT EXISTS badges (
+        id TEXT PRIMARY KEY,
+        unlockedAt TEXT NOT NULL,
+        notifiedAt TEXT
+      )
+      ''');
+      // Phase 1A: cause tag on relapse logs + milestone reflections table
+      try {
+        await db.execute(
+            'ALTER TABLE relapse_logs ADD COLUMN causeTag TEXT');
+      } catch (_) {
+        // Column may already exist on fresh installs
+      }
+      await db.execute('''
+      CREATE TABLE IF NOT EXISTS milestone_reflections (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        todoId TEXT NOT NULL,
+        milestoneDays INTEGER NOT NULL,
+        chipTag TEXT,
+        note TEXT,
         createdAt TEXT NOT NULL
       )
       ''');
@@ -491,20 +547,112 @@ class DatabaseHelper {
     return result;
   }
 
+  /// Returns a map of date-string → avoidance-count for a given month.
+  /// Used by the calendar heatmap in statistics_screen.
+  Future<Map<String, int>> getDailyAvoidanceMap(int year, int month) async {
+    final db = await instance.database;
+    final yearStr = year.toString();
+    final monthStr = month.toString().padLeft(2, '0');
+    final result = await db.rawQuery('''
+      SELECT strftime('%Y-%m-%d', archivedAt) as day, COUNT(*) as count
+      FROM todo
+      WHERE isArchived = 1
+        AND archivedAt IS NOT NULL
+        AND strftime('%Y', archivedAt) = ?
+        AND strftime('%m', archivedAt) = ?
+      GROUP BY day
+    ''', [yearStr, monthStr]);
+
+    final Map<String, int> map = {};
+    for (final row in result) {
+      map[row['day'] as String] = row['count'] as int;
+    }
+    return map;
+  }
+
+  /// Returns monthly avoidance counts for the last 12 months.
+  Future<List<Map<String, dynamic>>> getMonthlyStats() async {
+    final db = await instance.database;
+    final result = await db.rawQuery('''
+      SELECT strftime('%Y-%m', archivedAt) as month, COUNT(*) as count
+      FROM todo
+      WHERE isArchived = 1
+        AND archivedAt IS NOT NULL
+        AND archivedAt >= date('now', '-12 months')
+      GROUP BY month
+      ORDER BY month ASC
+    ''');
+    return result;
+  }
+
+  /// Returns a map of DateTime.weekday → relapse count for ALL time.
+  /// Weekday format matches Dart: 1 = Monday … 7 = Sunday.
+  /// Used by smart pattern notifications.
+  Future<Map<int, int>> getRelapseDayPattern() async {
+    final db = await instance.database;
+    // strftime('%w') returns 0=Sunday, 1=Monday, ..., 6=Saturday
+    final result = await db.rawQuery('''
+      SELECT CAST(strftime('%w', relapsedAt) AS INTEGER) as dow,
+             COUNT(*) as count
+      FROM relapse_logs
+      GROUP BY dow
+    ''');
+    // Initialise all weekdays to 0
+    final Map<int, int> map = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0};
+    for (final row in result) {
+      final dow = (row['dow'] as int? ?? 0);
+      final count = row['count'] as int? ?? 0;
+      // Convert strftime %w (0=Sun) → DateTime.weekday (1=Mon, 7=Sun)
+      final weekday = dow == 0 ? 7 : dow;
+      map[weekday] = count;
+    }
+    return map;
+  }
+
   Future<List<Map<String, dynamic>>> getWeeklyStats() async {
     final db = await instance.database;
     final result = await db.rawQuery('''
-      SELECT 
+      SELECT
         strftime('%Y-%W', archivedAt) as week,
-        COUNT(*) as count 
-      FROM todo 
+        COUNT(*) as count
+      FROM todo
       WHERE isArchived = 1 AND archivedAt IS NOT NULL
-      GROUP BY week 
-      ORDER BY week DESC 
+      GROUP BY week
+      ORDER BY week DESC
       LIMIT 8
     ''');
 
     return result.reversed.toList();
+  }
+
+  /// Returns avoidance counts for the last 7 days (today − 6 days to today),
+  /// always returning exactly 7 entries with 0 for days with no activity.
+  Future<List<Map<String, dynamic>>> getLast7DaysStats() async {
+    final db = await instance.database;
+    final result = await db.rawQuery('''
+      SELECT date(archivedAt) as day, COUNT(*) as count
+      FROM todo
+      WHERE isArchived = 1
+        AND archivedAt IS NOT NULL
+        AND date(archivedAt) >= date('now', '-6 days')
+      GROUP BY day
+      ORDER BY day ASC
+    ''');
+
+    final map = <String, int>{};
+    for (final row in result) {
+      map[row['day'] as String] = row['count'] as int;
+    }
+
+    final now = DateTime.now();
+    final days = <Map<String, dynamic>>[];
+    for (int i = 6; i >= 0; i--) {
+      final day = DateTime(now.year, now.month, now.day).subtract(Duration(days: i));
+      final dateStr =
+          '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
+      days.add({'date': dateStr, 'weekday': day.weekday, 'count': map[dateStr] ?? 0});
+    }
+    return days;
   }
 
   Future<int> getThisWeekArchivedCount() async {
@@ -623,6 +771,79 @@ class DatabaseHelper {
     final result = await db.rawQuery(
         'SELECT COUNT(*) as c FROM xp_events WHERE source = ?', [source]);
     return ((result.first['c'] as int?) ?? 0) > 0;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Milestone reflections (Phase 1A — Plus feature)
+  // ─────────────────────────────────────────────────────────────
+
+  Future<void> addMilestoneReflection({
+    required String todoId,
+    required int milestoneDays,
+    String? chipTag,
+    String? note,
+  }) async {
+    final db = await instance.database;
+    await db.insert('milestone_reflections', {
+      'todoId': todoId,
+      'milestoneDays': milestoneDays,
+      'chipTag': chipTag,
+      'note': note,
+      'createdAt': DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getMilestoneReflections(
+      String todoId) async {
+    final db = await instance.database;
+    return await db.query(
+      'milestone_reflections',
+      where: 'todoId = ?',
+      whereArgs: [todoId],
+      orderBy: 'createdAt DESC',
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Badges
+  // ─────────────────────────────────────────────────────────────
+
+  /// Persists a badge unlock. No-op if already unlocked (IGNORE conflict).
+  Future<void> unlockBadge(String id) async {
+    final db = await instance.database;
+    await db.insert(
+      'badges',
+      {
+        'id': id,
+        'unlockedAt': DateTime.now().toIso8601String(),
+        'notifiedAt': null,
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+  }
+
+  /// Returns all unlocked badges ordered by unlock time (oldest first).
+  Future<List<Map<String, dynamic>>> getUnlockedBadges() async {
+    final db = await instance.database;
+    return await db.query('badges', orderBy: 'unlockedAt ASC');
+  }
+
+  /// Total number of relapse log entries across all habits (for Honest badge).
+  Future<int> getTotalRelapseCount() async {
+    final db = await instance.database;
+    final result =
+        await db.rawQuery('SELECT COUNT(*) as count FROM relapse_logs');
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  /// Earliest createdAt date across all habits (for Veteran badge).
+  Future<DateTime?> getFirstHabitCreatedAt() async {
+    final db = await instance.database;
+    final result =
+        await db.rawQuery('SELECT MIN(createdAt) as first FROM todo');
+    final str = result.first['first'] as String?;
+    if (str == null) return null;
+    return DateTime.tryParse(str);
   }
 
   Future close() async {

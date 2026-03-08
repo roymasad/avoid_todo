@@ -82,4 +82,4 @@ storeFile=../upload-keystore.jks
 `flutter emulators`
 `flutter emulators --launch `
 
-
+`flutter build apk --release`

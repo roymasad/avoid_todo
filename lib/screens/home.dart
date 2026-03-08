@@ -23,6 +23,11 @@ import '../model/goal.dart';
 import '../l10n/app_localizations.dart';
 import 'archive_screen.dart';
 import 'statistics_screen.dart';
+import 'daily_commitment_screen.dart';
+import 'widget_setup_screen.dart';
+import 'sync_screen.dart';
+import '../helpers/home_widget_helper.dart';
+import '../helpers/sync_helper.dart';
 import 'help_screen.dart';
 import 'map_picker_screen.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
@@ -54,6 +59,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   late Animation<Offset> _swipeHintAnimation;
   bool _swipeHintPlayed = false;
   Timer? _swipeHintTimer;
+  bool _commitmentCheckDone = false; // Phase 1C: only check once per session
 
   // Coach Marks Keys
   final GlobalKey _menuKey = GlobalKey();
@@ -78,6 +84,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
   // Notification setting
   bool _notificationsEnabled = true;
+
+  // Phase 4: Home screen widget
+  bool _widgetEnabled = false;
+
+  // Phase 6: Cloud sync
+  bool _syncEnabled = false;
 
   // Phase 1 New Fields
   bool _isRecurring = true;
@@ -193,6 +205,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
+      _widgetEnabled = prefs.getBool('widget_enabled') ?? false;
+      _syncEnabled = prefs.getBool('sync_enabled') ?? false;
     });
   }
 
@@ -398,11 +412,28 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     if (!mounted) return;
 
     // Check streak milestones and award XP if any thresholds just crossed
+    final isPlus = context.read<PurchaseProvider>().isPlus;
     final rawTodos = todos.map((t) => t.toMap()).toList();
-    context.read<XpProvider>().awardStreakMilestonesIfNeeded(rawTodos);
+    final newMilestones = await context
+        .read<XpProvider>()
+        .awardStreakMilestonesIfNeeded(rawTodos);
+
+    // Plus: show "What Worked?" reflection sheet for each new milestone
+    if (isPlus && newMilestones.isNotEmpty && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        for (final milestone in newMilestones) {
+          if (!mounted) break;
+          await _showWhatWorkedSheet(
+            milestone['todoId'] as String,
+            milestone['todoText'] as String,
+            milestone['milestoneDay'] as int,
+          );
+        }
+      });
+    }
 
     // Load goals and check for completions
-    final isPlus = context.read<PurchaseProvider>().isPlus;
+    if (!mounted) return;
     final newlyCompleted = await context.read<GoalProvider>().load(
           activeTodos: todos,
           monthlySavings: monthlySavings,
@@ -445,6 +476,92 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         }
       }
     }
+
+    // Phase 1C: Daily commitment flow (Plus only, once per session/day)
+    _maybeShowDailyCommitment(todos, isPlus);
+
+    // Phase 2A: Pattern-based reminder (Plus only, once per ISO week)
+    if (isPlus) _schedulePatternReminderIfNeeded();
+
+    // Phase 2B: Cancel any pending relapse follow-up on natural app open
+    if (isPlus) NotificationHelper().cancelRelapseFollowUp();
+
+    // Phase 4: Push data to home screen widget (Plus + widget enabled)
+    if (isPlus && _widgetEnabled) {
+      final active =
+          todos.where((t) => !t.isArchived && t.isRecurring).toList();
+      HomeWidgetHelper.update(active);
+    }
+
+    // Phase 6: Cloud sync — check for newer backup on first load
+    if (isPlus && _syncEnabled) {
+      SyncHelper.uploadIfNeeded();
+    }
+  }
+
+  /// Shows the daily commitment screen if:
+  ///  - user is Plus, has active recurring habits, AND hasn't committed today.
+  Future<void> _maybeShowDailyCommitment(
+      List<ToDo> todos, bool isPlus) async {
+    if (_commitmentCheckDone) return;
+    _commitmentCheckDone = true;
+
+    if (!isPlus) return;
+
+    final activeTodos = todos
+        .where((t) => !t.isArchived && t.isRecurring)
+        .toList();
+    if (activeTodos.isEmpty) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    if (prefs.getString('last_commitment_date') == today) return;
+
+    if (!mounted) return;
+
+    final committed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            DailyCommitmentScreen(activeTodos: activeTodos),
+        fullscreenDialog: true,
+      ),
+    );
+
+    // Save the date only when the user tapped "Start my day"
+    if ((committed ?? false) && mounted) {
+      await prefs.setString('last_commitment_date', today);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Phase 2A: Pattern-based heads-up notification (Plus)
+  // ─────────────────────────────────────────────────────────────
+
+  /// Computes the highest-risk day of week from relapse history and schedules
+  /// a 10 PM heads-up the night before — at most once per ISO calendar week.
+  Future<void> _schedulePatternReminderIfNeeded() async {
+    final prefs = await SharedPreferences.getInstance();
+    final now = DateTime.now();
+    final weekKey = '${now.year}-W${_isoWeek(now)}';
+    if (prefs.getString('last_pattern_schedule_week') == weekKey) return;
+
+    final pattern = await DatabaseHelper.instance.getRelapseDayPattern();
+    // Only schedule if there is real relapse data
+    final hasData = pattern.values.any((count) => count > 0);
+    if (!hasData) return;
+
+    final maxEntry =
+        pattern.entries.reduce((a, b) => a.value > b.value ? a : b);
+
+    await NotificationHelper().schedulePatternReminder(maxEntry.key);
+    await prefs.setString('last_pattern_schedule_week', weekKey);
+  }
+
+  /// Returns the ISO 8601 week number for [date].
+  int _isoWeek(DateTime date) {
+    final doy = date.difference(DateTime(date.year, 1, 1)).inDays + 1;
+    return ((doy - date.weekday + 10) / 7).floor();
   }
 
   Future<void> _fetchTags() async {
@@ -712,6 +829,35 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   void _showAddTodoDialog() {
     final locationController = TextEditingController(text: _locationName);
     bool showAdvanced = false;
+
+    // ── Autocomplete state ────────────────────────────────────────
+    List<String> suggestionHistory = [];
+    List<String> suggestions = [];
+    void Function(void Function())? capturedSetState;
+
+    void updateSuggestions() {
+      final text = _todoController.text.trim();
+      final matches = text.isEmpty
+          ? <String>[]
+          : suggestionHistory
+              .where((h) =>
+                  h.toLowerCase().contains(text.toLowerCase()) && h != text)
+              .take(5)
+              .toList();
+      capturedSetState?.call(() => suggestions = matches);
+    }
+
+    _todoController.addListener(updateSuggestions);
+
+    DatabaseHelper.instance.database.then((db) async {
+      final rows = await db.rawQuery(
+        'SELECT todoText FROM todo GROUP BY todoText ORDER BY MAX(createdAt) DESC LIMIT 200',
+      );
+      suggestionHistory = rows.map((r) => r['todoText'] as String).toList();
+      updateSuggestions();
+    });
+    // ─────────────────────────────────────────────────────────────
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -719,7 +865,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
+        builder: (context, setModalState) {
+          capturedSetState = setModalState;
+          return Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
             left: 16,
@@ -747,6 +895,32 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   ),
                   autofocus: true,
                 ),
+                // ── Autocomplete suggestions ──────────────────────
+                if (suggestions.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: suggestions.map((s) => Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ActionChip(
+                          label: Text(
+                            s,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                          onPressed: () {
+                            _todoController.text = s;
+                            _todoController.selection =
+                                TextSelection.collapsed(offset: s.length);
+                            setModalState(() => suggestions = []);
+                          },
+                        ),
+                      )).toList(),
+                    ),
+                  ),
+                ],
+                // ─────────────────────────────────────────────────
                 const SizedBox(height: 16),
                 Text(AppLocalizations.of(context)?.avoidTypeLabel ?? 'Avoid Type:',
                     style: const TextStyle(fontWeight: FontWeight.w500)),
@@ -1206,9 +1380,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               ],
             ),
           ),
-        ),
+          );  // closes return Padding
+        },    // closes builder block
       ),
-    );
+    ).whenComplete(() => _todoController.removeListener(updateSuggestions));
   }
 
   void _runFilter(String enteredKeyword) {
@@ -1625,6 +1800,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                               },
                               onDismissed: (_) async {
                                 final todo = _foundToDo[i];
+                                // Remove synchronously first so Flutter never
+                                // tries to rebuild a widget it already dismissed
+                                setState(() => _foundToDo.removeAt(i));
                                 await _archiveTodo(int.parse(todo.id!));
                                 if (mounted) {
                                   _showItemAvoidedSnackBar(todo);
@@ -2291,6 +2469,16 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   Future<void> _triggerRelapse(ToDo todo) async {
     final noteController = TextEditingController();
     final xpProvider = context.read<XpProvider>();
+    final isPlus = context.read<PurchaseProvider>().isPlus;
+
+    const causeOptions = [
+      'Stress',
+      'Boredom',
+      'Environment',
+      'Social pressure',
+      'Impulse',
+      'Other',
+    ];
 
     await showModalBottomSheet(
       context: context,
@@ -2298,124 +2486,331 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 16,
-          right: 16,
-          top: 16,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppLocalizations.of(context)?.relapseDialogTitle ??
-                    'Oh no! What triggered this?',
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                AppLocalizations.of(context)?.relapseDialogSubtitle ??
-                    'Logging your triggers helps you avoid them in the future.',
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: noteController,
-                decoration: InputDecoration(
-                  hintText: AppLocalizations.of(context)?.relapseDialogHint ??
-                      'Optional notes...',
-                  border: const OutlineInputBorder(),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 24),
-              Row(
+      builder: (sheetCtx) {
+        String? selectedCause;
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text(
-                          AppLocalizations.of(context)?.cancel ?? 'Cancel'),
-                    ),
+                  Text(
+                    AppLocalizations.of(ctx)?.relapseDialogTitle ??
+                        'Oh no! What triggered this?',
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final updatedTodo = todo.copyWith(
-                          lastRelapsedAt: DateTime.now(),
-                          relapseCount: todo.relapseCount + 1,
+                  const SizedBox(height: 8),
+                  Text(
+                    AppLocalizations.of(ctx)?.relapseDialogSubtitle ??
+                        'Logging your triggers helps you avoid them in the future.',
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  // Plus: quick-tap cause chips
+                  if (isPlus) ...[
+                    const SizedBox(height: 16),
+                    const Text(
+                      'What caused it?',
+                      style: TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: causeOptions.map((cause) {
+                        final selected = selectedCause == cause;
+                        return FilterChip(
+                          label: Text(cause,
+                              style: const TextStyle(fontSize: 12)),
+                          selected: selected,
+                          onSelected: (_) => setSheetState(() {
+                            selectedCause = selected ? null : cause;
+                          }),
+                          selectedColor: tdAvoidRed.withAlpha(30),
+                          checkmarkColor: tdAvoidRed,
+                          side: BorderSide(
+                            color: selected
+                                ? tdAvoidRed.withAlpha(150)
+                                : Colors.grey.withAlpha(80),
+                          ),
                         );
-                        await DatabaseHelper.instance.update(updatedTodo);
-
-                        final log = RelapseLog(
-                          todoId: todo.id!,
-                          triggerNote: noteController.text.isNotEmpty
-                              ? noteController.text
-                              : null,
-                        );
-                        await DatabaseHelper.instance.addRelapseLog(log);
-
-                        // XP: honesty award for logging the relapse
-                        await xpProvider.award(
-                            XpHelper.sourceRelapse, XpHelper.xpRelapse);
-                        // Bonus XP for including a trigger note
-                        if (log.triggerNote != null &&
-                            log.triggerNote!.isNotEmpty) {
-                          await xpProvider.award(XpHelper.sourceTriggerNote,
-                              XpHelper.xpTriggerNote);
-                        }
-
-                        _fetchTodos();
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(AppLocalizations.of(context)
-                                      ?.relapseSuccess ??
-                                  'Streak reset. Don\'t give up!'),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                          final tip = getTipForRelapse();
-                          if (tip != null && mounted) {
-                            final messenger = ScaffoldMessenger.of(
-                                this.context);
-                            Future.delayed(const Duration(seconds: 2), () {
-                              if (mounted) {
-                                messenger.showSnackBar(
-                                  SnackBar(
-                                    content: Text('💡 $tip'),
-                                    duration: const Duration(seconds: 6),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
-                            });
-                          }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: tdAvoidRed,
-                        foregroundColor: Colors.white,
+                      }).toList(),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: noteController,
+                    decoration: InputDecoration(
+                      hintText:
+                          AppLocalizations.of(ctx)?.relapseDialogHint ??
+                              'Optional notes...',
+                      border: const OutlineInputBorder(),
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text(
+                              AppLocalizations.of(ctx)?.cancel ?? 'Cancel'),
+                        ),
                       ),
-                      child: Text(
-                          AppLocalizations.of(context)?.confirmRelapse ??
-                              'Confirm Relapse'),
-                    ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            // Capture context-dependent values before any awaits
+                            final messenger = ScaffoldMessenger.of(context);
+                            final l10n = AppLocalizations.of(context);
+                            final updatedTodo = todo.copyWith(
+                              lastRelapsedAt: DateTime.now(),
+                              relapseCount: todo.relapseCount + 1,
+                            );
+                            await DatabaseHelper.instance.update(updatedTodo);
+
+                            final log = RelapseLog(
+                              todoId: todo.id!,
+                              triggerNote: noteController.text.isNotEmpty
+                                  ? noteController.text
+                                  : null,
+                              causeTag: selectedCause,
+                            );
+                            await DatabaseHelper.instance.addRelapseLog(log);
+
+                            // XP: honesty award for logging the relapse
+                            await xpProvider.award(
+                                XpHelper.sourceRelapse, XpHelper.xpRelapse);
+                            // Bonus XP for trigger note
+                            if (log.triggerNote != null &&
+                                log.triggerNote!.isNotEmpty) {
+                              await xpProvider.award(
+                                  XpHelper.sourceTriggerNote,
+                                  XpHelper.xpTriggerNote);
+                            }
+                            // Plus: +10 XP for tagging a cause chip
+                            if (isPlus && selectedCause != null) {
+                              await xpProvider.award(
+                                  XpHelper.sourceFollowUpCause,
+                                  XpHelper.xpFollowUpCause);
+                            }
+
+                            // Phase 2B: schedule next-morning follow-up (Plus)
+                            if (isPlus) {
+                              await NotificationHelper()
+                                  .scheduleRelapseFollowUp();
+                            }
+
+                            _fetchTodos();
+                            if (ctx.mounted && mounted) {
+                              Navigator.pop(ctx);
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      l10n?.relapseSuccess ??
+                                          'Streak reset. Don\'t give up!'),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                              final tip = getTipForRelapse();
+                              if (tip != null) {
+                                Future.delayed(const Duration(seconds: 2),
+                                    () {
+                                  if (mounted) {
+                                    messenger.showSnackBar(
+                                      SnackBar(
+                                        content: Text('💡 $tip'),
+                                        duration: const Duration(seconds: 6),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
+                                });
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: tdAvoidRed,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: Text(
+                              AppLocalizations.of(ctx)?.confirmRelapse ??
+                                  'Confirm Relapse'),
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 16),
                 ],
               ),
-              const SizedBox(height: 16),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  /// Shows the "What Worked?" milestone reflection bottom sheet (Plus only).
+  Future<void> _showWhatWorkedSheet(
+      String todoId, String todoText, int milestoneDays) async {
+    if (!mounted) return;
+    final xpProvider = context.read<XpProvider>();
+    final noteController = TextEditingController();
+
+    const chipOptions = [
+      'Kept busy',
+      'Avoided triggers',
+      'Told someone',
+      'Distracted myself',
+      'Remembered my why',
+      'Other',
+    ];
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetCtx) {
+        String? selectedChip;
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+              left: 20,
+              right: 20,
+              top: 24,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Celebration header
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('🎉', style: TextStyle(fontSize: 36)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _milestoneCelebTitle(milestoneDays),
+                              style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              '$milestoneDays days avoiding "$todoText"',
+                              style: const TextStyle(
+                                  fontSize: 13, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'What helped you stay strong?',
+                    style: TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Optional — helps track what works for you.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: chipOptions.map((chip) {
+                      final selected = selectedChip == chip;
+                      return FilterChip(
+                        label: Text(chip,
+                            style: const TextStyle(fontSize: 13)),
+                        selected: selected,
+                        onSelected: (_) => setSheetState(() {
+                          selectedChip = selected ? null : chip;
+                        }),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: noteController,
+                    decoration: const InputDecoration(
+                      hintText: 'Add a note... (optional)',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Skip'),
+                      ),
+                      const Spacer(),
+                      FilledButton(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          await DatabaseHelper.instance
+                              .addMilestoneReflection(
+                            todoId: todoId,
+                            milestoneDays: milestoneDays,
+                            chipTag: selectedChip,
+                            note: noteController.text.isNotEmpty
+                                ? noteController.text
+                                : null,
+                          );
+                          await xpProvider.award(
+                            XpHelper.sourceWhatWorked,
+                            XpHelper.xpWhatWorked,
+                          );
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('+10 XP — Keep going! 💪'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                        child:
+                            const Text('Share & earn +10 XP'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _milestoneCelebTitle(int days) {
+    if (days >= 90) return 'Quarter Year! 🏆';
+    if (days >= 30) return 'Iron Month! 🛡️';
+    return '7-Day Streak! ⚡';
   }
 
   Widget _buildShimmerList(bool isDark) {
@@ -2684,7 +3079,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                 GestureDetector(
                   onTap: () {
                     if (goal.id != null) {
-                      context.read<GoalProvider>().removeGoal(goal.id!);
+                      context.read<GoalProvider>().removeGoal(goal.id!, isPlus: isPlus);
                     }
                   },
                   child: Icon(Icons.close, size: 14,
@@ -3188,6 +3583,158 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               }
             },
           ),
+          // Home Screen Widget toggle (Plus-gated, always visible)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: Text(
+              'Widget',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ),
+          Builder(builder: (context) {
+            final isPlus = context.read<PurchaseProvider>().isPlus;
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SwitchListTile(
+                  secondary: Icon(
+                    Icons.widgets_outlined,
+                    color: isPlus ? null : Colors.grey,
+                  ),
+                  title: Row(
+                    children: [
+                      const Text('Home Screen Widget'),
+                      if (!isPlus) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade700,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text('Plus',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ],
+                  ),
+                  subtitle: Text(
+                    'Shows your top streak on the home screen',
+                    style: TextStyle(color: isPlus ? null : Colors.grey),
+                  ),
+                  value: isPlus && _widgetEnabled,
+                  onChanged: isPlus
+                      ? (val) async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('widget_enabled', val);
+                          setState(() => _widgetEnabled = val);
+                          if (val) {
+                            final active = todosList
+                                .where((t) => !t.isArchived && t.isRecurring)
+                                .toList();
+                            await HomeWidgetHelper.update(active);
+                          }
+                        }
+                      : (_) => _showPlusDialog(context,
+                          subtitle:
+                              'Home screen widget is a Plus feature.'),
+                ),
+                if (isPlus && _widgetEnabled)
+                  ListTile(
+                    leading: const Icon(Icons.add_to_home_screen),
+                    title: const Text('Add widget to home screen'),
+                    subtitle: const Text('Instructions & quick-add button'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const WidgetSetupScreen(),
+                        ),
+                      );
+                    },
+                  ),
+              ],
+            );
+          }),
+          // Cloud Sync toggle (Plus-gated, always visible)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: Text(
+              'Cloud Sync',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ),
+          Builder(builder: (context) {
+            final isPlus = context.read<PurchaseProvider>().isPlus;
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SwitchListTile(
+                  secondary: Icon(
+                    Icons.cloud_sync_outlined,
+                    color: isPlus ? null : Colors.grey,
+                  ),
+                  title: Row(
+                    children: [
+                      const Text('Cloud Sync'),
+                      if (!isPlus) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade700,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text('Plus',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ],
+                  ),
+                  subtitle: Text(
+                    'Auto-backup to iCloud / Google Drive',
+                    style: TextStyle(color: isPlus ? null : Colors.grey),
+                  ),
+                  value: isPlus && _syncEnabled,
+                  onChanged: isPlus
+                      ? (val) async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('sync_enabled', val);
+                          setState(() => _syncEnabled = val);
+                          if (val) {
+                            await SyncHelper.uploadIfNeeded();
+                          }
+                        }
+                      : (_) => _showPlusDialog(context,
+                          subtitle:
+                              'Cloud sync is a Plus feature.'),
+                ),
+                if (isPlus && _syncEnabled)
+                  ListTile(
+                    leading: const Icon(Icons.manage_history_outlined),
+                    title: const Text('Manage sync'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const SyncScreen()),
+                      );
+                    },
+                  ),
+              ],
+            );
+          }),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.help_outline),

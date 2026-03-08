@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../helpers/database_helper.dart';
 import '../helpers/goal_helper.dart';
 import '../model/goal.dart';
@@ -13,10 +14,13 @@ class GoalProvider extends ChangeNotifier {
   // Load + auto-preset creation
   // ─────────────────────────────────────────────────────────────
 
+  static const _kPresetDismissedKey = 'preset_goal_dismissed_by_plus';
+
   /// Loads active goals from the DB.
   ///
-  /// For free-tier users ([isPlus] == false), auto-creates a streak preset
-  /// goal on the most-challenged habit if none exists yet.
+  /// Auto-creates a streak preset goal on the most-challenged habit if none
+  /// exists yet. For Plus users the preset is skipped if they previously
+  /// dismissed it (stored in SharedPreferences).
   ///
   /// Returns the list of goals that were newly completed this call, so the
   /// caller can award XP and show celebration feedback.
@@ -25,13 +29,17 @@ class GoalProvider extends ChangeNotifier {
     required double monthlySavings,
     required bool isPlus,
   }) async {
-    // Auto-create preset for free user if needed
-    if (!isPlus) {
-      final hasPreset = await DatabaseHelper.instance.hasActivePresetGoal();
-      if (!hasPreset) {
+    // Auto-create preset goal if none is active, unless a Plus user dismissed it
+    final hasPreset = await DatabaseHelper.instance.hasActivePresetGoal();
+    if (!hasPreset) {
+      bool skip = false;
+      if (isPlus) {
+        final prefs = await SharedPreferences.getInstance();
+        skip = prefs.getBool(_kPresetDismissedKey) ?? false;
+      }
+      if (!skip) {
         final preset = GoalHelper.buildPresetGoal(activeTodos);
         if (preset != null) {
-          // Don't capture the id — the subsequent query below will include it
           await DatabaseHelper.instance.createGoal(preset);
         }
       }
@@ -76,7 +84,17 @@ class GoalProvider extends ChangeNotifier {
   }
 
   /// Removes a goal entirely (user dismisses it).
-  Future<void> removeGoal(int goalId) async {
+  ///
+  /// If the removed goal is a preset and the user is Plus, records that they
+  /// intentionally dismissed it so it isn't recreated on the next load.
+  Future<void> removeGoal(int goalId, {bool isPlus = false}) async {
+    if (isPlus) {
+      final goal = _goals.where((g) => g.id == goalId).firstOrNull;
+      if (goal?.isPreset == true) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool(_kPresetDismissedKey, true);
+      }
+    }
     await DatabaseHelper.instance.deleteGoal(goalId);
     _goals = _goals.where((g) => g.id != goalId).toList();
     notifyListeners();

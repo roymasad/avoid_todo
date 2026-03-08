@@ -13,6 +13,9 @@ class XpHelper {
   static const int xpMilestone7d = 50;
   static const int xpMilestone30d = 100;
   static const int xpMilestone90d = 200;
+  static const int xpFollowUpCause = 10; // Plus: relapse cause chip tagged
+  static const int xpWhatWorked = 10; // Plus: "What worked" reflection filled
+  static const int xpDailyCommit = 20; // Plus: daily commitment per habit
 
   // ─────────────────────────────────────────────────────────────
   // XP event source keys (stored in xp_events.source column)
@@ -25,6 +28,9 @@ class XpHelper {
   static const String sourceMilestone7d = 'streak_7d';
   static const String sourceMilestone30d = 'streak_30d';
   static const String sourceMilestone90d = 'streak_90d';
+  static const String sourceFollowUpCause = 'follow_up_cause';
+  static const String sourceWhatWorked = 'what_worked_reflection';
+  static const String sourceDailyCommit = 'daily_commit';
 
   // ─────────────────────────────────────────────────────────────
   // Level definitions

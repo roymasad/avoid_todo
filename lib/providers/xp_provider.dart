@@ -77,15 +77,20 @@ class XpProvider extends ChangeNotifier {
   /// Checks every todo's current streak and awards milestone XP (7d / 30d /
   /// 90d) at most once per todo+milestone using a composite source key.
   ///
+  /// Returns a list of newly unlocked milestones: each map contains
+  /// `todoId` (String), `todoText` (String), and `milestoneDay` (int).
+  ///
   /// [todos] should be the raw map list from the DB (must include 'id',
-  /// 'createdAt', 'lastRelapsedAt', 'isArchived').
-  Future<void> awardStreakMilestonesIfNeeded(
+  /// 'todoText', 'createdAt', 'lastRelapsedAt', 'isArchived').
+  Future<List<Map<String, dynamic>>> awardStreakMilestonesIfNeeded(
       List<Map<String, dynamic>> todos) async {
     const milestones = [
       (7, XpHelper.sourceMilestone7d, XpHelper.xpMilestone7d),
       (30, XpHelper.sourceMilestone30d, XpHelper.xpMilestone30d),
       (90, XpHelper.sourceMilestone90d, XpHelper.xpMilestone90d),
     ];
+
+    final newMilestones = <Map<String, dynamic>>[];
 
     for (final todo in todos) {
       // Only active (non-archived) habits carry a live streak
@@ -108,9 +113,16 @@ class XpProvider extends ChangeNotifier {
           final already = await DatabaseHelper.instance.hasXpSourceKey(key);
           if (!already) {
             await award(key, amount);
+            newMilestones.add({
+              'todoId': id,
+              'todoText': todo['todoText'] as String? ?? '',
+              'milestoneDay': threshold,
+            });
           }
         }
       }
     }
+
+    return newMilestones;
   }
 }

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">Avoid Widget</string>
+    <string name="widget_description">Shows your longest streak-free habit</string>
+</resources>

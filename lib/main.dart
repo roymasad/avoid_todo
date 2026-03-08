@@ -14,9 +14,13 @@ import './constants/themes.dart';
 import './screens/onboarding_screen.dart';
 import 'package:avoid_todo/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:home_widget/home_widget.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Required for iOS widget to share data via App Group
+  HomeWidget.setAppGroupId('group.com.roymassaad.avoid_todo');
 
   await PurchaseHelper.init();
 
@@ -37,17 +41,47 @@ void main() async {
   }
 
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        ChangeNotifierProvider(create: (_) => PurchaseProvider()),
-        ChangeNotifierProvider(create: (_) => XpProvider()),
-        ChangeNotifierProvider(create: (_) => GoalProvider()),
-      ],
-      child: MyApp(hasSeenOnboarding: hasSeenOnboarding),
+    RestartWidget(
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(create: (_) => LocaleProvider()),
+          ChangeNotifierProvider(create: (_) => PurchaseProvider()),
+          ChangeNotifierProvider(create: (_) => XpProvider()),
+          ChangeNotifierProvider(create: (_) => GoalProvider()),
+        ],
+        child: MyApp(hasSeenOnboarding: hasSeenOnboarding),
+      ),
     ),
   );
+}
+
+/// Wraps the entire app so any descendant can trigger a full widget-tree
+/// rebuild (soft restart) by calling [RestartWidget.restartApp].
+/// Used after a DB restore so all providers reload from the new database.
+class RestartWidget extends StatefulWidget {
+  final Widget child;
+  const RestartWidget({super.key, required this.child});
+
+  static void restartApp(BuildContext context) {
+    context.findAncestorStateOfType<_RestartWidgetState>()?.restartApp();
+  }
+
+  @override
+  State<RestartWidget> createState() => _RestartWidgetState();
+}
+
+class _RestartWidgetState extends State<RestartWidget> {
+  Key _key = UniqueKey();
+
+  void restartApp() {
+    setState(() => _key = UniqueKey());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return KeyedSubtree(key: _key, child: widget.child);
+  }
 }
 
 class MyApp extends StatelessWidget {

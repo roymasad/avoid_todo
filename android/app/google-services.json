@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "937280087219",
+    "project_id": "avoid-todo",
+    "storage_bucket": "avoid-todo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:937280087219:android:cf899f5c1c2b33c290fcc6",
+        "android_client_info": {
+          "package_name": "com.roymassaad.avoid_todo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCt3M7P5Pnil2X6-Acgs3LqZz7Lmx9IZwo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

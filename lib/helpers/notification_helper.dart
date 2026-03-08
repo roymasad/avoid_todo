@@ -251,4 +251,106 @@ class NotificationHelper {
   Future<void> cancelAllNotifications() async {
     await flutterLocalNotificationsPlugin.cancelAll();
   }
+
+  // ─────────────────────────────────────────────────────────────
+  // Phase 2A: Pattern-based "heads up" reminder (Plus)
+  // ─────────────────────────────────────────────────────────────
+
+  /// Schedules a weekly 10 PM notification the night BEFORE [riskDayOfWeek]
+  /// (DateTime.weekday format: 1=Mon … 7=Sun).
+  ///
+  /// Repeats every week via [DateTimeComponents.dayOfWeekAndTime].
+  Future<void> schedulePatternReminder(int riskDayOfWeek) async {
+    const dayNames = [
+      '', 'Monday', 'Tuesday', 'Wednesday', 'Thursday',
+      'Friday', 'Saturday', 'Sunday',
+    ];
+    final riskDayName = dayNames[riskDayOfWeek.clamp(1, 7)];
+
+    const details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'pattern_reminder',
+        'Pattern Reminder',
+        channelDescription:
+            'Heads-up the night before your highest-risk day',
+        importance: Importance.defaultImportance,
+        priority: Priority.defaultPriority,
+      ),
+      iOS: DarwinNotificationDetails(),
+    );
+
+    // Schedule for the night BEFORE the risk day at 10 PM
+    final schedulingWeekday =
+        riskDayOfWeek == 1 ? 7 : riskDayOfWeek - 1;
+    final now = tz.TZDateTime.now(tz.local);
+
+    int daysUntil = (schedulingWeekday - now.weekday) % 7;
+    // If today IS that weekday, check whether 10 PM has passed
+    if (daysUntil == 0) {
+      final today10pm = tz.TZDateTime(
+          tz.local, now.year, now.month, now.day, 22);
+      if (today10pm.isBefore(now)) daysUntil = 7;
+    }
+
+    final scheduledDate = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day + daysUntil,
+      22,
+    );
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      id: 2001,
+      title: '⚠️ Heads up for tomorrow',
+      body:
+          'You tend to find $riskDayName tough. Stay strong tonight!',
+      scheduledDate: scheduledDate,
+      notificationDetails: details,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+    );
+  }
+
+  Future<void> cancelPatternReminder() async {
+    await flutterLocalNotificationsPlugin.cancel(id: 2001);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Phase 2B: Next-day relapse follow-up notification (Plus)
+  // ─────────────────────────────────────────────────────────────
+
+  /// Schedules a one-off 9 AM notification the next morning after a relapse.
+  Future<void> scheduleRelapseFollowUp() async {
+    const details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'relapse_followup',
+        'Relapse Follow-up',
+        channelDescription: 'Morning check-in after logging a relapse',
+        importance: Importance.defaultImportance,
+        priority: Priority.defaultPriority,
+      ),
+      iOS: DarwinNotificationDetails(),
+    );
+
+    final now = tz.TZDateTime.now(tz.local);
+    final tomorrow9am = tz.TZDateTime(
+        tz.local, now.year, now.month, now.day + 1, 9);
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      id: 2000,
+      title: "Yesterday was tough — how are you doing today?",
+      body: 'Check in with yourself and keep going. One day at a time.',
+      scheduledDate: tomorrow9am,
+      notificationDetails: details,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      // No matchDateTimeComponents → fires only once
+    );
+  }
+
+  /// Cancels any pending relapse follow-up (e.g. if the user opens the app
+  /// before 9 AM the next day).
+  Future<void> cancelRelapseFollowUp() async {
+    await flutterLocalNotificationsPlugin.cancel(id: 2000);
+  }
 }
