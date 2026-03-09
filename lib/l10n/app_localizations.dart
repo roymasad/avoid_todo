@@ -98,883 +98,979 @@ abstract class AppLocalizations {
     Locale('fr')
   ];
 
-  /// No description provided for @appTitle.
+  /// The app name.
   ///
   /// In en, this message translates to:
   /// **'Avoid Things Todo'**
   String get appTitle;
 
-  /// No description provided for @appTagline.
+  /// App tagline shown on onboarding.
   ///
   /// In en, this message translates to:
   /// **'Stay productive by avoiding!'**
   String get appTagline;
 
-  /// No description provided for @language.
+  /// Label for language selector.
   ///
   /// In en, this message translates to:
   /// **'Language'**
   String get language;
 
-  /// No description provided for @addThingToAvoid.
+  /// Button to add a new habit.
   ///
   /// In en, this message translates to:
   /// **'Add Thing to Avoid'**
   String get addThingToAvoid;
 
-  /// No description provided for @whatToAvoid.
+  /// Input hint in add-habit dialog.
   ///
   /// In en, this message translates to:
   /// **'What do you need to avoid?'**
   String get whatToAvoid;
 
-  /// No description provided for @category.
+  /// Label for category field.
   ///
   /// In en, this message translates to:
   /// **'Category'**
   String get category;
 
-  /// No description provided for @priority.
+  /// Label for priority field.
   ///
   /// In en, this message translates to:
   /// **'Priority'**
   String get priority;
 
-  /// No description provided for @addToAvoidList.
+  /// Confirm button in add-habit dialog.
   ///
   /// In en, this message translates to:
   /// **'Add to Avoid List'**
   String get addToAvoidList;
 
-  /// No description provided for @cancel.
+  /// Generic cancel button.
   ///
   /// In en, this message translates to:
   /// **'Cancel'**
   String get cancel;
 
-  /// No description provided for @save.
+  /// Generic save button.
   ///
   /// In en, this message translates to:
   /// **'Save'**
   String get save;
 
-  /// No description provided for @editItem.
+  /// Title of edit dialog.
   ///
   /// In en, this message translates to:
   /// **'Edit Item'**
   String get editItem;
 
-  /// No description provided for @search.
+  /// Search bar hint.
   ///
   /// In en, this message translates to:
   /// **'Search'**
   String get search;
 
-  /// No description provided for @noItemsYet.
+  /// Empty state message on home screen.
   ///
   /// In en, this message translates to:
   /// **'No items to avoid yet'**
   String get noItemsYet;
 
-  /// No description provided for @archive.
+  /// Archive screen label.
   ///
   /// In en, this message translates to:
   /// **'Archive'**
   String get archive;
 
-  /// No description provided for @statistics.
+  /// Statistics screen label.
   ///
   /// In en, this message translates to:
   /// **'Statistics'**
   String get statistics;
 
-  /// No description provided for @menu.
+  /// Menu label.
   ///
   /// In en, this message translates to:
   /// **'Menu'**
   String get menu;
 
-  /// No description provided for @about.
+  /// About menu item.
   ///
   /// In en, this message translates to:
   /// **'About'**
   String get about;
 
-  /// No description provided for @aboutDescription.
+  /// Short app description shown in About dialog.
   ///
   /// In en, this message translates to:
   /// **'Never forget what you need to avoid anymore.'**
   String get aboutDescription;
 
-  /// No description provided for @close.
+  /// Generic close button.
   ///
   /// In en, this message translates to:
   /// **'Close'**
   String get close;
 
-  /// No description provided for @theme.
+  /// Theme selector label.
   ///
   /// In en, this message translates to:
   /// **'Theme'**
   String get theme;
 
-  /// No description provided for @system.
+  /// System theme option.
   ///
   /// In en, this message translates to:
   /// **'System'**
   String get system;
 
-  /// No description provided for @light.
+  /// Light theme option.
   ///
   /// In en, this message translates to:
   /// **'Light'**
   String get light;
 
-  /// No description provided for @dark.
+  /// Dark theme option.
   ///
   /// In en, this message translates to:
   /// **'Dark'**
   String get dark;
 
-  /// No description provided for @noArchivedItems.
+  /// Empty state in archive screen.
   ///
   /// In en, this message translates to:
   /// **'No archived items yet'**
   String get noArchivedItems;
 
-  /// No description provided for @avoidedOn.
+  /// Label showing date item was archived.
   ///
   /// In en, this message translates to:
   /// **'Avoided on'**
   String get avoidedOn;
 
-  /// No description provided for @restore.
+  /// Restore archived item button.
   ///
   /// In en, this message translates to:
   /// **'Restore'**
   String get restore;
 
-  /// No description provided for @deletePermanently.
+  /// Permanent delete button.
   ///
   /// In en, this message translates to:
   /// **'Delete Permanently'**
   String get deletePermanently;
 
-  /// No description provided for @deleteConfirmation.
+  /// Confirmation message before permanent delete.
   ///
   /// In en, this message translates to:
   /// **'This action cannot be undone. Are you sure?'**
   String get deleteConfirmation;
 
-  /// No description provided for @delete.
+  /// Generic delete button.
   ///
   /// In en, this message translates to:
   /// **'Delete'**
   String get delete;
 
-  /// No description provided for @weeklyActivity.
+  /// Stats section title.
   ///
   /// In en, this message translates to:
   /// **'Weekly Activity'**
   String get weeklyActivity;
 
-  /// No description provided for @byCategory.
+  /// Stats section title.
   ///
   /// In en, this message translates to:
   /// **'By Category'**
   String get byCategory;
 
-  /// No description provided for @mostAvoided.
+  /// Stats section title.
   ///
   /// In en, this message translates to:
   /// **'Most Avoided'**
   String get mostAvoided;
 
-  /// No description provided for @times.
+  /// Unit suffix for count of avoidances.
   ///
   /// In en, this message translates to:
   /// **'times'**
   String get times;
 
-  /// No description provided for @avoided.
+  /// Stats label for avoided count.
   ///
   /// In en, this message translates to:
   /// **'Avoided'**
   String get avoided;
 
-  /// No description provided for @active.
+  /// Label for active habits count.
   ///
   /// In en, this message translates to:
   /// **'Active'**
   String get active;
 
-  /// No description provided for @swipeToAvoid.
+  /// Swipe hint shown on home screen.
   ///
   /// In en, this message translates to:
   /// **'Swipe right to mark as avoided!'**
   String get swipeToAvoid;
 
-  /// No description provided for @itemRestored.
+  /// Toast shown after restoring an item.
   ///
   /// In en, this message translates to:
   /// **'Item restored to active list'**
   String get itemRestored;
 
-  /// No description provided for @itemAvoided.
+  /// Suffix in toast after marking item avoided.
   ///
   /// In en, this message translates to:
   /// **'avoided!'**
   String get itemAvoided;
 
-  /// No description provided for @undo.
+  /// Undo action in snackbar.
   ///
   /// In en, this message translates to:
   /// **'Undo'**
   String get undo;
 
-  /// No description provided for @health.
+  /// Health category label.
   ///
   /// In en, this message translates to:
   /// **'Health'**
   String get health;
 
-  /// No description provided for @productivity.
+  /// Productivity category label.
   ///
   /// In en, this message translates to:
   /// **'Productivity'**
   String get productivity;
 
-  /// No description provided for @social.
+  /// Social category label.
   ///
   /// In en, this message translates to:
   /// **'Social'**
   String get social;
 
-  /// No description provided for @other.
+  /// Other category label.
   ///
   /// In en, this message translates to:
   /// **'Other'**
   String get other;
 
-  /// No description provided for @high.
+  /// High priority label.
   ///
   /// In en, this message translates to:
   /// **'High'**
   String get high;
 
-  /// No description provided for @medium.
+  /// Medium priority label.
   ///
   /// In en, this message translates to:
   /// **'Medium'**
   String get medium;
 
-  /// No description provided for @low.
+  /// Low priority label.
   ///
   /// In en, this message translates to:
   /// **'Low'**
   String get low;
 
-  /// No description provided for @english.
+  /// English language option.
   ///
   /// In en, this message translates to:
   /// **'English'**
   String get english;
 
-  /// No description provided for @french.
+  /// French language option.
   ///
   /// In en, this message translates to:
   /// **'Français'**
   String get french;
 
-  /// No description provided for @avoidedLabel.
+  /// Badge shown on avoided items.
   ///
   /// In en, this message translates to:
   /// **'Avoided!'**
   String get avoidedLabel;
 
-  /// No description provided for @totalAvoided.
+  /// Stats label for total avoidances.
   ///
   /// In en, this message translates to:
   /// **'Total Avoided'**
   String get totalAvoided;
 
-  /// No description provided for @byPriority.
+  /// Stats section title.
   ///
   /// In en, this message translates to:
   /// **'By Priority'**
   String get byPriority;
 
-  /// No description provided for @moneySaved.
+  /// Stats label for money saved.
   ///
   /// In en, this message translates to:
   /// **'Money Saved'**
   String get moneySaved;
 
-  /// No description provided for @tags.
+  /// Tags section label.
   ///
   /// In en, this message translates to:
   /// **'Tags'**
   String get tags;
 
-  /// No description provided for @newTag.
+  /// Button to create a new tag.
   ///
   /// In en, this message translates to:
   /// **'New Tag'**
   String get newTag;
 
-  /// No description provided for @tagName.
+  /// Input hint for tag name.
   ///
   /// In en, this message translates to:
   /// **'Tag name'**
   String get tagName;
 
-  /// No description provided for @create.
+  /// Generic create button.
   ///
   /// In en, this message translates to:
   /// **'Create'**
   String get create;
 
-  /// No description provided for @relapseTrigger.
+  /// Label for relapse trigger field.
   ///
   /// In en, this message translates to:
   /// **'Relapse Trigger'**
   String get relapseTrigger;
 
-  /// No description provided for @triggerNote.
+  /// Label for trigger note field.
   ///
   /// In en, this message translates to:
   /// **'Trigger Note'**
   String get triggerNote;
 
-  /// No description provided for @badges.
+  /// Badges section title.
   ///
   /// In en, this message translates to:
   /// **'Badges & Milestones'**
   String get badges;
 
-  /// No description provided for @badge24hTitle.
+  /// Title of 24h badge.
   ///
   /// In en, this message translates to:
   /// **'24h Freedom'**
   String get badge24hTitle;
 
-  /// No description provided for @badge24hDesc.
+  /// Description of 24h badge.
   ///
   /// In en, this message translates to:
   /// **'Stayed clean for 24 hours'**
   String get badge24hDesc;
 
-  /// No description provided for @badge7dTitle.
+  /// Title of 7-day badge.
   ///
   /// In en, this message translates to:
   /// **'7 Day Warrior'**
   String get badge7dTitle;
 
-  /// No description provided for @badge7dDesc.
+  /// Description of 7-day badge.
   ///
   /// In en, this message translates to:
   /// **'Stayed clean for 7 days'**
   String get badge7dDesc;
 
-  /// No description provided for @badgeBudgetTitle.
+  /// Title of budget saver badge.
   ///
   /// In en, this message translates to:
   /// **'Budget Saver'**
   String get badgeBudgetTitle;
 
-  /// No description provided for @badgeBudgetDesc.
+  /// Description of budget saver badge.
   ///
   /// In en, this message translates to:
   /// **'Saved over \$50'**
   String get badgeBudgetDesc;
 
-  /// No description provided for @badgeMegaTitle.
+  /// Title of mega saver badge.
   ///
   /// In en, this message translates to:
   /// **'Mega Saver'**
   String get badgeMegaTitle;
 
-  /// No description provided for @badgeMegaDesc.
+  /// Description of mega saver badge.
   ///
   /// In en, this message translates to:
   /// **'Saved over \$200'**
   String get badgeMegaDesc;
 
-  /// No description provided for @badgeConsistencyTitle.
+  /// Title of consistency badge.
   ///
   /// In en, this message translates to:
   /// **'Consistency'**
   String get badgeConsistencyTitle;
 
-  /// No description provided for @badgeConsistencyDesc.
+  /// Description of consistency badge.
   ///
   /// In en, this message translates to:
   /// **'5+ active habits'**
   String get badgeConsistencyDesc;
 
-  /// No description provided for @locked.
+  /// Label for locked badge.
   ///
   /// In en, this message translates to:
   /// **'Locked'**
   String get locked;
 
-  /// No description provided for @unlocked.
+  /// Label for unlocked badge.
   ///
   /// In en, this message translates to:
   /// **'Unlocked'**
   String get unlocked;
 
-  /// No description provided for @byTag.
+  /// Stats section title.
   ///
   /// In en, this message translates to:
   /// **'By Tag'**
   String get byTag;
 
-  /// No description provided for @isRecurring.
+  /// Toggle label for recurring habit.
   ///
   /// In en, this message translates to:
   /// **'Is this a recurring habit?'**
   String get isRecurring;
 
-  /// No description provided for @eventDate.
+  /// Label for one-time event date.
   ///
   /// In en, this message translates to:
   /// **'Event Date'**
   String get eventDate;
 
-  /// No description provided for @selectDate.
+  /// Button to pick a date.
   ///
   /// In en, this message translates to:
   /// **'Select Date'**
   String get selectDate;
 
-  /// No description provided for @estimatedCostLabel.
+  /// Label for cost input field.
   ///
   /// In en, this message translates to:
   /// **'Estimated Cost per Relapse/Duration'**
   String get estimatedCostLabel;
 
-  /// No description provided for @relapseDialogTitle.
+  /// Title of relapse dialog.
   ///
   /// In en, this message translates to:
   /// **'Oh no! What triggered this?'**
   String get relapseDialogTitle;
 
-  /// No description provided for @relapseDialogSubtitle.
+  /// Subtitle of relapse dialog.
   ///
   /// In en, this message translates to:
   /// **'Logging your triggers helps you avoid them in the future.'**
   String get relapseDialogSubtitle;
 
-  /// No description provided for @relapseDialogHint.
+  /// Hint in relapse notes field.
   ///
   /// In en, this message translates to:
   /// **'Optional notes...'**
   String get relapseDialogHint;
 
-  /// No description provided for @confirmRelapse.
+  /// Confirm button in relapse dialog.
   ///
   /// In en, this message translates to:
   /// **'Confirm Relapse'**
   String get confirmRelapse;
 
-  /// No description provided for @relapseSuccess.
+  /// Toast shown after logging a relapse.
   ///
   /// In en, this message translates to:
   /// **'Streak reset. Don\'t give up!'**
   String get relapseSuccess;
 
-  /// No description provided for @onboardingWelcomeTitle.
+  /// Onboarding slide 1 title.
   ///
   /// In en, this message translates to:
-  /// **'Welcome to Avoid ToDo'**
+  /// **'Stop the Habits Holding You Back'**
   String get onboardingWelcomeTitle;
 
-  /// No description provided for @onboardingWelcomeDesc.
+  /// Onboarding slide 1 description.
   ///
   /// In en, this message translates to:
-  /// **'A different kind of productivity app. Focus on what you should STOP doing to live a better life.'**
+  /// **'Most apps track what to DO. Avoid tracks what to STOP — the habits, urges, and patterns getting in your way. Add what you want to quit, log when you slip, and build streaks that matter.'**
   String get onboardingWelcomeDesc;
 
-  /// No description provided for @onboardingTagsTitle.
+  /// Onboarding slide 2 title.
   ///
   /// In en, this message translates to:
   /// **'Organize with Tags'**
   String get onboardingTagsTitle;
 
-  /// No description provided for @onboardingTagsDesc.
+  /// Onboarding slide 2 description.
   ///
   /// In en, this message translates to:
-  /// **'Create custom categories to track different areas of your life like Health, Work, or Social habits.'**
+  /// **'Group habits by area of life — Health, Work, Social. See at a glance which part of your life needs the most attention right now.'**
   String get onboardingTagsDesc;
 
-  /// No description provided for @onboardingMoneyTitle.
+  /// Onboarding slide 3 title.
   ///
   /// In en, this message translates to:
-  /// **'Track Your Savings'**
+  /// **'Every Slip Has a Cost'**
   String get onboardingMoneyTitle;
 
-  /// No description provided for @onboardingMoneyDesc.
+  /// Onboarding slide 3 description.
   ///
   /// In en, this message translates to:
-  /// **'See the real financial impact of your habits. Every avoided relapse is money in your pocket!'**
+  /// **'Set an estimated cost per slip (e.g. a cigarette pack, a takeout meal). Avoid multiplies it by your streak to show you the real money you\'ve saved.'**
   String get onboardingMoneyDesc;
 
-  /// No description provided for @onboardingRelapseTitle.
+  /// Onboarding slide 4 title.
   ///
   /// In en, this message translates to:
-  /// **'Understand Your Triggers'**
+  /// **'Slipped? That\'s OK — Log It'**
   String get onboardingRelapseTitle;
 
-  /// No description provided for @onboardingRelapseDesc.
+  /// Onboarding slide 4 description.
   ///
   /// In en, this message translates to:
-  /// **'Log relapses and notes to identify what causes them. Knowledge is power in breaking habits.'**
+  /// **'Tap Slip to record what triggered you. Over time, Avoid spots your patterns so you can get ahead of them. No judgment, just awareness.'**
   String get onboardingRelapseDesc;
 
-  /// No description provided for @onboardingBadgesTitle.
+  /// Onboarding slide 5 title.
   ///
   /// In en, this message translates to:
-  /// **'Earn Achievement Badges'**
+  /// **'Earn Rewards Along the Way'**
   String get onboardingBadgesTitle;
 
-  /// No description provided for @onboardingBadgesDesc.
+  /// Onboarding slide 5 description.
   ///
   /// In en, this message translates to:
-  /// **'Stay motivated with milestones for long streaks and significant savings. You\'ve got this!'**
+  /// **'Unlock badges for streaks and savings milestones. Complete goals, earn XP, and level up through 50 tiers as your habits get stronger.'**
   String get onboardingBadgesDesc;
 
-  /// No description provided for @getStarted.
+  /// Button on last onboarding slide.
   ///
   /// In en, this message translates to:
   /// **'Get Started'**
   String get getStarted;
 
-  /// No description provided for @next.
+  /// Next button on onboarding slides.
   ///
   /// In en, this message translates to:
   /// **'Next'**
   String get next;
 
-  /// No description provided for @skip.
+  /// Skip button on onboarding slides.
   ///
   /// In en, this message translates to:
   /// **'Skip'**
   String get skip;
 
-  /// No description provided for @help.
+  /// Help menu item label.
   ///
   /// In en, this message translates to:
   /// **'Help & Guide'**
   String get help;
 
-  /// No description provided for @helpTitle.
+  /// Title of the help screen.
   ///
   /// In en, this message translates to:
   /// **'App Guide & FAQ'**
   String get helpTitle;
 
-  /// No description provided for @faq1Question.
+  /// Help screen intro section title.
+  ///
+  /// In en, this message translates to:
+  /// **'What is Avoid?'**
+  String get helpWhatIsAvoidTitle;
+
+  /// Help screen intro section description.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid helps you break bad habits by tracking what you want to STOP doing. Add a habit, log when you slip, and note what triggered you. Over time you\'ll spot your patterns, build long streaks, and see the real impact — in money, mood, or time — of staying clean.'**
+  String get helpWhatIsAvoidDesc;
+
+  /// FAQ 1 question.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I add something to avoid?'**
+  String get faq1Question;
+
+  /// FAQ 1 answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the + button at the bottom right. You can add a recurring habit (like smoking or junk food), a one-time event (like skipping a party), a person to avoid, or even a location. Set an optional cost and reminder to keep yourself accountable.'**
+  String get faq1Answer;
+
+  /// FAQ 2 question.
+  ///
+  /// In en, this message translates to:
+  /// **'What is a slip and how do I log one?'**
+  String get faq2Question;
+
+  /// FAQ 2 answer.
+  ///
+  /// In en, this message translates to:
+  /// **'A slip (relapse) is when you give in to something you\'re trying to avoid. Tap the red Slip button on any habit card. You can add a quick note about what triggered you — this builds your trigger history and helps you spot patterns over time.'**
+  String get faq2Answer;
+
+  /// FAQ 3 question.
   ///
   /// In en, this message translates to:
   /// **'How are streaks calculated?'**
-  String get faq1Question;
-
-  /// No description provided for @faq1Answer.
-  ///
-  /// In en, this message translates to:
-  /// **'Streaks for recurring habits start from your last completion or relapse. For single events, they track until you archive the goal.'**
-  String get faq1Answer;
-
-  /// No description provided for @faq2Question.
-  ///
-  /// In en, this message translates to:
-  /// **'How does money tracking work?'**
-  String get faq2Question;
-
-  /// No description provided for @faq2Answer.
-  ///
-  /// In en, this message translates to:
-  /// **'Set an estimated cost for each habit. We multiply this by your successful streak duration to show total savings.'**
-  String get faq2Answer;
-
-  /// No description provided for @faq3Question.
-  ///
-  /// In en, this message translates to:
-  /// **'Can I edit my tags?'**
   String get faq3Question;
 
-  /// No description provided for @faq3Answer.
+  /// FAQ 3 answer.
   ///
   /// In en, this message translates to:
-  /// **'Yes! Long-press any tag in the filter or edit screen to manage your custom tags.'**
+  /// **'Your streak counts the days since your last slip. For recurring habits it resets each time you slip. For one-time events it tracks until you archive the item.'**
   String get faq3Answer;
 
-  /// No description provided for @coachMarkAddTitle.
+  /// FAQ 4 question.
   ///
   /// In en, this message translates to:
-  /// **'Track a new habit'**
+  /// **'How does money (or time/mood) tracking work?'**
+  String get faq4Question;
+
+  /// FAQ 4 answer.
+  ///
+  /// In en, this message translates to:
+  /// **'When adding a habit, set an estimated cost per slip — in money, hours, or mood points. Avoid multiplies this by your streak duration to show the total you\'ve saved by staying clean.'**
+  String get faq4Answer;
+
+  /// FAQ 5 question.
+  ///
+  /// In en, this message translates to:
+  /// **'What are goals and how do I use them?'**
+  String get faq5Question;
+
+  /// FAQ 5 answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Goals give you a specific target, like reaching a 7-day streak on your hardest habit. Everyone gets an auto-generated goal based on their most-relapsed habit. Plus users can also create custom goals and track savings targets.'**
+  String get faq5Answer;
+
+  /// FAQ 6 question.
+  ///
+  /// In en, this message translates to:
+  /// **'How does XP and leveling work?'**
+  String get faq6Question;
+
+  /// FAQ 6 answer.
+  ///
+  /// In en, this message translates to:
+  /// **'You earn XP by avoiding slips, completing goals, and doing the daily commitment. There are 50 levels with titles — free users progress to level 20, Plus unlocks all 50.'**
+  String get faq6Answer;
+
+  /// FAQ 7 question.
+  ///
+  /// In en, this message translates to:
+  /// **'What is the Daily Commitment? (Plus)'**
+  String get faq7Question;
+
+  /// FAQ 7 answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Plus users see a morning screen once per day to commit to their active habits. Each commitment earns +20 XP and builds a daily ritual around your goals.'**
+  String get faq7Answer;
+
+  /// FAQ 8 question.
+  ///
+  /// In en, this message translates to:
+  /// **'Can I track people or locations to avoid?'**
+  String get faq8Question;
+
+  /// FAQ 8 answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes! When adding a habit choose \'Person\' to link it to a contact from your phonebook, or \'Location\' to pin a spot on the map. Great for avoiding difficult people or triggering environments.'**
+  String get faq8Answer;
+
+  /// FAQ 9 question.
+  ///
+  /// In en, this message translates to:
+  /// **'What does Avoid Plus include?'**
+  String get faq9Question;
+
+  /// FAQ 9 answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Plus is a one-time purchase that unlocks: unlimited habits, full stats history & heatmap, relapse pattern analysis, custom goals, daily commitment (+XP), smart pattern-aware notifications, home screen widget, cloud backup, and data export.'**
+  String get faq9Answer;
+
+  /// Coach mark step 1 title.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first habit'**
   String get coachMarkAddTitle;
 
-  /// No description provided for @coachMarkAddDesc.
+  /// Coach mark step 1 description.
   ///
   /// In en, this message translates to:
-  /// **'Tap here to add something you want to avoid.'**
+  /// **'Tap + to add something you want to stop — a recurring habit, a one-time event, a person, or a location.'**
   String get coachMarkAddDesc;
 
-  /// No description provided for @coachMarkFilterTitle.
+  /// Coach mark step 2 title.
   ///
   /// In en, this message translates to:
-  /// **'Filter your list'**
+  /// **'Find your habits fast'**
   String get coachMarkFilterTitle;
 
-  /// No description provided for @coachMarkFilterDesc.
+  /// Coach mark step 2 description.
   ///
   /// In en, this message translates to:
-  /// **'Search by name or filter by tags to find specific items.'**
+  /// **'Search by name, or tap a tag chip to filter habits by category.'**
   String get coachMarkFilterDesc;
 
-  /// No description provided for @coachMarkMenuTitle.
+  /// Coach mark step 3 title.
   ///
   /// In en, this message translates to:
-  /// **'Explore more'**
+  /// **'See your progress'**
+  String get coachMarkStatsTitle;
+
+  /// Coach mark step 3 description.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the chart icon here to view your streaks, savings history, and habit insights.'**
+  String get coachMarkStatsDesc;
+
+  /// Coach mark step 4 title.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings & more'**
   String get coachMarkMenuTitle;
 
-  /// No description provided for @coachMarkMenuDesc.
+  /// Coach mark step 4 description.
   ///
   /// In en, this message translates to:
-  /// **'Open the menu to view Statistics, Archive, and this Help guide.'**
+  /// **'Open settings to change language, theme, and access the Help guide or cloud sync.'**
   String get coachMarkMenuDesc;
 
-  /// No description provided for @resetTutorial.
+  /// Menu item to reset the coach mark tutorial.
   ///
   /// In en, this message translates to:
   /// **'Reset Tutorial'**
   String get resetTutorial;
 
-  /// No description provided for @tutorialResetSuccess.
+  /// Toast shown after resetting the tutorial.
   ///
   /// In en, this message translates to:
   /// **'Tutorial reset. Restart the app to see the walkthrough again.'**
   String get tutorialResetSuccess;
 
-  /// No description provided for @savingsSummary.
+  /// Stats section title for savings breakdown.
   ///
   /// In en, this message translates to:
   /// **'Savings by Item Type'**
   String get savingsSummary;
 
-  /// No description provided for @navHome.
+  /// Bottom nav Home tab label.
   ///
   /// In en, this message translates to:
   /// **'Home'**
   String get navHome;
 
-  /// No description provided for @costTypeLabel.
+  /// Label for cost type selector.
   ///
   /// In en, this message translates to:
   /// **'Cost Type:'**
   String get costTypeLabel;
 
-  /// No description provided for @costMoney.
+  /// Money cost type option.
   ///
   /// In en, this message translates to:
   /// **'Money'**
   String get costMoney;
 
-  /// No description provided for @costMood.
+  /// Mood cost type option.
   ///
   /// In en, this message translates to:
   /// **'Mood'**
   String get costMood;
 
-  /// No description provided for @costTime.
+  /// Time cost type option.
   ///
   /// In en, this message translates to:
   /// **'Time'**
   String get costTime;
 
-  /// No description provided for @streakLabel.
+  /// Label for streak counter.
   ///
   /// In en, this message translates to:
   /// **'Streak'**
   String get streakLabel;
 
-  /// No description provided for @slipButton.
+  /// Button to log a relapse.
   ///
   /// In en, this message translates to:
   /// **'Slip'**
   String get slipButton;
 
-  /// No description provided for @justNow.
+  /// Relative time label for very recent events.
   ///
   /// In en, this message translates to:
   /// **'Just now'**
   String get justNow;
 
-  /// No description provided for @sortLatest.
+  /// Sort by latest option.
   ///
   /// In en, this message translates to:
   /// **'Latest'**
   String get sortLatest;
 
-  /// No description provided for @sortOldest.
+  /// Sort by oldest option.
   ///
   /// In en, this message translates to:
   /// **'Oldest'**
   String get sortOldest;
 
-  /// No description provided for @sortAvoidType.
+  /// Sort by avoid type option.
   ///
   /// In en, this message translates to:
   /// **'Avoid Type'**
   String get sortAvoidType;
 
-  /// No description provided for @sortCostType.
+  /// Sort by cost type option.
   ///
   /// In en, this message translates to:
   /// **'Cost Type'**
   String get sortCostType;
 
-  /// No description provided for @avoidTypeLabel.
+  /// Label for avoid type selector.
   ///
   /// In en, this message translates to:
   /// **'Avoid Type:'**
   String get avoidTypeLabel;
 
-  /// No description provided for @associatedPerson.
+  /// Label for associated person field.
   ///
   /// In en, this message translates to:
   /// **'Associated Person:'**
   String get associatedPerson;
 
-  /// No description provided for @avoidLocation.
+  /// Label for location to avoid.
   ///
   /// In en, this message translates to:
   /// **'Avoid Location:'**
   String get avoidLocation;
 
-  /// No description provided for @pickOnMap.
+  /// Button to open map picker.
   ///
   /// In en, this message translates to:
   /// **'Pick on Map'**
   String get pickOnMap;
 
-  /// No description provided for @eventReminderLabel.
+  /// Label for event reminder setting.
   ///
   /// In en, this message translates to:
   /// **'Event Reminder:'**
   String get eventReminderLabel;
 
-  /// No description provided for @dailyReminderLabel.
+  /// Label for daily reminder time setting.
   ///
   /// In en, this message translates to:
   /// **'Daily Reminder Time:'**
   String get dailyReminderLabel;
 
-  /// No description provided for @setReminder.
+  /// Button to set an event reminder.
   ///
   /// In en, this message translates to:
   /// **'Set Reminder'**
   String get setReminder;
 
-  /// No description provided for @setDailyReminder.
+  /// Button to set a daily reminder.
   ///
   /// In en, this message translates to:
   /// **'Set Daily Reminder'**
   String get setDailyReminder;
 
-  /// No description provided for @selectEventDateError.
+  /// Validation error for missing event date.
   ///
   /// In en, this message translates to:
   /// **'Please select an event date.'**
   String get selectEventDateError;
 
-  /// No description provided for @recentRelapsesTriggers.
+  /// Stats section title for recent relapses.
   ///
   /// In en, this message translates to:
   /// **'Recent Relapses & Triggers'**
   String get recentRelapsesTriggers;
 
-  /// No description provided for @ratingDialogTitle.
+  /// Title of the app rating dialog.
   ///
   /// In en, this message translates to:
   /// **'Enjoying Avoid Todo?'**
   String get ratingDialogTitle;
 
-  /// No description provided for @ratingDialogSubtitle.
+  /// Subtitle of the app rating dialog.
   ///
   /// In en, this message translates to:
   /// **'Tap a star to rate your experience'**
   String get ratingDialogSubtitle;
 
-  /// No description provided for @ratingDialogNotNow.
+  /// Dismiss button on rating dialog.
   ///
   /// In en, this message translates to:
   /// **'Not now'**
   String get ratingDialogNotNow;
 
-  /// No description provided for @ratingDialogContinue.
+  /// Continue button on rating dialog.
   ///
   /// In en, this message translates to:
   /// **'Continue'**
   String get ratingDialogContinue;
 
-  /// No description provided for @ratingHighTitle.
+  /// Title shown after high rating.
   ///
   /// In en, this message translates to:
   /// **'Thank you!'**
   String get ratingHighTitle;
 
-  /// No description provided for @ratingHighBody.
+  /// Body text after high rating.
   ///
   /// In en, this message translates to:
   /// **'Would you mind rating us? It really helps!'**
   String get ratingHighBody;
 
-  /// No description provided for @ratingHighRateNow.
+  /// Rate now button after high rating.
   ///
   /// In en, this message translates to:
   /// **'Rate Now'**
   String get ratingHighRateNow;
 
-  /// No description provided for @ratingHighNoThanks.
+  /// Decline button after high rating.
   ///
   /// In en, this message translates to:
   /// **'No thanks'**
   String get ratingHighNoThanks;
 
-  /// No description provided for @ratingLowTitle.
+  /// Title shown after low rating.
   ///
   /// In en, this message translates to:
   /// **'Help us improve'**
   String get ratingLowTitle;
 
-  /// No description provided for @ratingLowBody.
+  /// Body text after low rating.
   ///
   /// In en, this message translates to:
   /// **'What can we do better?'**
   String get ratingLowBody;
 
-  /// No description provided for @ratingLowHint.
+  /// Input hint in low-rating feedback form.
   ///
   /// In en, this message translates to:
   /// **'Your feedback...'**
   String get ratingLowHint;
 
-  /// No description provided for @ratingLowSend.
+  /// Send button on low-rating feedback form.
   ///
   /// In en, this message translates to:
   /// **'Send'**
   String get ratingLowSend;
 
-  /// No description provided for @ratingLowSkip.
+  /// Skip button on low-rating feedback form.
   ///
   /// In en, this message translates to:
   /// **'Skip'**
   String get ratingLowSkip;
 
-  /// No description provided for @ratingThanks.
+  /// Toast shown after submitting feedback.
   ///
   /// In en, this message translates to:
   /// **'Thank you for your feedback!'**

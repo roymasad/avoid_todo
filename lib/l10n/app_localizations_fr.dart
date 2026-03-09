@@ -256,39 +256,40 @@ class AppLocalizationsFr extends AppLocalizations {
   String get relapseSuccess => 'Série réinitialisée. N\'abandonnez pas !';
 
   @override
-  String get onboardingWelcomeTitle => 'Bienvenue sur Avoid ToDo';
+  String get onboardingWelcomeTitle =>
+      'Arrêtez les habitudes qui vous freinent';
 
   @override
   String get onboardingWelcomeDesc =>
-      'Une application de productivité différente. Concentrez-vous sur ce que vous devriez ARRÊTER de faire pour vivre mieux.';
+      'La plupart des applis suivent ce que vous devez FAIRE. Avoid suit ce que vous devez ARRÊTER — les habitudes, les envies et les schémas qui vous bloquent. Ajoutez ce que vous voulez quitter, notez vos rechutes et construisez des séries qui comptent.';
 
   @override
   String get onboardingTagsTitle => 'Organisez avec des Étiquettes';
 
   @override
   String get onboardingTagsDesc =>
-      'Créez des catégories personnalisées pour suivre différents domaines de votre vie comme la Santé, le Travail ou les habitudes Sociales.';
+      'Regroupez vos habitudes par domaine de vie — Santé, Travail, Social. Voyez d\'un coup d\'œil quelle partie de votre vie nécessite le plus d\'attention en ce moment.';
 
   @override
-  String get onboardingMoneyTitle => 'Suivez vos Économies';
+  String get onboardingMoneyTitle => 'Chaque rechute a un coût';
 
   @override
   String get onboardingMoneyDesc =>
-      'Visualisez l\'impact financier réel de vos habitudes. Chaque rechute évitée est de l\'argent dans votre poche !';
+      'Définissez un coût estimé par rechute (ex. un paquet de cigarettes, un repas à emporter). Avoid le multiplie par votre série pour vous montrer l\'argent réellement économisé.';
 
   @override
-  String get onboardingRelapseTitle => 'Comprenez vos Déclencheurs';
+  String get onboardingRelapseTitle => 'Une rechute ? C\'est OK — Notez-la';
 
   @override
   String get onboardingRelapseDesc =>
-      'Notez les rechutes et les notes pour identifier ce qui les cause. La connaissance est la clé pour changer ses habitudes.';
+      'Appuyez sur Rechute pour noter ce qui vous a déclenché. Avec le temps, Avoid repère vos schémas pour que vous puissiez les anticiper. Sans jugement, juste de la conscience.';
 
   @override
-  String get onboardingBadgesTitle => 'Gagnez des Badges de Réussite';
+  String get onboardingBadgesTitle => 'Gagnez des récompenses en chemin';
 
   @override
   String get onboardingBadgesDesc =>
-      'Restez motivé avec des jalons pour les longues séries et les économies significatives. Vous pouvez le faire !';
+      'Débloquez des badges pour vos séries et économies. Complétez des objectifs, gagnez de l\'XP et montez de niveau parmi 50 paliers au fil de vos progrès.';
 
   @override
   String get getStarted => 'Commencer';
@@ -306,46 +307,105 @@ class AppLocalizationsFr extends AppLocalizations {
   String get helpTitle => 'Guide de l\'application et FAQ';
 
   @override
-  String get faq1Question => 'Comment sont calculées les séries ?';
+  String get helpWhatIsAvoidTitle => 'Qu\'est-ce qu\'Avoid ?';
+
+  @override
+  String get helpWhatIsAvoidDesc =>
+      'Avoid vous aide à briser les mauvaises habitudes en suivant ce que vous voulez ARRÊTER de faire. Ajoutez une habitude, notez vos rechutes et identifiez ce qui les déclenche. Avec le temps, vous repérerez vos schémas, construirez de longues séries et mesurerez l\'impact réel — en argent, humeur ou temps — de rester propre.';
+
+  @override
+  String get faq1Question => 'Comment ajouter quelque chose à éviter ?';
 
   @override
   String get faq1Answer =>
-      'Les séries pour les habitudes récurrentes commencent à partir de votre dernière complétion ou rechute. Pour les événements uniques, elles sont suivies jusqu\'à ce que vous archiviez l\'objectif.';
+      'Appuyez sur le bouton + en bas à droite. Vous pouvez ajouter une habitude récurrente (comme fumer ou la malbouffe), un événement ponctuel (comme éviter une fête), une personne ou même un lieu. Définissez un coût optionnel et un rappel pour rester responsable.';
 
   @override
-  String get faq2Question => 'Comment fonctionne le suivi de l\'argent ?';
+  String get faq2Question =>
+      'Qu\'est-ce qu\'une rechute et comment l\'enregistrer ?';
 
   @override
   String get faq2Answer =>
-      'Définissez un coût estimé pour chaque habitude. Nous multiplions cela par la durée de votre série réussie pour afficher les économies totales.';
+      'Une rechute, c\'est quand vous cédez à quelque chose que vous essayez d\'éviter. Appuyez sur le bouton rouge Rechute de n\'importe quelle carte. Vous pouvez ajouter une note rapide sur ce qui vous a déclenché — cela enrichit votre historique et vous aide à repérer vos schémas.';
 
   @override
-  String get faq3Question => 'Puis-je modifier mes étiquettes ?';
+  String get faq3Question => 'Comment les séries sont-elles calculées ?';
 
   @override
   String get faq3Answer =>
-      'Oui ! Appuyez longuement sur n\'importe quelle étiquette dans le filtre ou l\'écran de modification pour gérer vos étiquettes personnalisées.';
+      'Votre série compte les jours depuis votre dernière rechute. Pour les habitudes récurrentes, elle se remet à zéro à chaque rechute. Pour les événements ponctuels, elle est suivie jusqu\'à l\'archivage.';
 
   @override
-  String get coachMarkAddTitle => 'Suivez une nouvelle habitude';
+  String get faq4Question =>
+      'Comment fonctionne le suivi de l\'argent (ou du temps/humeur) ?';
+
+  @override
+  String get faq4Answer =>
+      'Lors de l\'ajout d\'une habitude, définissez un coût estimé par rechute — en argent, heures ou points d\'humeur. Avoid le multiplie par la durée de votre série pour afficher le total économisé en restant propre.';
+
+  @override
+  String get faq5Question => 'Que sont les objectifs et comment les utiliser ?';
+
+  @override
+  String get faq5Answer =>
+      'Les objectifs vous donnent une cible précise, comme atteindre 7 jours de série sur votre habitude la plus difficile. Chacun reçoit un objectif auto-généré basé sur l\'habitude avec le plus de rechutes. Les utilisateurs Plus peuvent aussi créer des objectifs personnalisés et suivre des cibles d\'économies.';
+
+  @override
+  String get faq6Question => 'Comment fonctionnent l\'XP et les niveaux ?';
+
+  @override
+  String get faq6Answer =>
+      'Vous gagnez de l\'XP en évitant les rechutes, en complétant des objectifs et en faisant l\'engagement quotidien. Il y a 50 niveaux — les utilisateurs gratuits progressent jusqu\'au niveau 20, Plus débloque les 50.';
+
+  @override
+  String get faq7Question => 'Qu\'est-ce que l\'Engagement Quotidien ? (Plus)';
+
+  @override
+  String get faq7Answer =>
+      'Les utilisateurs Plus voient chaque matin un écran pour s\'engager envers leurs habitudes actives. Chaque engagement rapporte +20 XP et renforce un rituel quotidien autour de vos objectifs.';
+
+  @override
+  String get faq8Question =>
+      'Puis-je suivre des personnes ou des lieux à éviter ?';
+
+  @override
+  String get faq8Answer =>
+      'Oui ! Lors de l\'ajout d\'une habitude, choisissez \'Personne\' pour la lier à un contact de votre répertoire, ou \'Lieu\' pour épingler un endroit sur la carte. Idéal pour éviter des personnes difficiles ou des environnements déclencheurs.';
+
+  @override
+  String get faq9Question => 'Qu\'inclut Avoid Plus ?';
+
+  @override
+  String get faq9Answer =>
+      'Plus est un achat unique qui débloque : habitudes illimitées, historique complet des stats & carte de chaleur, analyse des schémas de rechute, objectifs personnalisés, engagement quotidien (+XP), notifications intelligentes, widget d\'écran d\'accueil, sauvegarde cloud et export de données.';
+
+  @override
+  String get coachMarkAddTitle => 'Ajoutez votre première habitude';
 
   @override
   String get coachMarkAddDesc =>
-      'Appuyez ici pour ajouter quelque chose que vous voulez éviter.';
+      'Appuyez sur + pour ajouter quelque chose que vous voulez arrêter — une habitude récurrente, un événement ponctuel, une personne ou un lieu.';
 
   @override
-  String get coachMarkFilterTitle => 'Filtrez votre liste';
+  String get coachMarkFilterTitle => 'Trouvez vos habitudes rapidement';
 
   @override
   String get coachMarkFilterDesc =>
-      'Recherchez par nom ou filtrez par étiquettes pour trouver des éléments spécifiques.';
+      'Recherchez par nom ou appuyez sur une étiquette pour filtrer vos habitudes par catégorie.';
 
   @override
-  String get coachMarkMenuTitle => 'Explorez plus';
+  String get coachMarkStatsTitle => 'Suivez votre progression';
+
+  @override
+  String get coachMarkStatsDesc =>
+      'Appuyez sur l\'icône graphique ici pour voir vos séries, économies et analyses d\'habitudes.';
+
+  @override
+  String get coachMarkMenuTitle => 'Paramètres & plus';
 
   @override
   String get coachMarkMenuDesc =>
-      'Ouvrez le menu pour voir les Statistiques, les Archives et ce guide d\'Aide.';
+      'Ouvrez les paramètres pour changer la langue, le thème et accéder au guide d\'Aide ou à la synchro cloud.';
 
   @override
   String get resetTutorial => 'Réinitialiser le tutoriel';

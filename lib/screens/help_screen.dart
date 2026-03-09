@@ -21,8 +21,8 @@ class HelpScreen extends StatelessWidget {
         children: [
           _buildHelpSection(
             context,
-            l10n.onboardingWelcomeTitle,
-            l10n.onboardingWelcomeDesc,
+            l10n.helpWhatIsAvoidTitle,
+            l10n.helpWhatIsAvoidDesc,
             Icons.info_outline,
             Colors.blue,
           ),
@@ -39,6 +39,12 @@ class HelpScreen extends StatelessWidget {
           _buildFAQItem(context, l10n.faq1Question, l10n.faq1Answer),
           _buildFAQItem(context, l10n.faq2Question, l10n.faq2Answer),
           _buildFAQItem(context, l10n.faq3Question, l10n.faq3Answer),
+          _buildFAQItem(context, l10n.faq4Question, l10n.faq4Answer),
+          _buildFAQItem(context, l10n.faq5Question, l10n.faq5Answer),
+          _buildFAQItem(context, l10n.faq6Question, l10n.faq6Answer),
+          _buildFAQItem(context, l10n.faq7Question, l10n.faq7Answer),
+          _buildFAQItem(context, l10n.faq8Question, l10n.faq8Answer),
+          _buildFAQItem(context, l10n.faq9Question, l10n.faq9Answer),
           const SizedBox(height: 32),
           _buildHelpSection(
             context,

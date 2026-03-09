@@ -66,6 +66,7 @@ dependencies:
   path_provider: ^2.1.0
   # Phase 4: Home screen widget
   home_widget: ^0.7.0
+  package_info_plus: ^8.0.0
   # Phase 6: Cloud sync
   icloud_storage: ^2.0.0
   google_sign_in: ^6.0.0

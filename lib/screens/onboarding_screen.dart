@@ -81,39 +81,42 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
                 itemBuilder: (context, index) {
                   final data = _pages[index];
-                  return Padding(
-                    padding: const EdgeInsets.all(40.0),
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32.0,
+                      vertical: 24.0,
+                    ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(30),
+                          padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
                             color: data.color.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             data.icon,
-                            size: 100,
+                            size: 80,
                             color: data.color,
                           ),
                         ),
-                        const SizedBox(height: 60),
+                        const SizedBox(height: 28),
                         Text(
                           data.titleKey(l10n),
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 28,
+                            fontSize: 24,
                             fontWeight: FontWeight.bold,
                             color: isDark ? Colors.white : Colors.black87,
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
                         Text(
                           data.descKey(l10n),
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 15,
                             color: isDark ? Colors.white70 : Colors.black54,
                             height: 1.5,
                           ),

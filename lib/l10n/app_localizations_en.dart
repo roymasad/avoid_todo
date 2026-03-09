@@ -254,39 +254,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get relapseSuccess => 'Streak reset. Don\'t give up!';
 
   @override
-  String get onboardingWelcomeTitle => 'Welcome to Avoid ToDo';
+  String get onboardingWelcomeTitle => 'Stop the Habits Holding You Back';
 
   @override
   String get onboardingWelcomeDesc =>
-      'A different kind of productivity app. Focus on what you should STOP doing to live a better life.';
+      'Most apps track what to DO. Avoid tracks what to STOP — the habits, urges, and patterns getting in your way. Add what you want to quit, log when you slip, and build streaks that matter.';
 
   @override
   String get onboardingTagsTitle => 'Organize with Tags';
 
   @override
   String get onboardingTagsDesc =>
-      'Create custom categories to track different areas of your life like Health, Work, or Social habits.';
+      'Group habits by area of life — Health, Work, Social. See at a glance which part of your life needs the most attention right now.';
 
   @override
-  String get onboardingMoneyTitle => 'Track Your Savings';
+  String get onboardingMoneyTitle => 'Every Slip Has a Cost';
 
   @override
   String get onboardingMoneyDesc =>
-      'See the real financial impact of your habits. Every avoided relapse is money in your pocket!';
+      'Set an estimated cost per slip (e.g. a cigarette pack, a takeout meal). Avoid multiplies it by your streak to show you the real money you\'ve saved.';
 
   @override
-  String get onboardingRelapseTitle => 'Understand Your Triggers';
+  String get onboardingRelapseTitle => 'Slipped? That\'s OK — Log It';
 
   @override
   String get onboardingRelapseDesc =>
-      'Log relapses and notes to identify what causes them. Knowledge is power in breaking habits.';
+      'Tap Slip to record what triggered you. Over time, Avoid spots your patterns so you can get ahead of them. No judgment, just awareness.';
 
   @override
-  String get onboardingBadgesTitle => 'Earn Achievement Badges';
+  String get onboardingBadgesTitle => 'Earn Rewards Along the Way';
 
   @override
   String get onboardingBadgesDesc =>
-      'Stay motivated with milestones for long streaks and significant savings. You\'ve got this!';
+      'Unlock badges for streaks and savings milestones. Complete goals, earn XP, and level up through 50 tiers as your habits get stronger.';
 
   @override
   String get getStarted => 'Get Started';
@@ -304,45 +304,102 @@ class AppLocalizationsEn extends AppLocalizations {
   String get helpTitle => 'App Guide & FAQ';
 
   @override
-  String get faq1Question => 'How are streaks calculated?';
+  String get helpWhatIsAvoidTitle => 'What is Avoid?';
+
+  @override
+  String get helpWhatIsAvoidDesc =>
+      'Avoid helps you break bad habits by tracking what you want to STOP doing. Add a habit, log when you slip, and note what triggered you. Over time you\'ll spot your patterns, build long streaks, and see the real impact — in money, mood, or time — of staying clean.';
+
+  @override
+  String get faq1Question => 'How do I add something to avoid?';
 
   @override
   String get faq1Answer =>
-      'Streaks for recurring habits start from your last completion or relapse. For single events, they track until you archive the goal.';
+      'Tap the + button at the bottom right. You can add a recurring habit (like smoking or junk food), a one-time event (like skipping a party), a person to avoid, or even a location. Set an optional cost and reminder to keep yourself accountable.';
 
   @override
-  String get faq2Question => 'How does money tracking work?';
+  String get faq2Question => 'What is a slip and how do I log one?';
 
   @override
   String get faq2Answer =>
-      'Set an estimated cost for each habit. We multiply this by your successful streak duration to show total savings.';
+      'A slip (relapse) is when you give in to something you\'re trying to avoid. Tap the red Slip button on any habit card. You can add a quick note about what triggered you — this builds your trigger history and helps you spot patterns over time.';
 
   @override
-  String get faq3Question => 'Can I edit my tags?';
+  String get faq3Question => 'How are streaks calculated?';
 
   @override
   String get faq3Answer =>
-      'Yes! Long-press any tag in the filter or edit screen to manage your custom tags.';
+      'Your streak counts the days since your last slip. For recurring habits it resets each time you slip. For one-time events it tracks until you archive the item.';
 
   @override
-  String get coachMarkAddTitle => 'Track a new habit';
+  String get faq4Question => 'How does money (or time/mood) tracking work?';
 
   @override
-  String get coachMarkAddDesc => 'Tap here to add something you want to avoid.';
+  String get faq4Answer =>
+      'When adding a habit, set an estimated cost per slip — in money, hours, or mood points. Avoid multiplies this by your streak duration to show the total you\'ve saved by staying clean.';
 
   @override
-  String get coachMarkFilterTitle => 'Filter your list';
+  String get faq5Question => 'What are goals and how do I use them?';
+
+  @override
+  String get faq5Answer =>
+      'Goals give you a specific target, like reaching a 7-day streak on your hardest habit. Everyone gets an auto-generated goal based on their most-relapsed habit. Plus users can also create custom goals and track savings targets.';
+
+  @override
+  String get faq6Question => 'How does XP and leveling work?';
+
+  @override
+  String get faq6Answer =>
+      'You earn XP by avoiding slips, completing goals, and doing the daily commitment. There are 50 levels with titles — free users progress to level 20, Plus unlocks all 50.';
+
+  @override
+  String get faq7Question => 'What is the Daily Commitment? (Plus)';
+
+  @override
+  String get faq7Answer =>
+      'Plus users see a morning screen once per day to commit to their active habits. Each commitment earns +20 XP and builds a daily ritual around your goals.';
+
+  @override
+  String get faq8Question => 'Can I track people or locations to avoid?';
+
+  @override
+  String get faq8Answer =>
+      'Yes! When adding a habit choose \'Person\' to link it to a contact from your phonebook, or \'Location\' to pin a spot on the map. Great for avoiding difficult people or triggering environments.';
+
+  @override
+  String get faq9Question => 'What does Avoid Plus include?';
+
+  @override
+  String get faq9Answer =>
+      'Plus is a one-time purchase that unlocks: unlimited habits, full stats history & heatmap, relapse pattern analysis, custom goals, daily commitment (+XP), smart pattern-aware notifications, home screen widget, cloud backup, and data export.';
+
+  @override
+  String get coachMarkAddTitle => 'Add your first habit';
+
+  @override
+  String get coachMarkAddDesc =>
+      'Tap + to add something you want to stop — a recurring habit, a one-time event, a person, or a location.';
+
+  @override
+  String get coachMarkFilterTitle => 'Find your habits fast';
 
   @override
   String get coachMarkFilterDesc =>
-      'Search by name or filter by tags to find specific items.';
+      'Search by name, or tap a tag chip to filter habits by category.';
 
   @override
-  String get coachMarkMenuTitle => 'Explore more';
+  String get coachMarkStatsTitle => 'See your progress';
+
+  @override
+  String get coachMarkStatsDesc =>
+      'Tap the chart icon here to view your streaks, savings history, and habit insights.';
+
+  @override
+  String get coachMarkMenuTitle => 'Settings & more';
 
   @override
   String get coachMarkMenuDesc =>
-      'Open the menu to view Statistics, Archive, and this Help guide.';
+      'Open settings to change language, theme, and access the Help guide or cloud sync.';
 
   @override
   String get resetTutorial => 'Reset Tutorial';

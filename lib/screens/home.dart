@@ -35,6 +35,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import '../helpers/rating_helper.dart';
 import '../widgets/rating_dialog.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 // Note: Map implementation uses simple location names for now.
 
 enum SortOption { latest, oldest, avoidType, costType, priority }
@@ -107,6 +108,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   // Bottom nav
   int _selectedIndex = 0;
 
+  // App version (loaded dynamically from package info)
+  String _appVersion = '';
+
   @override
   void initState() {
     super.initState();
@@ -147,6 +151,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     _fetchTodos();
     _fetchTags();
     _loadNotificationPref();
+    _loadAppVersion();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PurchaseProvider>().refresh();
       context.read<XpProvider>().load().then((_) {
@@ -210,6 +215,15 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     });
   }
 
+  Future<void> _loadAppVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() {
+        _appVersion = '${info.version} (build ${info.buildNumber})';
+      });
+    }
+  }
+
   Future<void> _checkCoachMarks() async {
     final prefs = await SharedPreferences.getInstance();
     final bool hasSeenCoachMarks = prefs.getBool('hasSeenCoachMarks') ?? false;
@@ -252,86 +266,56 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   void _initTargets() {
     final l10n = AppLocalizations.of(context)!;
     targets.clear();
-    targets.add(
-      TargetFocus(
-        identify: "menu",
-        keyTarget: _menuKey,
-        enableOverlayTab: true,
-        contents: [
-          TargetContent(
-            align: ContentAlign.bottom,
-            builder: (context, controller) {
-              return Material(
-                color: Colors.transparent,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.coachMarkMenuTitle,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        fontSize: 22.0,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      l10n.coachMarkMenuDesc,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.0,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
 
-    targets.add(
-      TargetFocus(
-        identify: "search",
-        keyTarget: _searchKey,
-        enableOverlayTab: true,
-        contents: [
-          TargetContent(
-            align: ContentAlign.bottom,
-            builder: (context, controller) {
-              return Material(
-                color: Colors.transparent,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.coachMarkFilterTitle,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        fontSize: 22.0,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      l10n.coachMarkFilterDesc,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.0,
-                      ),
-                    ),
-                  ],
+    // Shared helper: tappable content block that advances the coach mark.
+    Widget coachContent(
+      TutorialCoachMarkController ctrl,
+      String title,
+      String desc, {
+      Widget? prefix,
+    }) {
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: ctrl.next,
+        child: Material(
+          color: Colors.transparent,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (prefix != null) prefix,
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontSize: 22.0,
                 ),
-              );
-            },
+              ),
+              const SizedBox(height: 10),
+              Text(
+                desc,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16.0,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '▶  tap to continue',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.55),
+                  fontSize: 12.0,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        ),
+      );
+    }
 
+    // Step 1: Add button (FAB) — most basic, show first
     targets.add(
       TargetFocus(
         identify: "add",
@@ -340,33 +324,77 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         contents: [
           TargetContent(
             align: ContentAlign.top,
-            builder: (context, controller) {
-              return Material(
-                color: Colors.transparent,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.coachMarkAddTitle,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        fontSize: 22.0,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      l10n.coachMarkAddDesc,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.0,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+            builder: (context, ctrl) => coachContent(
+              ctrl,
+              l10n.coachMarkAddTitle,
+              l10n.coachMarkAddDesc,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // Step 2: Search/filter bar
+    targets.add(
+      TargetFocus(
+        identify: "search",
+        keyTarget: _searchKey,
+        enableOverlayTab: true,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            builder: (context, ctrl) => coachContent(
+              ctrl,
+              l10n.coachMarkFilterTitle,
+              l10n.coachMarkFilterDesc,
+              prefix: const SizedBox(height: 80),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // Step 3: Statistics tab in the bottom NavigationBar
+    final screenSize = MediaQuery.of(context).size;
+    final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
+    const navBarHeight = 80.0; // M3 NavigationBar default height
+    final tabWidth = screenSize.width / 3;
+    targets.add(
+      TargetFocus(
+        identify: "stats",
+        enableOverlayTab: true,
+        targetPosition: TargetPosition(
+          Size(tabWidth, navBarHeight),
+          // Second tab (index 1): starts at tabWidth from left
+          Offset(tabWidth, screenSize.height - navBarHeight - bottomPadding),
+        ),
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            builder: (context, ctrl) => coachContent(
+              ctrl,
+              l10n.coachMarkStatsTitle,
+              l10n.coachMarkStatsDesc,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // Step 4: Settings/menu button (top-right)
+    targets.add(
+      TargetFocus(
+        identify: "menu",
+        keyTarget: _menuKey,
+        enableOverlayTab: true,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            builder: (context, ctrl) => coachContent(
+              ctrl,
+              l10n.coachMarkMenuTitle,
+              l10n.coachMarkMenuDesc,
+            ),
           ),
         ],
       ),
@@ -3758,7 +3786,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                 builder: (BuildContext context) {
                   return AlertDialog(
                     title: Text(l10n?.appTitle ?? 'Avoid Todo App'),
-                    content: Text('${l10n?.aboutDescription ?? 'Never forget what you need to avoid anymore.'}\n\nVersion 1.0.2 (build 3)'),
+                    content: Text('${l10n?.aboutDescription ?? 'Never forget what you need to avoid anymore.'}\n\nVersion $_appVersion'),
                     actions: [
                       TextButton(
                         child: Text(l10n?.close ?? 'Close'),
