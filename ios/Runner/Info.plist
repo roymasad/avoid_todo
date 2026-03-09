@@ -4,6 +4,8 @@
 	<dict>
 		<key>NSContactsUsageDescription</key>
 		<string>Used to select a person you want to avoid from your contacts.</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>Used to let you attach places to habits by starting from your current location.</string>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
 		<key>CFBundleDevelopmentRegion</key>
