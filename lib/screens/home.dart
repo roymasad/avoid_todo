@@ -3513,7 +3513,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   l10n?.appTitle ?? 'Avoid ToDo',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -3588,16 +3588,16 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             ),
           ),
           const Divider(),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
-              'Notifications',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              l10n?.notifications ?? 'Notifications',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ),
           SwitchListTile(
             secondary: const Icon(Icons.notifications_outlined),
-            title: const Text('Enable Notifications'),
+            title: Text(l10n?.enableNotifications ?? 'Enable Notifications'),
             value: _notificationsEnabled,
             onChanged: (val) async {
               final prefs = await SharedPreferences.getInstance();
@@ -3612,11 +3612,11 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             },
           ),
           // Home Screen Widget toggle (Plus-gated, always visible)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Text(
-              'Widget',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              l10n?.drawerWidget ?? 'Widget',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ),
           Builder(builder: (context) {
@@ -3631,7 +3631,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   ),
                   title: Row(
                     children: [
-                      const Text('Home Screen Widget'),
+                      Text(l10n?.homeScreenWidget ?? 'Home Screen Widget'),
                       if (!isPlus) ...[
                         const SizedBox(width: 8),
                         Container(
@@ -3651,7 +3651,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     ],
                   ),
                   subtitle: Text(
-                    'Shows your top streak on the home screen',
+                    l10n?.homeScreenWidgetDesc ?? 'Shows your top streak on the home screen',
                     style: TextStyle(color: isPlus ? null : Colors.grey),
                   ),
                   value: isPlus && _widgetEnabled,
@@ -3669,13 +3669,13 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                         }
                       : (_) => _showPlusDialog(context,
                           subtitle:
-                              'Home screen widget is a Plus feature.'),
+                              l10n?.homeScreenWidgetPlusHint ?? 'Home screen widget is a Plus feature.'),
                 ),
                 if (isPlus && _widgetEnabled)
                   ListTile(
                     leading: const Icon(Icons.add_to_home_screen),
-                    title: const Text('Add widget to home screen'),
-                    subtitle: const Text('Instructions & quick-add button'),
+                    title: Text(l10n?.addWidgetToHomeScreen ?? 'Add widget to home screen'),
+                    subtitle: Text(l10n?.addWidgetInstructions ?? 'Instructions & quick-add button'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
                       Navigator.pop(context);
@@ -3691,11 +3691,11 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             );
           }),
           // Cloud Sync toggle (Plus-gated, always visible)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Text(
-              'Cloud Sync',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              l10n?.cloudSync ?? 'Cloud Sync',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ),
           Builder(builder: (context) {
@@ -3710,7 +3710,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   ),
                   title: Row(
                     children: [
-                      const Text('Cloud Sync'),
+                      Text(l10n?.cloudSync ?? 'Cloud Sync'),
                       if (!isPlus) ...[
                         const SizedBox(width: 8),
                         Container(
@@ -3730,7 +3730,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     ],
                   ),
                   subtitle: Text(
-                    'Auto-backup to iCloud / Google Drive',
+                    l10n?.cloudSyncDesc ?? 'Auto-backup to iCloud / Google Drive',
                     style: TextStyle(color: isPlus ? null : Colors.grey),
                   ),
                   value: isPlus && _syncEnabled,
@@ -3745,12 +3745,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                         }
                       : (_) => _showPlusDialog(context,
                           subtitle:
-                              'Cloud sync is a Plus feature.'),
+                              l10n?.cloudSyncPlusHint ?? 'Cloud sync is a Plus feature.'),
                 ),
                 if (isPlus && _syncEnabled)
                   ListTile(
                     leading: const Icon(Icons.manage_history_outlined),
-                    title: const Text('Manage sync'),
+                    title: Text(l10n?.manageSync ?? 'Manage sync'),
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(

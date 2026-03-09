@@ -527,4 +527,207 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ratingThanks => 'Merci pour votre retour !';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get enableNotifications => 'Activer les notifications';
+
+  @override
+  String get drawerWidget => 'Widget';
+
+  @override
+  String get homeScreenWidget => 'Widget d\'écran d\'accueil';
+
+  @override
+  String get homeScreenWidgetDesc =>
+      'Affiche votre meilleure série sur l\'écran d\'accueil';
+
+  @override
+  String get homeScreenWidgetPlusHint =>
+      'Le widget d\'écran d\'accueil est une fonctionnalité Plus.';
+
+  @override
+  String get addWidgetToHomeScreen => 'Ajouter le widget à l\'écran d\'accueil';
+
+  @override
+  String get addWidgetInstructions => 'Instructions et bouton d\'ajout rapide';
+
+  @override
+  String get cloudSync => 'Synchro cloud';
+
+  @override
+  String get cloudSyncDesc => 'Sauvegarde auto. sur iCloud / Google Drive';
+
+  @override
+  String get cloudSyncPlusHint =>
+      'La synchro cloud est une fonctionnalité Plus.';
+
+  @override
+  String get manageSync => 'Gérer la synchro';
+
+  @override
+  String syncCloudBackupTitle(Object cloudName) {
+    return 'Sauvegarde $cloudName';
+  }
+
+  @override
+  String get syncNeverSynced => 'Jamais synchronisé.';
+
+  @override
+  String get syncLastSynced => 'Dernière synchro :';
+
+  @override
+  String get syncUploadSuccess => '✓ Sauvegarde envoyée avec succès.';
+
+  @override
+  String get syncUploadFailed =>
+      'Échec de l\'envoi. Vérifiez votre connexion et réessayez.';
+
+  @override
+  String get syncNoBackupFound =>
+      'Aucune sauvegarde trouvée dans le cloud. Appuyez sur le bouton ci-dessous pour en créer une.';
+
+  @override
+  String get syncBackupFoundTitle => 'Sauvegarde trouvée';
+
+  @override
+  String get syncRestoreWarning =>
+      '⚠️ Cela remplacera vos données actuelles par la sauvegarde cloud.\n\nToute modification depuis votre dernière sauvegarde sera perdue. Voulez-vous vraiment restaurer ?';
+
+  @override
+  String get syncUploading => 'Envoi en cours…';
+
+  @override
+  String get syncBackupNow => 'Sauvegarder maintenant';
+
+  @override
+  String get syncChecking => 'Vérification…';
+
+  @override
+  String get syncCheckForBackup => 'Chercher une sauvegarde';
+
+  @override
+  String get syncHowItWorksTitle => 'Comment ça fonctionne';
+
+  @override
+  String syncHowItWorksBody(Object cloudName) {
+    return '• Vos données sont sauvegardées dans votre $cloudName — Avoid n\'y a jamais accès.\n• Les sauvegardes se font automatiquement (au plus toutes les 10 minutes) après les actions importantes.\n• Pour restaurer sur un nouvel appareil : installez Avoid, connectez-vous, puis appuyez sur « Chercher une sauvegarde ».';
+  }
+
+  @override
+  String get syncNotAvailable =>
+      'La synchro cloud n\'est pas disponible sur cette plateforme.';
+
+  @override
+  String get widgetSetupTitleIos => '🍎 iOS — Ajouter le widget';
+
+  @override
+  String get widgetSetupTitleAndroid => '🤖 Android — Ajouter le widget';
+
+  @override
+  String get widgetColorLabel => 'Couleur du widget';
+
+  @override
+  String get colorForest => 'Forêt';
+
+  @override
+  String get colorMidnight => 'Minuit';
+
+  @override
+  String get colorOcean => 'Océan';
+
+  @override
+  String get colorPurple => 'Violet';
+
+  @override
+  String get widgetAddButton => 'Ajouter le widget à l\'écran d\'accueil';
+
+  @override
+  String get widgetDialogOpened => 'Fenêtre widget ouverte !';
+
+  @override
+  String get widgetLauncherHint => 'Votre lanceur vous demandera où le placer.';
+
+  @override
+  String get widgetFollowSteps => 'Suivez ces étapes :';
+
+  @override
+  String get widgetManualSteps =>
+      'Le lanceur ne prend pas en charge le bouton ? Essayez manuellement :';
+
+  @override
+  String get widgetDone => 'Terminé';
+
+  @override
+  String get widgetIosStep1Title => 'Aller à l\'écran d\'accueil';
+
+  @override
+  String get widgetIosStep1Desc =>
+      'Appuyez sur le bouton Accueil ou glissez vers le haut.';
+
+  @override
+  String get widgetIosStep2Title => 'Appui long sur une zone vide';
+
+  @override
+  String get widgetIosStep2Desc =>
+      'Maintenez jusqu\'à ce que les icônes se mettent à trembler.';
+
+  @override
+  String get widgetIosStep3Title => 'Appuyez sur le bouton +';
+
+  @override
+  String get widgetIosStep3Desc => 'Coin supérieur gauche.';
+
+  @override
+  String get widgetIosStep4Title => 'Recherchez « Avoid »';
+
+  @override
+  String get widgetIosStep4Desc => 'Tapez dans la barre de recherche.';
+
+  @override
+  String get widgetIosStep5Title => 'Sélectionnez le widget Avoid';
+
+  @override
+  String get widgetIosStep5Desc =>
+      'Appuyez dessus, choisissez une taille, puis « Ajouter le widget ».';
+
+  @override
+  String get widgetIosStep6Title => 'Appuyez sur Terminé';
+
+  @override
+  String get widgetIosStep6Desc => 'Coin supérieur droit pour terminer.';
+
+  @override
+  String get widgetAndroidStep1Title => 'Aller à l\'écran d\'accueil';
+
+  @override
+  String get widgetAndroidStep1Desc => 'Appuyez sur le bouton Accueil.';
+
+  @override
+  String get widgetAndroidStep2Title => 'Appui long sur une zone vide';
+
+  @override
+  String get widgetAndroidStep2Desc =>
+      'Maintenez jusqu\'à l\'apparition du mode édition.';
+
+  @override
+  String get widgetAndroidStep3Title => 'Appuyez sur « Widgets »';
+
+  @override
+  String get widgetAndroidStep3Desc => 'Regardez en bas de l\'écran.';
+
+  @override
+  String get widgetAndroidStep4Title => 'Trouvez « Avoid Todo »';
+
+  @override
+  String get widgetAndroidStep4Desc => 'Faites défiler jusqu\'à la section A.';
+
+  @override
+  String get widgetAndroidStep5Title => 'Appui long & glisser';
+
+  @override
+  String get widgetAndroidStep5Desc =>
+      'Faites glisser le widget vers un endroit vide de votre écran d\'accueil.';
 }

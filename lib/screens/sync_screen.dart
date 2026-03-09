@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../helpers/sync_helper.dart';
+import '../l10n/app_localizations.dart';
 import '../main.dart';
 
 /// Shows cloud sync status and lets the user trigger a manual sync or restore.
@@ -39,12 +40,13 @@ class _SyncScreenState extends State<SyncScreen> {
     final success = await SyncHelper.uploadIfNeeded(force: true);
     final t = await SyncHelper.lastSyncTime();
     if (mounted) {
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _isUploading = false;
         _lastSync = t;
         _statusMessage = success
-            ? '✓ Backup uploaded successfully.'
-            : 'Upload failed. Check your connection and try again.';
+            ? (l10n?.syncUploadSuccess ?? '✓ Backup uploaded successfully.')
+            : (l10n?.syncUploadFailed ?? 'Upload failed. Check your connection and try again.');
       });
     }
   }
@@ -60,34 +62,37 @@ class _SyncScreenState extends State<SyncScreen> {
     setState(() => _isChecking = false);
 
     if (backup == null) {
+      final l10n = AppLocalizations.of(context);
       setState(() {
-        _statusMessage =
-            'No backup found in the cloud yet. Tap "Back up now" to create one.';
+        _statusMessage = l10n?.syncNoBackupFound ??
+            'No backup found in the cloud yet. Tap the button below to create one.';
       });
       return;
     }
 
     // Backup found — always ask user whether to restore
+    final l10n = AppLocalizations.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Backup found'),
-        content: const Text(
-          '⚠️ This will overwrite your current data with the cloud backup.\n\n'
-          'Any changes made since your last backup will be lost. '
-          'Are you sure you want to restore?',
+        title: Text(l10n?.syncBackupFoundTitle ?? 'Backup found'),
+        content: Text(
+          l10n?.syncRestoreWarning ??
+              '⚠️ This will overwrite your current data with the cloud backup.\n\n'
+              'Any changes made since your last backup will be lost. '
+              'Are you sure you want to restore?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n?.cancel ?? 'Cancel'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Colors.red,
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Restore'),
+            child: Text(l10n?.restore ?? 'Restore'),
           ),
         ],
       ),
@@ -109,13 +114,14 @@ class _SyncScreenState extends State<SyncScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isIos = Platform.isIOS;
     final cloudName = isIos ? 'iCloud' : 'Google Drive';
     final cloudIcon = isIos ? Icons.cloud_outlined : Icons.add_to_drive_outlined;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cloud Sync'),
+        title: Text(l10n?.cloudSync ?? 'Cloud Sync'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -133,7 +139,7 @@ class _SyncScreenState extends State<SyncScreen> {
                           color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 10),
                       Text(
-                        '$cloudName Backup',
+                        l10n?.syncCloudBackupTitle(cloudName) ?? '$cloudName Backup',
                         style: const TextStyle(
                             fontSize: 17, fontWeight: FontWeight.bold),
                       ),
@@ -142,7 +148,7 @@ class _SyncScreenState extends State<SyncScreen> {
                   const SizedBox(height: 12),
                   _lastSync == null
                       ? Text(
-                          'Never synced yet.',
+                          l10n?.syncNeverSynced ?? 'Never synced yet.',
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
@@ -150,8 +156,8 @@ class _SyncScreenState extends State<SyncScreen> {
                       : Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Last synced:',
-                                style: TextStyle(fontWeight: FontWeight.w500)),
+                            Text(l10n?.syncLastSynced ?? 'Last synced:',
+                                style: const TextStyle(fontWeight: FontWeight.w500)),
                             const SizedBox(height: 2),
                             Text(
                               _formatDateTime(_lastSync!),
@@ -190,7 +196,9 @@ class _SyncScreenState extends State<SyncScreen> {
                         strokeWidth: 2, color: Colors.white),
                   )
                 : const Icon(Icons.cloud_upload_outlined),
-            label: Text(_isUploading ? 'Uploading…' : 'Back up now'),
+            label: Text(_isUploading
+                ? (l10n?.syncUploading ?? 'Uploading…')
+                : (l10n?.syncBackupNow ?? 'Back up now')),
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
@@ -202,7 +210,9 @@ class _SyncScreenState extends State<SyncScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.cloud_download_outlined),
-            label: Text(_isChecking ? 'Checking…' : 'Check for backup'),
+            label: Text(_isChecking
+                ? (l10n?.syncChecking ?? 'Checking…')
+                : (l10n?.syncCheckForBackup ?? 'Check for backup')),
           ),
           const SizedBox(height: 24),
 
@@ -217,18 +227,16 @@ class _SyncScreenState extends State<SyncScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'How it works',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    l10n?.syncHowItWorksTitle ?? 'How it works',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '• Your data is backed up to your own $cloudName — '
-                    'Avoid never sees it.\n'
-                    '• Backups happen automatically (at most every 10 minutes) '
-                    'after major actions.\n'
-                    '• To restore on a new device: install Avoid, sign in, '
-                    'then tap "Check for backup".',
+                    l10n?.syncHowItWorksBody(cloudName) ??
+                        '• Your data is backed up to your own $cloudName — Avoid never sees it.\n'
+                        '• Backups happen automatically (at most every 10 minutes) after major actions.\n'
+                        '• To restore on a new device: install Avoid, sign in, then tap "Check for backup".',
                     style: TextStyle(
                       fontSize: 13,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -242,7 +250,8 @@ class _SyncScreenState extends State<SyncScreen> {
           if (!SyncHelper.isSupported) ...[
             const SizedBox(height: 16),
             Text(
-              'Cloud sync is not available on this platform.',
+              l10n?.syncNotAvailable ??
+                  'Cloud sync is not available on this platform.',
               style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),

@@ -1075,6 +1075,378 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Thank you for your feedback!'**
   String get ratingThanks;
+
+  /// Notifications section header in settings drawer.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notifications;
+
+  /// Toggle to enable or disable notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Notifications'**
+  String get enableNotifications;
+
+  /// Widget section header in settings drawer.
+  ///
+  /// In en, this message translates to:
+  /// **'Widget'**
+  String get drawerWidget;
+
+  /// Toggle title for home screen widget.
+  ///
+  /// In en, this message translates to:
+  /// **'Home Screen Widget'**
+  String get homeScreenWidget;
+
+  /// Subtitle for home screen widget toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shows your top streak on the home screen'**
+  String get homeScreenWidgetDesc;
+
+  /// Hint shown when free user taps widget toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Home screen widget is a Plus feature.'**
+  String get homeScreenWidgetPlusHint;
+
+  /// ListTile title for widget setup.
+  ///
+  /// In en, this message translates to:
+  /// **'Add widget to home screen'**
+  String get addWidgetToHomeScreen;
+
+  /// Subtitle for widget setup tile.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructions & quick-add button'**
+  String get addWidgetInstructions;
+
+  /// Cloud Sync section header and toggle title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud Sync'**
+  String get cloudSync;
+
+  /// Subtitle for cloud sync toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-backup to iCloud / Google Drive'**
+  String get cloudSyncDesc;
+
+  /// Hint shown when free user taps cloud sync toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud sync is a Plus feature.'**
+  String get cloudSyncPlusHint;
+
+  /// ListTile title for sync management screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage sync'**
+  String get manageSync;
+
+  /// Card header showing cloud service name. {cloudName} replaced at runtime with iCloud or Google Drive.
+  ///
+  /// In en, this message translates to:
+  /// **'{cloudName} Backup'**
+  String syncCloudBackupTitle(Object cloudName);
+
+  /// Status shown when no backup has been made.
+  ///
+  /// In en, this message translates to:
+  /// **'Never synced yet.'**
+  String get syncNeverSynced;
+
+  /// Label before last sync timestamp.
+  ///
+  /// In en, this message translates to:
+  /// **'Last synced:'**
+  String get syncLastSynced;
+
+  /// Status shown after successful backup upload.
+  ///
+  /// In en, this message translates to:
+  /// **'✓ Backup uploaded successfully.'**
+  String get syncUploadSuccess;
+
+  /// Status shown after failed backup upload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload failed. Check your connection and try again.'**
+  String get syncUploadFailed;
+
+  /// Status when no cloud backup exists.
+  ///
+  /// In en, this message translates to:
+  /// **'No backup found in the cloud yet. Tap the button below to create one.'**
+  String get syncNoBackupFound;
+
+  /// Dialog title when a cloud backup is available to restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup found'**
+  String get syncBackupFoundTitle;
+
+  /// Warning text in the restore confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'⚠️ This will overwrite your current data with the cloud backup.\n\nAny changes made since your last backup will be lost. Are you sure you want to restore?'**
+  String get syncRestoreWarning;
+
+  /// Label on backup button while uploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading…'**
+  String get syncUploading;
+
+  /// Button to trigger an immediate backup.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up now'**
+  String get syncBackupNow;
+
+  /// Label on check button while looking for a backup.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking…'**
+  String get syncChecking;
+
+  /// Button to look for an existing cloud backup.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for backup'**
+  String get syncCheckForBackup;
+
+  /// Title of the info card in the sync screen.
+  ///
+  /// In en, this message translates to:
+  /// **'How it works'**
+  String get syncHowItWorksTitle;
+
+  /// Body of how-it-works card. {cloudName} is replaced at runtime with iCloud or Google Drive.
+  ///
+  /// In en, this message translates to:
+  /// **'• Your data is backed up to your own {cloudName} — Avoid never sees it.\n• Backups happen automatically (at most every 10 minutes) after major actions.\n• To restore on a new device: install Avoid, sign in, then tap \"Check for backup\".'**
+  String syncHowItWorksBody(Object cloudName);
+
+  /// Message shown when cloud sync is unsupported on the current platform.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud sync is not available on this platform.'**
+  String get syncNotAvailable;
+
+  /// AppBar title for iOS widget setup screen.
+  ///
+  /// In en, this message translates to:
+  /// **'🍎 iOS — Add Widget'**
+  String get widgetSetupTitleIos;
+
+  /// AppBar title for Android widget setup screen.
+  ///
+  /// In en, this message translates to:
+  /// **'🤖 Android — Add Widget'**
+  String get widgetSetupTitleAndroid;
+
+  /// Label above the colour picker in widget setup.
+  ///
+  /// In en, this message translates to:
+  /// **'Widget colour'**
+  String get widgetColorLabel;
+
+  /// Forest widget colour theme name.
+  ///
+  /// In en, this message translates to:
+  /// **'Forest'**
+  String get colorForest;
+
+  /// Midnight widget colour theme name.
+  ///
+  /// In en, this message translates to:
+  /// **'Midnight'**
+  String get colorMidnight;
+
+  /// Ocean widget colour theme name.
+  ///
+  /// In en, this message translates to:
+  /// **'Ocean'**
+  String get colorOcean;
+
+  /// Purple widget colour theme name.
+  ///
+  /// In en, this message translates to:
+  /// **'Purple'**
+  String get colorPurple;
+
+  /// Button to pin the widget to the home screen (Android).
+  ///
+  /// In en, this message translates to:
+  /// **'Add Widget to Home Screen'**
+  String get widgetAddButton;
+
+  /// Label shown after the pin-widget dialog is triggered.
+  ///
+  /// In en, this message translates to:
+  /// **'Widget dialog opened!'**
+  String get widgetDialogOpened;
+
+  /// Hint shown below the add-widget button.
+  ///
+  /// In en, this message translates to:
+  /// **'Your launcher will ask where to place it.'**
+  String get widgetLauncherHint;
+
+  /// Header above the manual step list.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow these steps:'**
+  String get widgetFollowSteps;
+
+  /// Header shown when the launcher doesn't support pin-widget.
+  ///
+  /// In en, this message translates to:
+  /// **'Launcher doesn\'t support the button? Try manually:'**
+  String get widgetManualSteps;
+
+  /// Done button on widget setup screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get widgetDone;
+
+  /// iOS widget setup step 1 title.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to your Home Screen'**
+  String get widgetIosStep1Title;
+
+  /// iOS widget setup step 1 description.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Home or swipe up from any app.'**
+  String get widgetIosStep1Desc;
+
+  /// iOS widget setup step 2 title.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press an empty area'**
+  String get widgetIosStep2Title;
+
+  /// iOS widget setup step 2 description.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold until the icons start to jiggle.'**
+  String get widgetIosStep2Desc;
+
+  /// iOS widget setup step 3 title.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the + button'**
+  String get widgetIosStep3Title;
+
+  /// iOS widget setup step 3 description.
+  ///
+  /// In en, this message translates to:
+  /// **'Top-left corner.'**
+  String get widgetIosStep3Desc;
+
+  /// iOS widget setup step 4 title.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for \"Avoid\"'**
+  String get widgetIosStep4Title;
+
+  /// iOS widget setup step 4 description.
+  ///
+  /// In en, this message translates to:
+  /// **'Type in the search bar.'**
+  String get widgetIosStep4Desc;
+
+  /// iOS widget setup step 5 title.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the Avoid widget'**
+  String get widgetIosStep5Title;
+
+  /// iOS widget setup step 5 description.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap it, pick a size, then tap \"Add Widget\".'**
+  String get widgetIosStep5Desc;
+
+  /// iOS widget setup step 6 title.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Done'**
+  String get widgetIosStep6Title;
+
+  /// iOS widget setup step 6 description.
+  ///
+  /// In en, this message translates to:
+  /// **'Top-right corner to finish.'**
+  String get widgetIosStep6Desc;
+
+  /// Android widget setup step 1 title.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to your Home Screen'**
+  String get widgetAndroidStep1Title;
+
+  /// Android widget setup step 1 description.
+  ///
+  /// In en, this message translates to:
+  /// **'Press the Home button.'**
+  String get widgetAndroidStep1Desc;
+
+  /// Android widget setup step 2 title.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press an empty area'**
+  String get widgetAndroidStep2Title;
+
+  /// Android widget setup step 2 description.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold on a blank spot until edit mode appears.'**
+  String get widgetAndroidStep2Desc;
+
+  /// Android widget setup step 3 title.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap \"Widgets\"'**
+  String get widgetAndroidStep3Title;
+
+  /// Android widget setup step 3 description.
+  ///
+  /// In en, this message translates to:
+  /// **'Look at the bottom of the screen.'**
+  String get widgetAndroidStep3Desc;
+
+  /// Android widget setup step 4 title.
+  ///
+  /// In en, this message translates to:
+  /// **'Find \"Avoid Todo\"'**
+  String get widgetAndroidStep4Title;
+
+  /// Android widget setup step 4 description.
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll to the A section.'**
+  String get widgetAndroidStep4Desc;
+
+  /// Android widget setup step 5 title.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press & drag'**
+  String get widgetAndroidStep5Title;
+
+  /// Android widget setup step 5 description.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag the widget to any empty spot on your home screen.'**
+  String get widgetAndroidStep5Desc;
 }
 
 class _AppLocalizationsDelegate

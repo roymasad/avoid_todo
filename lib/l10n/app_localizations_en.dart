@@ -518,4 +518,203 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ratingThanks => 'Thank you for your feedback!';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get enableNotifications => 'Enable Notifications';
+
+  @override
+  String get drawerWidget => 'Widget';
+
+  @override
+  String get homeScreenWidget => 'Home Screen Widget';
+
+  @override
+  String get homeScreenWidgetDesc => 'Shows your top streak on the home screen';
+
+  @override
+  String get homeScreenWidgetPlusHint =>
+      'Home screen widget is a Plus feature.';
+
+  @override
+  String get addWidgetToHomeScreen => 'Add widget to home screen';
+
+  @override
+  String get addWidgetInstructions => 'Instructions & quick-add button';
+
+  @override
+  String get cloudSync => 'Cloud Sync';
+
+  @override
+  String get cloudSyncDesc => 'Auto-backup to iCloud / Google Drive';
+
+  @override
+  String get cloudSyncPlusHint => 'Cloud sync is a Plus feature.';
+
+  @override
+  String get manageSync => 'Manage sync';
+
+  @override
+  String syncCloudBackupTitle(Object cloudName) {
+    return '$cloudName Backup';
+  }
+
+  @override
+  String get syncNeverSynced => 'Never synced yet.';
+
+  @override
+  String get syncLastSynced => 'Last synced:';
+
+  @override
+  String get syncUploadSuccess => '✓ Backup uploaded successfully.';
+
+  @override
+  String get syncUploadFailed =>
+      'Upload failed. Check your connection and try again.';
+
+  @override
+  String get syncNoBackupFound =>
+      'No backup found in the cloud yet. Tap the button below to create one.';
+
+  @override
+  String get syncBackupFoundTitle => 'Backup found';
+
+  @override
+  String get syncRestoreWarning =>
+      '⚠️ This will overwrite your current data with the cloud backup.\n\nAny changes made since your last backup will be lost. Are you sure you want to restore?';
+
+  @override
+  String get syncUploading => 'Uploading…';
+
+  @override
+  String get syncBackupNow => 'Back up now';
+
+  @override
+  String get syncChecking => 'Checking…';
+
+  @override
+  String get syncCheckForBackup => 'Check for backup';
+
+  @override
+  String get syncHowItWorksTitle => 'How it works';
+
+  @override
+  String syncHowItWorksBody(Object cloudName) {
+    return '• Your data is backed up to your own $cloudName — Avoid never sees it.\n• Backups happen automatically (at most every 10 minutes) after major actions.\n• To restore on a new device: install Avoid, sign in, then tap \"Check for backup\".';
+  }
+
+  @override
+  String get syncNotAvailable =>
+      'Cloud sync is not available on this platform.';
+
+  @override
+  String get widgetSetupTitleIos => '🍎 iOS — Add Widget';
+
+  @override
+  String get widgetSetupTitleAndroid => '🤖 Android — Add Widget';
+
+  @override
+  String get widgetColorLabel => 'Widget colour';
+
+  @override
+  String get colorForest => 'Forest';
+
+  @override
+  String get colorMidnight => 'Midnight';
+
+  @override
+  String get colorOcean => 'Ocean';
+
+  @override
+  String get colorPurple => 'Purple';
+
+  @override
+  String get widgetAddButton => 'Add Widget to Home Screen';
+
+  @override
+  String get widgetDialogOpened => 'Widget dialog opened!';
+
+  @override
+  String get widgetLauncherHint => 'Your launcher will ask where to place it.';
+
+  @override
+  String get widgetFollowSteps => 'Follow these steps:';
+
+  @override
+  String get widgetManualSteps =>
+      'Launcher doesn\'t support the button? Try manually:';
+
+  @override
+  String get widgetDone => 'Done';
+
+  @override
+  String get widgetIosStep1Title => 'Go to your Home Screen';
+
+  @override
+  String get widgetIosStep1Desc => 'Press Home or swipe up from any app.';
+
+  @override
+  String get widgetIosStep2Title => 'Long-press an empty area';
+
+  @override
+  String get widgetIosStep2Desc => 'Hold until the icons start to jiggle.';
+
+  @override
+  String get widgetIosStep3Title => 'Tap the + button';
+
+  @override
+  String get widgetIosStep3Desc => 'Top-left corner.';
+
+  @override
+  String get widgetIosStep4Title => 'Search for \"Avoid\"';
+
+  @override
+  String get widgetIosStep4Desc => 'Type in the search bar.';
+
+  @override
+  String get widgetIosStep5Title => 'Select the Avoid widget';
+
+  @override
+  String get widgetIosStep5Desc =>
+      'Tap it, pick a size, then tap \"Add Widget\".';
+
+  @override
+  String get widgetIosStep6Title => 'Press Done';
+
+  @override
+  String get widgetIosStep6Desc => 'Top-right corner to finish.';
+
+  @override
+  String get widgetAndroidStep1Title => 'Go to your Home Screen';
+
+  @override
+  String get widgetAndroidStep1Desc => 'Press the Home button.';
+
+  @override
+  String get widgetAndroidStep2Title => 'Long-press an empty area';
+
+  @override
+  String get widgetAndroidStep2Desc =>
+      'Hold on a blank spot until edit mode appears.';
+
+  @override
+  String get widgetAndroidStep3Title => 'Tap \"Widgets\"';
+
+  @override
+  String get widgetAndroidStep3Desc => 'Look at the bottom of the screen.';
+
+  @override
+  String get widgetAndroidStep4Title => 'Find \"Avoid Todo\"';
+
+  @override
+  String get widgetAndroidStep4Desc => 'Scroll to the A section.';
+
+  @override
+  String get widgetAndroidStep5Title => 'Long-press & drag';
+
+  @override
+  String get widgetAndroidStep5Desc =>
+      'Drag the widget to any empty spot on your home screen.';
 }

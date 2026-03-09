@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../l10n/app_localizations.dart';
 
 class WidgetSetupScreen extends StatefulWidget {
   const WidgetSetupScreen({super.key});
@@ -21,12 +22,22 @@ class _WidgetSetupScreenState extends State<WidgetSetupScreen> {
   int _habitCount = 0;
 
   // Gradient pairs matching the native XML drawables exactly
-  static const _colors = [
-    (label: 'Forest',   start: Color(0xFF2E7D32), end: Color(0xFF0D2E0F)),
-    (label: 'Midnight', start: Color(0xFF1A2E42), end: Color(0xFF050C15)),
-    (label: 'Ocean',    start: Color(0xFF0E4A7A), end: Color(0xFF051828)),
-    (label: 'Purple',   start: Color(0xFF3D2490), end: Color(0xFF150938)),
+  static const _colorGradients = [
+    (start: Color(0xFF2E7D32), end: Color(0xFF0D2E0F)),
+    (start: Color(0xFF1A2E42), end: Color(0xFF050C15)),
+    (start: Color(0xFF0E4A7A), end: Color(0xFF051828)),
+    (start: Color(0xFF3D2490), end: Color(0xFF150938)),
   ];
+
+  String _colorLabel(int index, AppLocalizations? l10n) {
+    switch (index) {
+      case 0: return l10n?.colorForest ?? 'Forest';
+      case 1: return l10n?.colorMidnight ?? 'Midnight';
+      case 2: return l10n?.colorOcean ?? 'Ocean';
+      case 3: return l10n?.colorPurple ?? 'Purple';
+      default: return '';
+    }
+  }
 
   @override
   void initState() {
@@ -83,8 +94,9 @@ class _WidgetSetupScreenState extends State<WidgetSetupScreen> {
   }
 
   // ── Preview ──────────────────────────────────────────────────────────────
+  // The preview intentionally mirrors the native widget which renders in English.
   Widget _buildPreview() {
-    final c        = _colors[_selectedColor];
+    final c        = _colorGradients[_selectedColor];
     final hasData  = _habitName.isNotEmpty;
     final label    = hasData
         ? (_habitCount == 1 ? 'AVOIDING 1 HABIT' : 'AVOIDING $_habitCount HABITS')
@@ -172,15 +184,47 @@ class _WidgetSetupScreenState extends State<WidgetSetupScreen> {
     );
   }
 
+  // ── Step builders ─────────────────────────────────────────────────────────
+  List<_Step> _buildIosSteps(AppLocalizations? l10n) => [
+    _Step(l10n?.widgetIosStep1Title ?? 'Go to your Home Screen',
+          l10n?.widgetIosStep1Desc  ?? 'Press Home or swipe up from any app.'),
+    _Step(l10n?.widgetIosStep2Title ?? 'Long-press an empty area',
+          l10n?.widgetIosStep2Desc  ?? 'Hold until the icons start to jiggle.'),
+    _Step(l10n?.widgetIosStep3Title ?? 'Tap the + button',
+          l10n?.widgetIosStep3Desc  ?? 'Top-left corner.'),
+    _Step(l10n?.widgetIosStep4Title ?? 'Search for "Avoid"',
+          l10n?.widgetIosStep4Desc  ?? 'Type in the search bar.'),
+    _Step(l10n?.widgetIosStep5Title ?? 'Select the Avoid widget',
+          l10n?.widgetIosStep5Desc  ?? 'Tap it, pick a size, then tap "Add Widget".'),
+    _Step(l10n?.widgetIosStep6Title ?? 'Press Done',
+          l10n?.widgetIosStep6Desc  ?? 'Top-right corner to finish.'),
+  ];
+
+  List<_Step> _buildAndroidSteps(AppLocalizations? l10n) => [
+    _Step(l10n?.widgetAndroidStep1Title ?? 'Go to your Home Screen',
+          l10n?.widgetAndroidStep1Desc  ?? 'Press the Home button.'),
+    _Step(l10n?.widgetAndroidStep2Title ?? 'Long-press an empty area',
+          l10n?.widgetAndroidStep2Desc  ?? 'Hold on a blank spot until edit mode appears.'),
+    _Step(l10n?.widgetAndroidStep3Title ?? 'Tap "Widgets"',
+          l10n?.widgetAndroidStep3Desc  ?? 'Look at the bottom of the screen.'),
+    _Step(l10n?.widgetAndroidStep4Title ?? 'Find "Avoid Todo"',
+          l10n?.widgetAndroidStep4Desc  ?? 'Scroll to the A section.'),
+    _Step(l10n?.widgetAndroidStep5Title ?? 'Long-press & drag',
+          l10n?.widgetAndroidStep5Desc  ?? 'Drag the widget to any empty spot on your home screen.'),
+  ];
+
   // ── Build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final l10n  = AppLocalizations.of(context);
     final isIos = Platform.isIOS;
-    final steps = isIos ? _iosSteps : _androidFallbackSteps;
+    final steps = isIos ? _buildIosSteps(l10n) : _buildAndroidSteps(l10n);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isIos ? '🍎 iOS — Add Widget' : '🤖 Android — Add Widget'),
+        title: Text(isIos
+            ? (l10n?.widgetSetupTitleIos ?? '🍎 iOS — Add Widget')
+            : (l10n?.widgetSetupTitleAndroid ?? '🤖 Android — Add Widget')),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
@@ -200,8 +244,8 @@ class _WidgetSetupScreenState extends State<WidgetSetupScreen> {
                 child: FilledButton.icon(
                   icon: const Icon(Icons.add_to_home_screen),
                   label: Text(_pinRequested
-                      ? 'Widget dialog opened!'
-                      : 'Add Widget to Home Screen'),
+                      ? (l10n?.widgetDialogOpened ?? 'Widget dialog opened!')
+                      : (l10n?.widgetAddButton ?? 'Add Widget to Home Screen')),
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
@@ -210,7 +254,7 @@ class _WidgetSetupScreenState extends State<WidgetSetupScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Your launcher will ask where to place it.',
+                l10n?.widgetLauncherHint ?? 'Your launcher will ask where to place it.',
                 style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -220,12 +264,12 @@ class _WidgetSetupScreenState extends State<WidgetSetupScreen> {
 
             // Color picker (Android only)
             if (!isIos) ...[
-              const Text('Widget colour',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              Text(l10n?.widgetColorLabel ?? 'Widget colour',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
               const SizedBox(height: 10),
               Row(
-                children: List.generate(_colors.length, (i) {
-                  final c        = _colors[i];
+                children: List.generate(_colorGradients.length, (i) {
+                  final c        = _colorGradients[i];
                   final selected = _selectedColor == i;
                   return Padding(
                     padding: const EdgeInsets.only(right: 12),
@@ -257,7 +301,7 @@ class _WidgetSetupScreenState extends State<WidgetSetupScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            c.label,
+                            _colorLabel(i, l10n),
                             style: TextStyle(
                               fontSize: 11,
                               color: selected
@@ -284,10 +328,10 @@ class _WidgetSetupScreenState extends State<WidgetSetupScreen> {
             // Step list header
             Text(
               isIos
-                  ? 'Follow these steps:'
+                  ? (l10n?.widgetFollowSteps ?? 'Follow these steps:')
                   : (_pinSupported
-                      ? 'Launcher doesn\'t support the button? Try manually:'
-                      : 'Follow these steps:'),
+                      ? (l10n?.widgetManualSteps ?? 'Launcher doesn\'t support the button? Try manually:')
+                      : (l10n?.widgetFollowSteps ?? 'Follow these steps:')),
               style: const TextStyle(
                   fontSize: 13, fontWeight: FontWeight.w600),
             ),
@@ -359,7 +403,7 @@ class _WidgetSetupScreenState extends State<WidgetSetupScreen> {
                   await prefs.setBool('widget_setup_shown', true);
                   if (context.mounted) Navigator.pop(context);
                 },
-                child: const Text('Done'),
+                child: Text(l10n?.widgetDone ?? 'Done'),
               ),
             ),
           ],
@@ -367,28 +411,6 @@ class _WidgetSetupScreenState extends State<WidgetSetupScreen> {
       ),
     );
   }
-
-  static const _iosSteps = [
-    _Step('Go to your Home Screen',
-        'Press Home or swipe up from any app.'),
-    _Step('Long-press an empty area',
-        'Hold until the icons start to jiggle.'),
-    _Step('Tap the + button', 'Top-left corner.'),
-    _Step('Search for "Avoid"', 'Type in the search bar.'),
-    _Step('Select the Avoid widget',
-        'Tap it, pick a size, then tap "Add Widget".'),
-    _Step('Press Done', 'Top-right corner to finish.'),
-  ];
-
-  static const _androidFallbackSteps = [
-    _Step('Go to your Home Screen', 'Press the Home button.'),
-    _Step('Long-press an empty area',
-        'Hold on a blank spot until edit mode appears.'),
-    _Step('Tap "Widgets"', 'Look at the bottom of the screen.'),
-    _Step('Find "Avoid Todo"', 'Scroll to the A section.'),
-    _Step('Long-press & drag',
-        'Drag the widget to any empty spot on your home screen.'),
-  ];
 }
 
 class _Step {
