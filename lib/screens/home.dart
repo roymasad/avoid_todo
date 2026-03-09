@@ -42,6 +42,8 @@ import '../helpers/trusted_support_helper.dart';
 
 enum SortOption { latest, oldest, avoidType, costType, priority }
 
+enum CommitmentPromptFrequency { daily, weekly, never }
+
 class _TrustedSupportChoice {
   final String contactId;
   final String contactName;
@@ -79,6 +81,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   bool _swipeHintPlayed = false;
   Timer? _swipeHintTimer;
   bool _commitmentCheckDone = false; // Phase 1C: only check once per session
+  CommitmentPromptFrequency _commitmentPromptFrequency =
+      CommitmentPromptFrequency.daily;
 
   // Coach Marks Keys
   final GlobalKey _menuKey = GlobalKey();
@@ -233,7 +237,126 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
       _widgetEnabled = prefs.getBool('widget_enabled') ?? false;
       _syncEnabled = prefs.getBool('sync_enabled') ?? false;
+      _commitmentPromptFrequency = _commitmentPromptFrequencyFromString(
+        prefs.getString('commitment_prompt_frequency'),
+      );
     });
+  }
+
+  CommitmentPromptFrequency _commitmentPromptFrequencyFromString(
+      String? value) {
+    switch (value) {
+      case 'weekly':
+        return CommitmentPromptFrequency.weekly;
+      case 'never':
+        return CommitmentPromptFrequency.never;
+      case 'daily':
+      default:
+        return CommitmentPromptFrequency.daily;
+    }
+  }
+
+  String _commitmentPromptFrequencyValue(CommitmentPromptFrequency value) {
+    switch (value) {
+      case CommitmentPromptFrequency.weekly:
+        return 'weekly';
+      case CommitmentPromptFrequency.never:
+        return 'never';
+      case CommitmentPromptFrequency.daily:
+        return 'daily';
+    }
+  }
+
+  String _commitmentPromptFrequencyLabel(CommitmentPromptFrequency value) {
+    switch (value) {
+      case CommitmentPromptFrequency.weekly:
+        return 'Once a week';
+      case CommitmentPromptFrequency.never:
+        return 'Never';
+      case CommitmentPromptFrequency.daily:
+        return 'Every day';
+    }
+  }
+
+  String _currentCommitmentPeriodKey(DateTime now) {
+    switch (_commitmentPromptFrequency) {
+      case CommitmentPromptFrequency.weekly:
+        return '${now.year}-W${_isoWeek(now)}';
+      case CommitmentPromptFrequency.never:
+        return 'never';
+      case CommitmentPromptFrequency.daily:
+        return now.toIso8601String().substring(0, 10);
+    }
+  }
+
+  String _commitmentFrequencySubtitle(bool isPlus) {
+    if (!isPlus) {
+      return 'Choose how often the commitment screen shows up.';
+    }
+    return _commitmentPromptFrequencyLabel(_commitmentPromptFrequency);
+  }
+
+  Future<void> _setCommitmentPromptFrequency(
+    CommitmentPromptFrequency value,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'commitment_prompt_frequency',
+      _commitmentPromptFrequencyValue(value),
+    );
+    if (!mounted) return;
+    setState(() => _commitmentPromptFrequency = value);
+  }
+
+  Future<void> _showCommitmentPromptSettings() async {
+    final selected = await showModalBottomSheet<CommitmentPromptFrequency>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const ListTile(
+                title: Text('Commitment Check-In'),
+                subtitle: Text(
+                  'Control how often the full-screen commitment prompt appears.',
+                ),
+              ),
+              RadioGroup<CommitmentPromptFrequency>(
+                groupValue: _commitmentPromptFrequency,
+                onChanged: (value) {
+                  if (value != null) {
+                    Navigator.pop(context, value);
+                  }
+                },
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    RadioListTile<CommitmentPromptFrequency>(
+                      value: CommitmentPromptFrequency.daily,
+                      title: Text('Every day'),
+                    ),
+                    RadioListTile<CommitmentPromptFrequency>(
+                      value: CommitmentPromptFrequency.weekly,
+                      title: Text('Once a week'),
+                    ),
+                    RadioListTile<CommitmentPromptFrequency>(
+                      value: CommitmentPromptFrequency.never,
+                      title: Text('Never'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selected != null) {
+      await _setCommitmentPromptFrequency(selected);
+    }
   }
 
   Future<void> _loadTrustedSupportContact() async {
@@ -545,14 +668,21 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     _commitmentCheckDone = true;
 
     if (!isPlus) return;
+    if (_commitmentPromptFrequency == CommitmentPromptFrequency.never) return;
 
     final activeTodos =
         todos.where((t) => !t.isArchived && t.isRecurring).toList();
     if (activeTodos.isEmpty) return;
 
     final prefs = await SharedPreferences.getInstance();
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-    if (prefs.getString('last_commitment_date') == today) return;
+    final now = DateTime.now();
+    final periodKey = _currentCommitmentPeriodKey(now);
+    final lastCommitmentKey = prefs.getString(
+      _commitmentPromptFrequency == CommitmentPromptFrequency.weekly
+          ? 'last_commitment_week'
+          : 'last_commitment_date',
+    );
+    if (lastCommitmentKey == periodKey) return;
 
     if (!mounted) return;
 
@@ -566,7 +696,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
     // Save the date only when the user tapped "Start my day"
     if ((committed ?? false) && mounted) {
-      await prefs.setString('last_commitment_date', today);
+      await prefs.setString(
+        _commitmentPromptFrequency == CommitmentPromptFrequency.weekly
+            ? 'last_commitment_week'
+            : 'last_commitment_date',
+        periodKey,
+      );
     }
   }
 
@@ -4343,6 +4478,50 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     },
                   ),
               ],
+            );
+          }),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: Text(
+              'Commitment Check-In',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ),
+          Builder(builder: (context) {
+            final isPlus = context.read<PurchaseProvider>().isPlus;
+            return ListTile(
+              leading: Icon(
+                Icons.flag_outlined,
+                color: isPlus ? null : Colors.grey,
+              ),
+              title: Row(
+                children: [
+                  const Text('Commitment Check-In'),
+                  if (!isPlus) ...[
+                    const SizedBox(width: 8),
+                    _buildPlusBadge(),
+                  ],
+                ],
+              ),
+              subtitle: Text(
+                _commitmentFrequencySubtitle(isPlus),
+                style: TextStyle(color: isPlus ? null : Colors.grey),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                if (!isPlus) {
+                  _showPlusDialog(
+                    context,
+                    subtitle:
+                        'Commitment Check-In is a Plus feature. Control how often the daily focus screen appears.',
+                  );
+                  return;
+                }
+                Navigator.pop(context);
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) _showCommitmentPromptSettings();
+                });
+              },
             );
           }),
           // Cloud Sync toggle (Plus-gated, always visible)
