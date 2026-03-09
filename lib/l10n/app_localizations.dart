@@ -685,7 +685,7 @@ abstract class AppLocalizations {
   /// Onboarding slide 5 description.
   ///
   /// In en, this message translates to:
-  /// **'Unlock badges for streaks and savings milestones. Complete goals, earn XP, and level up through 50 tiers as your habits get stronger.'**
+  /// **'Unlock badges for streaks and savings milestones. Complete goals, earn XP, and level up through 100 tiers as your habits get stronger.'**
   String get onboardingBadgesDesc;
 
   /// Button on last onboarding slide.
@@ -799,7 +799,7 @@ abstract class AppLocalizations {
   /// FAQ 6 answer.
   ///
   /// In en, this message translates to:
-  /// **'You earn XP by avoiding slips, completing goals, and doing the daily commitment. There are 50 levels with titles — free users progress to level 20, Plus unlocks all 50.'**
+  /// **'You earn XP by avoiding slips, completing goals, and doing the daily commitment. There are 100 levels with titles — free users progress to level 20, Plus unlocks all 100.'**
   String get faq6Answer;
 
   /// FAQ 7 question.
@@ -837,6 +837,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Plus is a one-time purchase that unlocks: unlimited habits, full stats history & heatmap, relapse pattern analysis, custom goals, daily commitment (+XP), smart pattern-aware notifications, home screen widget, cloud backup, and data export.'**
   String get faq9Answer;
+
+  /// FAQ 10 question.
+  ///
+  /// In en, this message translates to:
+  /// **'Is my data stored in the cloud?'**
+  String get faq10Question;
+
+  /// FAQ 10 answer.
+  ///
+  /// In en, this message translates to:
+  /// **'No. Avoid does not process, collect, or store your habit data on our own servers. Your data stays on your device. If you enable cloud backup, it is saved to your own iCloud or Google Drive account, not to Avoid\'s cloud.'**
+  String get faq10Answer;
 
   /// Coach mark step 1 title.
   ///

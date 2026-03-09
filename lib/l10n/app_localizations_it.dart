@@ -304,7 +304,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get onboardingBadgesDesc =>
-      'Sblocca badge per le serie e i traguardi di risparmio. Completa obiettivi, guadagna XP e sali attraverso 50 livelli mentre le tue abitudini diventano più forti.';
+      'Sblocca badge per le serie e i traguardi di risparmio. Completa obiettivi, guadagna XP e sali attraverso 100 livelli mentre le tue abitudini diventano più forti.';
 
   @override
   String get getStarted => 'Inizia';
@@ -369,7 +369,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get faq6Answer =>
-      'Guadagni XP evitando ricadute, completando obiettivi e facendo l’impegno quotidiano. Ci sono 50 livelli con titoli: gli utenti free avanzano fino al livello 20, mentre Plus sblocca tutti e 50.';
+      'Guadagni XP evitando ricadute, completando obiettivi e facendo l’impegno quotidiano. Ci sono 100 livelli con titoli: gli utenti free avanzano fino al livello 20, mentre Plus sblocca tutti e 100.';
 
   @override
   String get faq7Question => 'Che cos’è l’Impegno quotidiano? (Plus)';
@@ -392,6 +392,13 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get faq9Answer =>
       'Plus è un acquisto una tantum che sblocca abitudini illimitate, cronologia completa delle statistiche e heatmap, analisi dei pattern di ricaduta, obiettivi personalizzati, impegno quotidiano (+XP), notifiche intelligenti basate sui pattern, widget per la schermata Home, backup cloud ed esportazione dei dati.';
+
+  @override
+  String get faq10Question => 'I miei dati vengono salvati nel cloud?';
+
+  @override
+  String get faq10Answer =>
+      'No. Avoid non elabora, raccoglie né salva i dati delle tue abitudini sui propri server. I tuoi dati restano sul tuo dispositivo. Se attivi il backup cloud, vengono salvati nel tuo account iCloud o Google Drive, non nel cloud di Avoid.';
 
   @override
   String get coachMarkAddTitle => 'Aggiungi la tua prima abitudine';

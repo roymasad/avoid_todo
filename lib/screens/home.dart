@@ -36,6 +36,7 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 import '../helpers/rating_helper.dart';
 import '../widgets/rating_dialog.dart';
 import '../widgets/language_settings_tile.dart';
+import '../widgets/plus_upgrade_dialog.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../helpers/trusted_support_helper.dart';
 // Note: Map implementation uses simple location names for now.
@@ -68,6 +69,11 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with TickerProviderStateMixin {
+  static final Color _fabBaseColor = Color.alphaBlend(
+    Colors.white.withValues(alpha: 0.08),
+    tdAvoidRed,
+  );
+
   List<ToDo> todosList = [];
   late List<ToDo> _foundToDo = [];
   bool _isLoading = true;
@@ -76,6 +82,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   final _costController = TextEditingController();
   late ConfettiController _confettiController;
   late AnimationController _animationController;
+  late Animation<double> _fabSheenAnimation;
   late AnimationController _swipeHintController;
   late Animation<Offset> _swipeHintAnimation;
   bool _swipeHintPlayed = false;
@@ -142,8 +149,16 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         ConfettiController(duration: const Duration(seconds: 2));
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 6800),
     );
+    _fabSheenAnimation = Tween<double>(
+      begin: -1.8,
+      end: 2.2,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+    _animationController.repeat();
     _swipeHintController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 750),
@@ -752,8 +767,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           _showPlusDialog(context,
-              subtitle:
-                  'Free plan is limited to 10 active habits. Upgrade to Plus for unlimited.');
+              subtitle: 'Unlock Plus for unlimited habits.');
         }
       });
       return;
@@ -1001,6 +1015,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   }
 
   void _showAddTodoDialog() {
+    _animationController.stop();
     final locationController = TextEditingController(text: _locationName);
     bool showAdvanced = false;
 
@@ -1142,7 +1157,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                 });
                               }
                             },
-                            selectedColor: tdAvoidRed.withAlpha(200),
+                            selectedColor: _fabBaseColor,
                             labelStyle: TextStyle(
                               color: isSelected ? Colors.white : null,
                             ),
@@ -1571,7 +1586,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: tdAvoidRed,
+                        backgroundColor: _fabBaseColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -1590,7 +1605,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           ); // closes return Padding
         }, // closes builder block
       ),
-    ).whenComplete(() => _todoController.removeListener(updateSuggestions));
+    ).whenComplete(() {
+      _todoController.removeListener(updateSuggestions);
+      if (mounted && _selectedIndex == 0) {
+        _animationController.repeat(reverse: true);
+      }
+    });
   }
 
   void _runFilter(String enteredKeyword) {
@@ -1837,8 +1857,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                     final level = xp.levelCapped(isPlus);
                                     final title = xp.titleForLevel(level);
                                     final prog = xp.progress(isPlus);
-                                    final atCap = !isPlus &&
+                                    final atFreeCap = !isPlus &&
                                         level >= XpHelper.maxFreeLevel;
+                                    final atMaxLevel =
+                                        isPlus && level >= XpHelper.maxLevel;
                                     final textColor = isDark
                                         ? AppThemes.darkTextSecondary
                                         : AppThemes.lightTextSecondary;
@@ -1860,9 +1882,16 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                               ),
                                             ),
                                             const Spacer(),
-                                            if (atCap)
+                                            if (atFreeCap)
                                               const Text(
                                                 '⭐ Plus to level up',
+                                                style: TextStyle(
+                                                    fontSize: 11,
+                                                    color: Colors.amber),
+                                              )
+                                            else if (atMaxLevel)
+                                              const Text(
+                                                'Max level',
                                                 style: TextStyle(
                                                     fontSize: 11,
                                                     color: Colors.amber),
@@ -1876,7 +1905,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                               ),
                                           ],
                                         ),
-                                        if (!atCap) ...[
+                                        if (!atFreeCap && !atMaxLevel) ...[
                                           const SizedBox(height: 4),
                                           ClipRRect(
                                             borderRadius:
@@ -2169,11 +2198,68 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           ],
         ),
         floatingActionButton: _selectedIndex == 0
-            ? FloatingActionButton.extended(
-                key: _addKey,
-                onPressed: _showAddTodoDialog,
-                icon: const Icon(Icons.add),
-                label: const Text('Add'),
+            ? AnimatedBuilder(
+                animation: _animationController,
+                builder: (context, _) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _fabBaseColor.withValues(alpha: 0.22),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: Stack(
+                        children: [
+                          FloatingActionButton.extended(
+                            key: _addKey,
+                            onPressed: _showAddTodoDialog,
+                            backgroundColor: _fabBaseColor,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            highlightElevation: 0,
+                            hoverElevation: 0,
+                            focusElevation: 0,
+                            splashColor: Colors.white.withValues(alpha: 0.14),
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add'),
+                          ),
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment(
+                                      _fabSheenAnimation.value - 1.5,
+                                      -1.0,
+                                    ),
+                                    end: Alignment(
+                                      _fabSheenAnimation.value + 1.5,
+                                      1.0,
+                                    ),
+                                    colors: const [
+                                      Colors.transparent,
+                                      Color(0x00FFFFFF),
+                                      Color(0x33FFFFFF),
+                                      Color(0x00FFFFFF),
+                                      Colors.transparent,
+                                    ],
+                                    stops: const [0.0, 0.28, 0.5, 0.72, 1.0],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               )
             : null,
       ),
@@ -2276,7 +2362,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                               });
                             }
                           },
-                          selectedColor: tdAvoidRed.withAlpha(200),
+                          selectedColor: _fabBaseColor,
                           labelStyle: TextStyle(
                             color: isSelected ? Colors.white : null,
                           ),
@@ -2735,7 +2821,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                           if (context.mounted) Navigator.pop(context);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: tdAvoidRed,
+                          backgroundColor: _fabBaseColor,
                           foregroundColor: Colors.white,
                         ),
                         child:
@@ -4109,130 +4195,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   }
 
   void _showPlusDialog(BuildContext context, {String? subtitle}) {
-    final purchase = context.read<PurchaseProvider>();
-    final messenger = ScaffoldMessenger.of(context);
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.star, color: Colors.amber),
-            SizedBox(width: 8),
-            Text('Unlock Avoid Plus'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (subtitle != null) ...[
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.orange.shade700,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-            Text(
-              '${purchase.plusPriceString ?? '\$2.99'} · One-time purchase',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            const Text('What you unlock:'),
-            const SizedBox(height: 10),
-            const Row(children: [
-              Text('♾️', style: TextStyle(fontSize: 16)),
-              SizedBox(width: 8),
-              Expanded(child: Text('Unlimited active habits (free: 10)'))
-            ]),
-            const SizedBox(height: 6),
-            const Row(children: [
-              Text('📅', style: TextStyle(fontSize: 16)),
-              SizedBox(width: 8),
-              Expanded(child: Text('Full stats history & heatmap'))
-            ]),
-            const SizedBox(height: 6),
-            const Row(children: [
-              Text('🎯', style: TextStyle(fontSize: 16)),
-              SizedBox(width: 8),
-              Expanded(child: Text('Daily commitment flow & goals'))
-            ]),
-            const SizedBox(height: 6),
-            const Row(children: [
-              Text('🔔', style: TextStyle(fontSize: 16)),
-              SizedBox(width: 8),
-              Expanded(child: Text('Smart scheduled notifications'))
-            ]),
-            const SizedBox(height: 6),
-            const Row(children: [
-              Text('🏅', style: TextStyle(fontSize: 16)),
-              SizedBox(width: 8),
-              Expanded(child: Text('All achievement medals'))
-            ]),
-            const SizedBox(height: 6),
-            const Row(children: [
-              Text('📈', style: TextStyle(fontSize: 16)),
-              SizedBox(width: 8),
-              Expanded(child: Text('XP levels beyond 20 & titles'))
-            ]),
-            const SizedBox(height: 6),
-            const Row(children: [
-              Text('🏠', style: TextStyle(fontSize: 16)),
-              SizedBox(width: 8),
-              Expanded(child: Text('Home screen widget'))
-            ]),
-            const SizedBox(height: 6),
-            const Row(children: [
-              Text('☁️', style: TextStyle(fontSize: 16)),
-              SizedBox(width: 8),
-              Expanded(child: Text('Cloud sync across devices'))
-            ]),
-            const SizedBox(height: 6),
-            const Row(children: [
-              Text('📤', style: TextStyle(fontSize: 16)),
-              SizedBox(width: 8),
-              Expanded(child: Text('Export your data'))
-            ]),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final restored = await purchase.restorePurchases();
-              if (mounted) {
-                messenger.showSnackBar(SnackBar(
-                  content: Text(restored
-                      ? 'Purchase restored!'
-                      : 'No purchase found to restore.'),
-                ));
-              }
-            },
-            child: const Text('Restore Purchase'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final success = await purchase.purchasePlus();
-              if (mounted && !success) {
-                messenger.showSnackBar(
-                  const SnackBar(
-                      content: Text('Purchase failed or was cancelled.')),
-                );
-              }
-            },
-            child: const Text('Unlock Now'),
-          ),
-        ],
-      ),
-    );
+    showPlusUpgradeDialog(context, subtitle: subtitle);
   }
 
   AppBar _buildAppBar() {
@@ -4243,12 +4206,6 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           onPressed: () => setState(() => _selectedIndex = 0),
         ),
         title: const Text('Statistics'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => setState(() {}),
-          ),
-        ],
       );
     }
     if (_selectedIndex == 2) {
@@ -4284,7 +4241,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         Builder(
           builder: (context) => IconButton(
             key: _menuKey,
-            icon: const Icon(Icons.settings, color: Colors.red),
+            icon: Icon(Icons.settings, color: _fabBaseColor),
             onPressed: () => Scaffold.of(context).openEndDrawer(),
           ),
         ),
@@ -4456,8 +4413,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                           }
                         }
                       : (_) => _showPlusDialog(context,
-                          subtitle: l10n?.homeScreenWidgetPlusHint ??
-                              'Home screen widget is a Plus feature.'),
+                          subtitle:
+                              'Unlock Plus to use the home screen widget.'),
                 ),
                 if (isPlus && _widgetEnabled)
                   ListTile(
@@ -4512,8 +4469,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                 if (!isPlus) {
                   _showPlusDialog(
                     context,
-                    subtitle:
-                        'Commitment Check-In is a Plus feature. Control how often the daily focus screen appears.',
+                    subtitle: 'Unlock Plus to control the commitment check-in.',
                   );
                   return;
                 }
@@ -4579,8 +4535,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                           }
                         }
                       : (_) => _showPlusDialog(context,
-                          subtitle: l10n?.cloudSyncPlusHint ??
-                              'Cloud sync is a Plus feature.'),
+                          subtitle: 'Unlock Plus to use cloud backup.'),
                 ),
                 if (isPlus && _syncEnabled)
                   ListTile(
@@ -4630,7 +4585,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   _showPlusDialog(
                     context,
                     subtitle:
-                        'Trusted Support is a Plus feature. Save one supporter and prepare a message after a relapse.',
+                        'Unlock Plus to set up Trusted Support after a relapse.',
                   );
                   return;
                 }

@@ -71,6 +71,14 @@ class BadgeHelper {
       tier: BadgeTier.free,
     ),
     BadgeDefinition(
+      id: 'badge_14d',
+      title: 'Two Week Shield',
+      description: '14-day streak on any habit',
+      icon: Icons.verified_user_rounded,
+      color: Colors.indigo,
+      tier: BadgeTier.free,
+    ),
+    BadgeDefinition(
       id: 'badge_budget',
       title: 'Budget Saver',
       description: 'Saved \$50 in money',
@@ -84,6 +92,14 @@ class BadgeHelper {
       description: 'Tracking 5+ active habits simultaneously',
       icon: Icons.repeat_rounded,
       color: Colors.orange,
+      tier: BadgeTier.free,
+    ),
+    BadgeDefinition(
+      id: 'badge_25_avoids',
+      title: 'Momentum',
+      description: '25 successful avoidances',
+      icon: Icons.local_fire_department_rounded,
+      color: Colors.deepOrange,
       tier: BadgeTier.free,
     ),
     // ── Plus badges ──────────────────────────────────────────────────────────
@@ -144,6 +160,14 @@ class BadgeHelper {
       tier: BadgeTier.plus,
     ),
     BadgeDefinition(
+      id: 'badge_double_century',
+      title: 'Double Century',
+      description: '200 successful avoidances',
+      icon: Icons.whatshot_rounded,
+      color: Colors.redAccent,
+      tier: BadgeTier.plus,
+    ),
+    BadgeDefinition(
       id: 'badge_honest',
       title: 'Honest',
       description: 'Logged 25 relapses (self-awareness takes courage)',
@@ -152,11 +176,27 @@ class BadgeHelper {
       tier: BadgeTier.plus,
     ),
     BadgeDefinition(
+      id: 'badge_tycoon',
+      title: 'Tycoon',
+      description: 'Saved \$2,500 in money',
+      icon: Icons.account_balance_wallet_rounded,
+      color: Colors.green,
+      tier: BadgeTier.plus,
+    ),
+    BadgeDefinition(
       id: 'badge_veteran',
       title: 'Veteran',
       description: '1 year since your first habit was added',
       icon: Icons.local_police_rounded,
       color: Colors.brown,
+      tier: BadgeTier.plus,
+    ),
+    BadgeDefinition(
+      id: 'badge_legacy',
+      title: 'Legacy',
+      description: '2 years since your first habit was added',
+      icon: Icons.history_edu_rounded,
+      color: Colors.teal,
       tier: BadgeTier.plus,
     ),
   ];
@@ -185,8 +225,10 @@ class BadgeHelper {
     }
     if (stats.longestStreak.inHours >= 24) earned.add('badge_24h');
     if (stats.longestStreak.inDays >= 7) earned.add('badge_7d');
+    if (stats.longestStreak.inDays >= 14) earned.add('badge_14d');
     if (stats.totalSavedMoney >= 50) earned.add('badge_budget');
     if (stats.activeCount >= 5) earned.add('badge_consistency');
+    if (stats.totalAvoided >= 25) earned.add('badge_25_avoids');
 
     // Plus badges (persisted for all; shown/celebrated only for Plus users)
     if (stats.longestStreak.inDays >= 30) earned.add('badge_iron_month');
@@ -195,11 +237,14 @@ class BadgeHelper {
     if (stats.longestStreak.inDays >= 365) earned.add('badge_one_year');
     if (stats.totalSavedMoney >= 200) earned.add('badge_mega_saver');
     if (stats.totalSavedMoney >= 1000) earned.add('badge_high_roller');
+    if (stats.totalSavedMoney >= 2500) earned.add('badge_tycoon');
     if (stats.totalAvoided >= 100) earned.add('badge_century');
+    if (stats.totalAvoided >= 200) earned.add('badge_double_century');
     if (stats.totalRelapses >= 25) earned.add('badge_honest');
     if (stats.firstHabitCreatedAt != null) {
       final age = DateTime.now().difference(stats.firstHabitCreatedAt!);
       if (age.inDays >= 365) earned.add('badge_veteran');
+      if (age.inDays >= 730) earned.add('badge_legacy');
     }
 
     return earned;

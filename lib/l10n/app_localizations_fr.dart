@@ -307,7 +307,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get onboardingBadgesDesc =>
-      'Débloquez des badges pour vos séries et économies. Complétez des objectifs, gagnez de l\'XP et montez de niveau parmi 50 paliers au fil de vos progrès.';
+      'Débloquez des badges pour vos séries et économies. Complétez des objectifs, gagnez de l\'XP et montez de niveau parmi 100 paliers au fil de vos progrès.';
 
   @override
   String get getStarted => 'Commencer';
@@ -373,7 +373,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get faq6Answer =>
-      'Vous gagnez de l\'XP en évitant les rechutes, en complétant des objectifs et en faisant l\'engagement quotidien. Il y a 50 niveaux — les utilisateurs gratuits progressent jusqu\'au niveau 20, Plus débloque les 50.';
+      'Vous gagnez de l\'XP en évitant les rechutes, en complétant des objectifs et en faisant l\'engagement quotidien. Il y a 100 niveaux — les utilisateurs gratuits progressent jusqu\'au niveau 20, Plus débloque les 100.';
 
   @override
   String get faq7Question => 'Qu\'est-ce que l\'Engagement Quotidien ? (Plus)';
@@ -396,6 +396,13 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get faq9Answer =>
       'Plus est un achat unique qui débloque : habitudes illimitées, historique complet des stats & carte de chaleur, analyse des schémas de rechute, objectifs personnalisés, engagement quotidien (+XP), notifications intelligentes, widget d\'écran d\'accueil, sauvegarde cloud et export de données.';
+
+  @override
+  String get faq10Question => 'Mes données sont-elles stockées dans le cloud ?';
+
+  @override
+  String get faq10Answer =>
+      'Non. Avoid ne traite, ne collecte ni ne stocke les données de vos habitudes sur ses propres serveurs. Vos données restent sur votre appareil. Si vous activez la sauvegarde cloud, elles sont enregistrées dans votre propre compte iCloud ou Google Drive, pas dans le cloud d\'Avoid.';
 
   @override
   String get coachMarkAddTitle => 'Ajoutez votre première habitude';

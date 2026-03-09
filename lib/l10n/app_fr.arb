@@ -384,7 +384,7 @@
   "@onboardingBadgesTitle": {
     "description": "Onboarding slide 5 title."
   },
-  "onboardingBadgesDesc": "Débloquez des badges pour vos séries et économies. Complétez des objectifs, gagnez de l'XP et montez de niveau parmi 50 paliers au fil de vos progrès.",
+  "onboardingBadgesDesc": "Débloquez des badges pour vos séries et économies. Complétez des objectifs, gagnez de l'XP et montez de niveau parmi 100 paliers au fil de vos progrès.",
   "@onboardingBadgesDesc": {
     "description": "Onboarding slide 5 description."
   },
@@ -460,7 +460,7 @@
   "@faq6Question": {
     "description": "FAQ 6 question."
   },
-  "faq6Answer": "Vous gagnez de l'XP en évitant les rechutes, en complétant des objectifs et en faisant l'engagement quotidien. Il y a 50 niveaux — les utilisateurs gratuits progressent jusqu'au niveau 20, Plus débloque les 50.",
+  "faq6Answer": "Vous gagnez de l'XP en évitant les rechutes, en complétant des objectifs et en faisant l'engagement quotidien. Il y a 100 niveaux — les utilisateurs gratuits progressent jusqu'au niveau 20, Plus débloque les 100.",
   "@faq6Answer": {
     "description": "FAQ 6 answer."
   },
@@ -487,6 +487,14 @@
   "faq9Answer": "Plus est un achat unique qui débloque : habitudes illimitées, historique complet des stats & carte de chaleur, analyse des schémas de rechute, objectifs personnalisés, engagement quotidien (+XP), notifications intelligentes, widget d'écran d'accueil, sauvegarde cloud et export de données.",
   "@faq9Answer": {
     "description": "FAQ 9 answer."
+  },
+  "faq10Question": "Mes données sont-elles stockées dans le cloud ?",
+  "@faq10Question": {
+    "description": "FAQ 10 question."
+  },
+  "faq10Answer": "Non. Avoid ne traite, ne collecte ni ne stocke les données de vos habitudes sur ses propres serveurs. Vos données restent sur votre appareil. Si vous activez la sauvegarde cloud, elles sont enregistrées dans votre propre compte iCloud ou Google Drive, pas dans le cloud d'Avoid.",
+  "@faq10Answer": {
+    "description": "FAQ 10 answer."
   },
   "coachMarkAddTitle": "Ajoutez votre première habitude",
   "@coachMarkAddTitle": {

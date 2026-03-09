@@ -1,6 +1,6 @@
 /// XP constants, level thresholds, and computation helpers.
 ///
-/// Levels 1–20 are Free. Levels 21+ require Plus.
+/// Levels 1–20 are Free. Levels 21–100 require Plus.
 class XpHelper {
   // ─────────────────────────────────────────────────────────────
   // XP amounts per event
@@ -37,6 +37,7 @@ class XpHelper {
   // ─────────────────────────────────────────────────────────────
 
   static const int maxFreeLevel = 20;
+  static const int maxLevel = 100;
 
   static const List<_LevelDef> _levels = [
     // Free tier — levels 1–20
@@ -60,7 +61,7 @@ class XpHelper {
     _LevelDef(18, 4300, 'Elite'),
     _LevelDef(19, 4650, 'Champion'),
     _LevelDef(20, 5000, 'Unbreakable'),
-    // Plus tier — levels 21–50
+    // Plus tier — levels 21–100
     _LevelDef(21, 5500, 'Ascendant'),
     _LevelDef(22, 6100, 'Formidable'),
     _LevelDef(23, 6800, 'Unstoppable'),
@@ -75,6 +76,16 @@ class XpHelper {
     _LevelDef(40, 23000, 'Transcendent'),
     _LevelDef(45, 27000, 'Immortal'),
     _LevelDef(50, 30000, 'Mythic'),
+    _LevelDef(55, 34000, 'Paragon'),
+    _LevelDef(60, 39000, 'Overlord'),
+    _LevelDef(65, 45000, 'Celestial'),
+    _LevelDef(70, 52000, 'Voidwalker'),
+    _LevelDef(75, 60000, 'Godforged'),
+    _LevelDef(80, 69000, 'Apex'),
+    _LevelDef(85, 79000, 'Eclipsed'),
+    _LevelDef(90, 90000, 'Omniscient'),
+    _LevelDef(95, 102000, 'Beyond'),
+    _LevelDef(100, 115000, 'Unbound'),
   ];
 
   // ─────────────────────────────────────────────────────────────
@@ -93,11 +104,14 @@ class XpHelper {
       }
     }
     if (capAtFree && level > maxFreeLevel) return maxFreeLevel;
+    if (level > maxLevel) return maxLevel;
     return level;
   }
 
   /// Returns the minimum XP required to reach [level].
   static int getXpForLevel(int level) {
+    if (level <= 1) return 0;
+    if (level >= maxLevel) return _levels.last.xpRequired;
     for (final def in _levels) {
       if (def.level == level) return def.xpRequired;
     }
@@ -134,6 +148,7 @@ class XpHelper {
   /// Returns 1.0 when at the free level cap (nothing to show beyond).
   static double getProgressToNextLevel(int xp, {bool capAtFree = false}) {
     final currentLevel = getLevelForXp(xp, capAtFree: capAtFree);
+    if (currentLevel >= maxLevel) return 1.0;
     if (capAtFree && currentLevel >= maxFreeLevel) return 1.0;
     final currentLevelXp = getXpForLevel(currentLevel);
     final nextLevelXp = getXpForLevel(currentLevel + 1);

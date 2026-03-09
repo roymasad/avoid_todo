@@ -384,7 +384,7 @@
   "@onboardingBadgesTitle": {
     "description": "Onboarding slide 5 title."
   },
-  "onboardingBadgesDesc": "Desbloqueie badges por sequências e marcos de economia. Conclua metas, ganhe XP e suba por 50 níveis conforme seus hábitos ficam mais fortes.",
+  "onboardingBadgesDesc": "Desbloqueie badges por sequências e marcos de economia. Conclua metas, ganhe XP e suba por 100 níveis conforme seus hábitos ficam mais fortes.",
   "@onboardingBadgesDesc": {
     "description": "Onboarding slide 5 description."
   },
@@ -460,7 +460,7 @@
   "@faq6Question": {
     "description": "FAQ 6 question."
   },
-  "faq6Answer": "Você ganha XP evitando recaídas, concluindo metas e fazendo o compromisso diário. Existem 50 níveis com títulos; usuários gratuitos avançam até o nível 20, e o Plus desbloqueia todos os 50.",
+  "faq6Answer": "Você ganha XP evitando recaídas, concluindo metas e fazendo o compromisso diário. Existem 100 níveis com títulos; usuários gratuitos avançam até o nível 20, e o Plus desbloqueia todos os 100.",
   "@faq6Answer": {
     "description": "FAQ 6 answer."
   },
@@ -487,6 +487,14 @@
   "faq9Answer": "Plus é uma compra única que desbloqueia hábitos ilimitados, histórico completo de estatísticas e mapa de calor, análise de padrões de recaída, metas personalizadas, compromisso diário (+XP), notificações inteligentes baseadas em padrões, widget da tela inicial, backup na nuvem e exportação de dados.",
   "@faq9Answer": {
     "description": "FAQ 9 answer."
+  },
+  "faq10Question": "Meus dados ficam salvos na nuvem?",
+  "@faq10Question": {
+    "description": "FAQ 10 question."
+  },
+  "faq10Answer": "Não. O Avoid não processa, coleta nem armazena os dados dos seus hábitos em servidores próprios. Seus dados ficam no seu dispositivo. Se você ativar o backup na nuvem, eles serão salvos na sua própria conta do iCloud ou Google Drive, não em uma nuvem do Avoid.",
+  "@faq10Answer": {
+    "description": "FAQ 10 answer."
   },
   "coachMarkAddTitle": "Adicione seu primeiro hábito",
   "@coachMarkAddTitle": {

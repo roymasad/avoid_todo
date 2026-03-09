@@ -384,7 +384,7 @@
   "@onboardingBadgesTitle": {
     "description": "Onboarding slide 5 title."
   },
-  "onboardingBadgesDesc": "Schalte Abzeichen für Serien und Spar-Meilensteine frei. Erreiche Ziele, sammle XP und steige durch 50 Stufen auf, während deine Gewohnheiten stärker werden.",
+  "onboardingBadgesDesc": "Schalte Abzeichen für Serien und Spar-Meilensteine frei. Erreiche Ziele, sammle XP und steige durch 100 Stufen auf, während deine Gewohnheiten stärker werden.",
   "@onboardingBadgesDesc": {
     "description": "Onboarding slide 5 description."
   },
@@ -460,7 +460,7 @@
   "@faq6Question": {
     "description": "FAQ 6 question."
   },
-  "faq6Answer": "Du erhältst XP, indem du Rückfälle vermeidest, Ziele abschließt und das tägliche Commitment machst. Es gibt 50 Level mit Titeln; kostenlose Nutzer kommen bis Level 20, Plus schaltet alle 50 frei.",
+  "faq6Answer": "Du erhältst XP, indem du Rückfälle vermeidest, Ziele abschließt und das tägliche Commitment machst. Es gibt 100 Level mit Titeln; kostenlose Nutzer kommen bis Level 20, Plus schaltet alle 100 frei.",
   "@faq6Answer": {
     "description": "FAQ 6 answer."
   },
@@ -487,6 +487,14 @@
   "faq9Answer": "Plus ist ein Einmalkauf und schaltet unbegrenzte Gewohnheiten, vollständige Statistik-Historie und Heatmap, Analyse von Rückfallmustern, eigene Ziele, tägliches Commitment (+XP), smarte Benachrichtigungen auf Basis von Mustern, ein Startbildschirm-Widget, Cloud-Backup und Datenexport frei.",
   "@faq9Answer": {
     "description": "FAQ 9 answer."
+  },
+  "faq10Question": "Werden meine Daten in der Cloud gespeichert?",
+  "@faq10Question": {
+    "description": "FAQ 10 question."
+  },
+  "faq10Answer": "Nein. Avoid verarbeitet, sammelt oder speichert deine Habit-Daten nicht auf eigenen Servern. Deine Daten bleiben auf deinem Gerät. Wenn du Cloud-Backup aktivierst, werden sie in deinem eigenen iCloud- oder Google-Drive-Konto gespeichert, nicht in einer Avoid-Cloud.",
+  "@faq10Answer": {
+    "description": "FAQ 10 answer."
   },
   "coachMarkAddTitle": "Füge deine erste Gewohnheit hinzu",
   "@coachMarkAddTitle": {

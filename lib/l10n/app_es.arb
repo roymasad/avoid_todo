@@ -384,7 +384,7 @@
   "@onboardingBadgesTitle": {
     "description": "Onboarding slide 5 title."
   },
-  "onboardingBadgesDesc": "Desbloquea insignias por rachas y metas de ahorro. Completa objetivos, gana XP y sube por 50 niveles a medida que tus hábitos se fortalecen.",
+  "onboardingBadgesDesc": "Desbloquea insignias por rachas y metas de ahorro. Completa objetivos, gana XP y sube por 100 niveles a medida que tus hábitos se fortalecen.",
   "@onboardingBadgesDesc": {
     "description": "Onboarding slide 5 description."
   },
@@ -460,7 +460,7 @@
   "@faq6Question": {
     "description": "FAQ 6 question."
   },
-  "faq6Answer": "Ganas XP evitando recaídas, completando objetivos y haciendo el compromiso diario. Hay 50 niveles con títulos; los usuarios gratis avanzan hasta el nivel 20 y Plus desbloquea los 50.",
+  "faq6Answer": "Ganas XP evitando recaídas, completando objetivos y haciendo el compromiso diario. Hay 100 niveles con títulos; los usuarios gratis avanzan hasta el nivel 20 y Plus desbloquea los 100.",
   "@faq6Answer": {
     "description": "FAQ 6 answer."
   },
@@ -487,6 +487,14 @@
   "faq9Answer": "Plus es una compra única que desbloquea hábitos ilimitados, historial completo de estadísticas y mapa de calor, análisis de patrones de recaída, objetivos personalizados, compromiso diario (+XP), notificaciones inteligentes según patrones, widget para la pantalla de inicio, copia de seguridad en la nube y exportación de datos.",
   "@faq9Answer": {
     "description": "FAQ 9 answer."
+  },
+  "faq10Question": "¿Mis datos se guardan en la nube?",
+  "@faq10Question": {
+    "description": "FAQ 10 question."
+  },
+  "faq10Answer": "No. Avoid no procesa, recopila ni almacena los datos de tus hábitos en sus propios servidores. Tus datos permanecen en tu dispositivo. Si activas la copia de seguridad en la nube, se guardan en tu propia cuenta de iCloud o Google Drive, no en la nube de Avoid.",
+  "@faq10Answer": {
+    "description": "FAQ 10 answer."
   },
   "coachMarkAddTitle": "Añade tu primer hábito",
   "@coachMarkAddTitle": {

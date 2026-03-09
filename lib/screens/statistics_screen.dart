@@ -17,6 +17,7 @@ import '../providers/xp_provider.dart';
 import '../helpers/xp_helper.dart';
 import '../helpers/badge_helper.dart';
 import '../helpers/export_helper.dart';
+import '../widgets/plus_upgrade_dialog.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key, this.embedded = false});
@@ -670,36 +671,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   void _showUpgradeDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.star, color: Colors.amber),
-            SizedBox(width: 8),
-            Text('Unlock Avoid Plus'),
-          ],
-        ),
-        content: Text(
-          '${context.read<PurchaseProvider>().plusPriceString ?? '\$2.99'} · One-time purchase\n\nUnlock all Plus badges, full stats history, relapse patterns, tag breakdown, smart notifications, and more.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Maybe later'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await context.read<PurchaseProvider>().purchasePlus();
-            },
-            child: Text(
-              'Unlock — ${context.read<PurchaseProvider>().plusPriceString ?? '\$2.99'}',
-            ),
-          ),
-        ],
-      ),
-    );
+    showPlusUpgradeDialog(context);
   }
 
   // ── Section header with info tooltip ─────────────────────────────────────
@@ -806,35 +778,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           const SizedBox(width: 10),
           FilledButton.tonal(
             onPressed: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Row(
-                    children: [
-                      Icon(Icons.star, color: Colors.amber),
-                      SizedBox(width: 8),
-                      Text('Unlock Avoid Plus'),
-                    ],
-                  ),
-                  content: Text(
-                    '${context.read<PurchaseProvider>().plusPriceString ?? '\$2.99'} · One-time purchase\n\nUnlock full stats history, relapse patterns, tag breakdown, trigger words, goals, smart notifications, and more.',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Maybe later'),
-                    ),
-                    FilledButton(
-                      onPressed: () async {
-                        Navigator.pop(ctx);
-                        await context.read<PurchaseProvider>().purchasePlus();
-                      },
-                      child: Text(
-                          'Unlock — ${context.read<PurchaseProvider>().plusPriceString ?? '\$2.99'}'),
-                    ),
-                  ],
-                ),
-              );
+              showPlusUpgradeDialog(context);
             },
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -971,7 +915,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         final level = xp.levelCapped(isPlus);
         final title = xp.titleForLevel(level);
         final prog = xp.progress(isPlus);
-        final atCap = !isPlus && level >= XpHelper.maxFreeLevel;
+        final atFreeCap = !isPlus && level >= XpHelper.maxFreeLevel;
+        final atMaxLevel = isPlus && level >= XpHelper.maxLevel;
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final xpFloor = xp.xpFloor(isPlus);
         final xpCeil = xp.xpCeiling(isPlus);
@@ -1021,7 +966,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          if (atCap) ...[
+                          if (atFreeCap) ...[
                             const Spacer(),
                             Text(
                               'Max free level',
@@ -1032,12 +977,31 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               ),
                             ),
                           ],
+                          if (atMaxLevel) ...[
+                            const Spacer(),
+                            Text(
+                              'Max level',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.amber.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 6),
-                      if (atCap)
+                      if (atFreeCap)
                         Text(
                           'Unlock Plus to continue levelling up',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? Colors.white60 : Colors.black54,
+                          ),
+                        )
+                      else if (atMaxLevel)
+                        Text(
+                          'You reached the highest level in Avoid.',
                           style: TextStyle(
                             fontSize: 12,
                             color: isDark ? Colors.white60 : Colors.black54,

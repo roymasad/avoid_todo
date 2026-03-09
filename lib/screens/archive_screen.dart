@@ -16,6 +16,11 @@ class ArchiveScreen extends StatefulWidget {
 
 class ArchiveScreenState extends State<ArchiveScreen>
     with SingleTickerProviderStateMixin {
+  static final Color _accentColor = Color.alphaBlend(
+    Colors.white.withValues(alpha: 0.08),
+    const Color(0xFFE53935),
+  );
+
   List<ToDo> archivedTodos = [];
   List<Tag> allTags = [];
   List<Map<String, dynamic>> relapseReflections = [];
@@ -101,7 +106,7 @@ class ArchiveScreenState extends State<ArchiveScreen>
             onPressed: () => Navigator.pop(context, true),
             child: Text(
               l10n?.delete ?? 'Delete',
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(color: _accentColor),
             ),
           ),
         ],
@@ -279,7 +284,7 @@ class ArchiveScreenState extends State<ArchiveScreen>
                   tooltip: l10n?.restore ?? 'Restore',
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete_forever, color: Colors.red),
+                  icon: Icon(Icons.delete_forever, color: _accentColor),
                   onPressed: () => _deletePermanently(todo),
                   tooltip: l10n?.deletePermanently ?? 'Delete permanently',
                 ),

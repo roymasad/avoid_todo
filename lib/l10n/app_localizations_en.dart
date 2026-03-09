@@ -304,7 +304,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingBadgesDesc =>
-      'Unlock badges for streaks and savings milestones. Complete goals, earn XP, and level up through 50 tiers as your habits get stronger.';
+      'Unlock badges for streaks and savings milestones. Complete goals, earn XP, and level up through 100 tiers as your habits get stronger.';
 
   @override
   String get getStarted => 'Get Started';
@@ -368,7 +368,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get faq6Answer =>
-      'You earn XP by avoiding slips, completing goals, and doing the daily commitment. There are 50 levels with titles — free users progress to level 20, Plus unlocks all 50.';
+      'You earn XP by avoiding slips, completing goals, and doing the daily commitment. There are 100 levels with titles — free users progress to level 20, Plus unlocks all 100.';
 
   @override
   String get faq7Question => 'What is the Daily Commitment? (Plus)';
@@ -390,6 +390,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get faq9Answer =>
       'Plus is a one-time purchase that unlocks: unlimited habits, full stats history & heatmap, relapse pattern analysis, custom goals, daily commitment (+XP), smart pattern-aware notifications, home screen widget, cloud backup, and data export.';
+
+  @override
+  String get faq10Question => 'Is my data stored in the cloud?';
+
+  @override
+  String get faq10Answer =>
+      'No. Avoid does not process, collect, or store your habit data on our own servers. Your data stays on your device. If you enable cloud backup, it is saved to your own iCloud or Google Drive account, not to Avoid\'s cloud.';
 
   @override
   String get coachMarkAddTitle => 'Add your first habit';

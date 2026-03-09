@@ -384,7 +384,7 @@
   "@onboardingBadgesTitle": {
     "description": "Onboarding slide 5 title."
   },
-  "onboardingBadgesDesc": "Unlock badges for streaks and savings milestones. Complete goals, earn XP, and level up through 50 tiers as your habits get stronger.",
+  "onboardingBadgesDesc": "Unlock badges for streaks and savings milestones. Complete goals, earn XP, and level up through 100 tiers as your habits get stronger.",
   "@onboardingBadgesDesc": {
     "description": "Onboarding slide 5 description."
   },
@@ -460,7 +460,7 @@
   "@faq6Question": {
     "description": "FAQ 6 question."
   },
-  "faq6Answer": "You earn XP by avoiding slips, completing goals, and doing the daily commitment. There are 50 levels with titles — free users progress to level 20, Plus unlocks all 50.",
+  "faq6Answer": "You earn XP by avoiding slips, completing goals, and doing the daily commitment. There are 100 levels with titles — free users progress to level 20, Plus unlocks all 100.",
   "@faq6Answer": {
     "description": "FAQ 6 answer."
   },
@@ -487,6 +487,14 @@
   "faq9Answer": "Plus is a one-time purchase that unlocks: unlimited habits, full stats history & heatmap, relapse pattern analysis, custom goals, daily commitment (+XP), smart pattern-aware notifications, home screen widget, cloud backup, and data export.",
   "@faq9Answer": {
     "description": "FAQ 9 answer."
+  },
+  "faq10Question": "Is my data stored in the cloud?",
+  "@faq10Question": {
+    "description": "FAQ 10 question."
+  },
+  "faq10Answer": "No. Avoid does not process, collect, or store your habit data on our own servers. Your data stays on your device. If you enable cloud backup, it is saved to your own iCloud or Google Drive account, not to Avoid's cloud.",
+  "@faq10Answer": {
+    "description": "FAQ 10 answer."
   },
   "coachMarkAddTitle": "Add your first habit",
   "@coachMarkAddTitle": {

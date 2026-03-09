@@ -308,7 +308,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get onboardingBadgesDesc =>
-      'Schalte Abzeichen für Serien und Spar-Meilensteine frei. Erreiche Ziele, sammle XP und steige durch 50 Stufen auf, während deine Gewohnheiten stärker werden.';
+      'Schalte Abzeichen für Serien und Spar-Meilensteine frei. Erreiche Ziele, sammle XP und steige durch 100 Stufen auf, während deine Gewohnheiten stärker werden.';
 
   @override
   String get getStarted => 'Loslegen';
@@ -374,7 +374,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get faq6Answer =>
-      'Du erhältst XP, indem du Rückfälle vermeidest, Ziele abschließt und das tägliche Commitment machst. Es gibt 50 Level mit Titeln; kostenlose Nutzer kommen bis Level 20, Plus schaltet alle 50 frei.';
+      'Du erhältst XP, indem du Rückfälle vermeidest, Ziele abschließt und das tägliche Commitment machst. Es gibt 100 Level mit Titeln; kostenlose Nutzer kommen bis Level 20, Plus schaltet alle 100 frei.';
 
   @override
   String get faq7Question => 'Was ist das tägliche Commitment? (Plus)';
@@ -397,6 +397,13 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get faq9Answer =>
       'Plus ist ein Einmalkauf und schaltet unbegrenzte Gewohnheiten, vollständige Statistik-Historie und Heatmap, Analyse von Rückfallmustern, eigene Ziele, tägliches Commitment (+XP), smarte Benachrichtigungen auf Basis von Mustern, ein Startbildschirm-Widget, Cloud-Backup und Datenexport frei.';
+
+  @override
+  String get faq10Question => 'Werden meine Daten in der Cloud gespeichert?';
+
+  @override
+  String get faq10Answer =>
+      'Nein. Avoid verarbeitet, sammelt oder speichert deine Habit-Daten nicht auf eigenen Servern. Deine Daten bleiben auf deinem Gerät. Wenn du Cloud-Backup aktivierst, werden sie in deinem eigenen iCloud- oder Google-Drive-Konto gespeichert, nicht in einer Avoid-Cloud.';
 
   @override
   String get coachMarkAddTitle => 'Füge deine erste Gewohnheit hinzu';

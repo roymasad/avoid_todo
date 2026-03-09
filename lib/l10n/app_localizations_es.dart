@@ -305,7 +305,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onboardingBadgesDesc =>
-      'Desbloquea insignias por rachas y metas de ahorro. Completa objetivos, gana XP y sube por 50 niveles a medida que tus hábitos se fortalecen.';
+      'Desbloquea insignias por rachas y metas de ahorro. Completa objetivos, gana XP y sube por 100 niveles a medida que tus hábitos se fortalecen.';
 
   @override
   String get getStarted => 'Comenzar';
@@ -370,7 +370,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get faq6Answer =>
-      'Ganas XP evitando recaídas, completando objetivos y haciendo el compromiso diario. Hay 50 niveles con títulos; los usuarios gratis avanzan hasta el nivel 20 y Plus desbloquea los 50.';
+      'Ganas XP evitando recaídas, completando objetivos y haciendo el compromiso diario. Hay 100 niveles con títulos; los usuarios gratis avanzan hasta el nivel 20 y Plus desbloquea los 100.';
 
   @override
   String get faq7Question => '¿Qué es el Compromiso diario? (Plus)';
@@ -393,6 +393,13 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get faq9Answer =>
       'Plus es una compra única que desbloquea hábitos ilimitados, historial completo de estadísticas y mapa de calor, análisis de patrones de recaída, objetivos personalizados, compromiso diario (+XP), notificaciones inteligentes según patrones, widget para la pantalla de inicio, copia de seguridad en la nube y exportación de datos.';
+
+  @override
+  String get faq10Question => '¿Mis datos se guardan en la nube?';
+
+  @override
+  String get faq10Answer =>
+      'No. Avoid no procesa, recopila ni almacena los datos de tus hábitos en sus propios servidores. Tus datos permanecen en tu dispositivo. Si activas la copia de seguridad en la nube, se guardan en tu propia cuenta de iCloud o Google Drive, no en la nube de Avoid.';
 
   @override
   String get coachMarkAddTitle => 'Añade tu primer hábito';
