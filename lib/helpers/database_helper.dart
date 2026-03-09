@@ -4,6 +4,7 @@ import '../model/todo.dart';
 import '../model/tag.dart';
 import '../model/relapse_log.dart';
 import '../model/goal.dart';
+import '../model/trusted_support_contact.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -33,7 +34,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 12,
+      version: 14,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -85,6 +86,7 @@ class DatabaseHelper {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       todoId TEXT NOT NULL,
       milestoneDays INTEGER NOT NULL,
+      reflectionType TEXT NOT NULL DEFAULT 'milestone',
       chipTag TEXT,
       note TEXT,
       createdAt TEXT NOT NULL
@@ -136,6 +138,20 @@ class DatabaseHelper {
       id TEXT PRIMARY KEY,
       unlockedAt TEXT NOT NULL,
       notifiedAt TEXT
+    )
+    ''');
+
+    await db.execute('''
+    CREATE TABLE trusted_support_contact (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      contactId TEXT NOT NULL,
+      contactName TEXT NOT NULL,
+      channel TEXT NOT NULL,
+      destinationValue TEXT NOT NULL,
+      destinationLabel TEXT NOT NULL,
+      isEnabled INTEGER NOT NULL DEFAULT 1,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL
     )
     ''');
 
@@ -294,8 +310,7 @@ class DatabaseHelper {
       ''');
       // Phase 1A: cause tag on relapse logs + milestone reflections table
       try {
-        await db.execute(
-            'ALTER TABLE relapse_logs ADD COLUMN causeTag TEXT');
+        await db.execute('ALTER TABLE relapse_logs ADD COLUMN causeTag TEXT');
       } catch (_) {
         // Column may already exist on fresh installs
       }
@@ -304,11 +319,36 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         todoId TEXT NOT NULL,
         milestoneDays INTEGER NOT NULL,
+        reflectionType TEXT NOT NULL DEFAULT 'milestone',
         chipTag TEXT,
         note TEXT,
         createdAt TEXT NOT NULL
       )
       ''');
+    }
+    if (oldVersion < 13) {
+      await db.execute('''
+      CREATE TABLE IF NOT EXISTS trusted_support_contact (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        contactId TEXT NOT NULL,
+        contactName TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        destinationValue TEXT NOT NULL,
+        destinationLabel TEXT NOT NULL,
+        isEnabled INTEGER NOT NULL DEFAULT 1,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      )
+      ''');
+    }
+    if (oldVersion < 14) {
+      try {
+        await db.execute(
+          "ALTER TABLE milestone_reflections ADD COLUMN reflectionType TEXT NOT NULL DEFAULT 'milestone'",
+        );
+      } catch (_) {
+        // Column may already exist.
+      }
     }
   }
 
@@ -464,6 +504,23 @@ class DatabaseHelper {
     return await db.insert('relapse_logs', log.toMap());
   }
 
+  Future<int> updateRelapseLogDetails(
+    int id, {
+    String? triggerNote,
+    String? causeTag,
+  }) async {
+    final db = await instance.database;
+    return await db.update(
+      'relapse_logs',
+      {
+        'triggerNote': triggerNote,
+        'causeTag': causeTag,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future<List<RelapseLog>> getRelapseLogs(String todoId) async {
     final db = await instance.database;
     final result = await db.query(
@@ -478,6 +535,46 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getAllRelapseLogsRaw() async {
     final db = await instance.database;
     return await db.query('relapse_logs', orderBy: 'relapsedAt DESC');
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Trusted support
+  // ─────────────────────────────────────────────────────────────
+
+  Future<TrustedSupportContact?> getTrustedSupportContact() async {
+    final db = await instance.database;
+    final result = await db.query(
+      'trusted_support_contact',
+      orderBy: 'updatedAt DESC',
+      limit: 1,
+    );
+    if (result.isEmpty) return null;
+    return TrustedSupportContact.fromMap(result.first);
+  }
+
+  Future<void> upsertTrustedSupportContact(
+      TrustedSupportContact contact) async {
+    final db = await instance.database;
+    await db.transaction((txn) async {
+      await txn.delete('trusted_support_contact');
+      await txn.insert('trusted_support_contact', contact.toMap());
+    });
+  }
+
+  Future<void> setTrustedSupportEnabled(bool enabled) async {
+    final db = await instance.database;
+    await db.update(
+      'trusted_support_contact',
+      {
+        'isEnabled': enabled ? 1 : 0,
+        'updatedAt': DateTime.now().toIso8601String(),
+      },
+    );
+  }
+
+  Future<void> deleteTrustedSupportContact() async {
+    final db = await instance.database;
+    await db.delete('trusted_support_contact');
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -647,19 +744,23 @@ class DatabaseHelper {
     final now = DateTime.now();
     final days = <Map<String, dynamic>>[];
     for (int i = 6; i >= 0; i--) {
-      final day = DateTime(now.year, now.month, now.day).subtract(Duration(days: i));
+      final day =
+          DateTime(now.year, now.month, now.day).subtract(Duration(days: i));
       final dateStr =
           '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
-      days.add({'date': dateStr, 'weekday': day.weekday, 'count': map[dateStr] ?? 0});
+      days.add({
+        'date': dateStr,
+        'weekday': day.weekday,
+        'count': map[dateStr] ?? 0
+      });
     }
     return days;
   }
 
   Future<int> getThisWeekArchivedCount() async {
     final db = await instance.database;
-    final cutoff = DateTime.now()
-        .subtract(const Duration(days: 7))
-        .toIso8601String();
+    final cutoff =
+        DateTime.now().subtract(const Duration(days: 7)).toIso8601String();
     final result = await db.rawQuery(
       'SELECT COUNT(*) as c FROM todo WHERE isArchived = 1 AND archivedAt >= ?',
       [cutoff],
@@ -729,8 +830,7 @@ class DatabaseHelper {
   Future<double> getThisMonthMoneySavings() async {
     final db = await instance.database;
     final now = DateTime.now();
-    final monthStart =
-        DateTime(now.year, now.month, 1).toIso8601String();
+    final monthStart = DateTime(now.year, now.month, 1).toIso8601String();
     final result = await db.rawQuery('''
       SELECT COALESCE(SUM(estimatedCost), 0) as total
       FROM todo
@@ -759,8 +859,8 @@ class DatabaseHelper {
   /// Returns the sum of all awarded XP.
   Future<int> getTotalXp() async {
     final db = await instance.database;
-    final result =
-        await db.rawQuery('SELECT COALESCE(SUM(amount), 0) as total FROM xp_events');
+    final result = await db
+        .rawQuery('SELECT COALESCE(SUM(amount), 0) as total FROM xp_events');
     return (result.first['total'] as num?)?.toInt() ?? 0;
   }
 
@@ -780,6 +880,7 @@ class DatabaseHelper {
   Future<void> addMilestoneReflection({
     required String todoId,
     required int milestoneDays,
+    String reflectionType = 'milestone',
     String? chipTag,
     String? note,
   }) async {
@@ -787,6 +888,7 @@ class DatabaseHelper {
     await db.insert('milestone_reflections', {
       'todoId': todoId,
       'milestoneDays': milestoneDays,
+      'reflectionType': reflectionType,
       'chipTag': chipTag,
       'note': note,
       'createdAt': DateTime.now().toIso8601String(),
@@ -802,6 +904,28 @@ class DatabaseHelper {
       whereArgs: [todoId],
       orderBy: 'createdAt DESC',
     );
+  }
+
+  Future<List<Map<String, dynamic>>> getRecentMilestoneReflections({
+    int? limit = 10,
+  }) async {
+    final db = await instance.database;
+    final limitClause = limit == null ? '' : 'LIMIT ?';
+    return await db.rawQuery('''
+      SELECT
+        m.id,
+        m.todoId,
+        m.milestoneDays,
+        m.reflectionType,
+        m.chipTag,
+        m.note,
+        m.createdAt,
+        t.todoText
+      FROM milestone_reflections m
+      JOIN todo t ON m.todoId = t.id
+      ORDER BY m.createdAt DESC
+      $limitClause
+    ''', limit == null ? [] : [limit]);
   }
 
   // ─────────────────────────────────────────────────────────────

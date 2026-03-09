@@ -86,186 +86,214 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     _loadedForIsPlus = isPlus;
 
     try {
-    // Always load — free tier data
-    final avoided = await DatabaseHelper.instance.getTotalAvoidedCount();
-    final active = await DatabaseHelper.instance.getActiveCount();
-    final weekly = await DatabaseHelper.instance.getWeeklyStats();
-    final daily7 = await DatabaseHelper.instance.getLast7DaysStats();
+      // Always load — free tier data
+      final avoided = await DatabaseHelper.instance.getTotalAvoidedCount();
+      final active = await DatabaseHelper.instance.getActiveCount();
+      final weekly = await DatabaseHelper.instance.getWeeklyStats();
+      final daily7 = await DatabaseHelper.instance.getLast7DaysStats();
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    // Fetch recent relapses — free users get last 5, Plus gets last 10
-    final db = await DatabaseHelper.instance.database;
-    final relapseLimit = isPlus ? 10 : 5;
-    final relapsesResult = await db.rawQuery('''
-      SELECT r.relapsedAt, r.triggerNote, t.todoText
+      // Fetch recent relapses — free users get last 5, Plus gets last 10
+      final db = await DatabaseHelper.instance.database;
+      final relapseLimit = isPlus ? 10 : 5;
+      final relapsesResult = await db.rawQuery('''
+      SELECT r.relapsedAt, r.triggerNote, r.causeTag, t.todoText
       FROM relapse_logs r
       JOIN todo t ON r.todoId = t.id
       ORDER BY r.relapsedAt DESC
       LIMIT $relapseLimit
     ''');
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    // Plus-only data
-    Map<String, int> tags = {};
-    Map<String, Tag> tagMapData = {};
-    Map<TodoPriority, int> priorities = {};
-    List<Map<String, dynamic>> topAvoided = [];
-    List<int> dayBuckets = List.filled(7, 0);
-    List<MapEntry<String, int>> topWords = [];
-    Map<String, int> dailyAvoidanceMapData = {};
-    List<Map<String, dynamic>> monthlyStatsData = [];
+      // Plus-only data
+      Map<String, int> tags = {};
+      Map<String, Tag> tagMapData = {};
+      Map<TodoPriority, int> priorities = {};
+      List<Map<String, dynamic>> topAvoided = [];
+      List<int> dayBuckets = List.filled(7, 0);
+      List<MapEntry<String, int>> topWords = [];
+      Map<String, int> dailyAvoidanceMapData = {};
+      List<Map<String, dynamic>> monthlyStatsData = [];
 
-    if (isPlus) {
-      tags = await DatabaseHelper.instance.getTagBreakdown();
-      final allTags = await DatabaseHelper.instance.getAllTags();
-      tagMapData = {for (final t in allTags) t.id: t};
-      priorities = await DatabaseHelper.instance.getPriorityBreakdown();
-      topAvoided = await DatabaseHelper.instance.getMostAvoidedItems();
+      if (isPlus) {
+        tags = await DatabaseHelper.instance.getTagBreakdown();
+        final allTags = await DatabaseHelper.instance.getAllTags();
+        tagMapData = {for (final t in allTags) t.id: t};
+        priorities = await DatabaseHelper.instance.getPriorityBreakdown();
+        topAvoided = await DatabaseHelper.instance.getMostAvoidedItems();
 
-      // Relapse patterns & trigger words (Plus only)
-      final allLogs = await DatabaseHelper.instance.getAllRelapseLogsRaw();
-      final Map<String, int> wordFreq = {};
-      const stopWords = {
-        'i', 'a', 'an', 'the', 'and', 'or', 'but', 'it', 'my', 'me',
-        'was', 'is', 'are', 'of', 'to', 'in', 'on', 'at', 'for', 'by',
-        'with', 'so', 'had', 'felt', 'got', 'just', 'that', 'this', 'when',
-      };
-      for (final log in allLogs) {
-        final dateStr = log['relapsedAt'] as String?;
-        if (dateStr != null) {
-          final date = DateTime.tryParse(dateStr);
-          if (date != null) {
-            dayBuckets[date.weekday - 1]++;
+        // Relapse patterns & trigger words (Plus only)
+        final allLogs = await DatabaseHelper.instance.getAllRelapseLogsRaw();
+        final Map<String, int> wordFreq = {};
+        const stopWords = {
+          'i',
+          'a',
+          'an',
+          'the',
+          'and',
+          'or',
+          'but',
+          'it',
+          'my',
+          'me',
+          'was',
+          'is',
+          'are',
+          'of',
+          'to',
+          'in',
+          'on',
+          'at',
+          'for',
+          'by',
+          'with',
+          'so',
+          'had',
+          'felt',
+          'got',
+          'just',
+          'that',
+          'this',
+          'when',
+        };
+        for (final log in allLogs) {
+          final dateStr = log['relapsedAt'] as String?;
+          if (dateStr != null) {
+            final date = DateTime.tryParse(dateStr);
+            if (date != null) {
+              dayBuckets[date.weekday - 1]++;
+            }
           }
-        }
-        final note = (log['triggerNote'] as String? ?? '').toLowerCase();
-        if (note.isNotEmpty) {
-          for (final word in note.split(RegExp(r'\s+'))) {
-            final clean = word.replaceAll(RegExp(r'[^a-z]'), '');
-            if (clean.length > 2 && !stopWords.contains(clean)) {
-              wordFreq[clean] = (wordFreq[clean] ?? 0) + 1;
+          final note = (log['triggerNote'] as String? ?? '').toLowerCase();
+          if (note.isNotEmpty) {
+            for (final word in note.split(RegExp(r'\s+'))) {
+              final clean = word.replaceAll(RegExp(r'[^a-z]'), '');
+              if (clean.length > 2 && !stopWords.contains(clean)) {
+                wordFreq[clean] = (wordFreq[clean] ?? 0) + 1;
+              }
             }
           }
         }
-      }
-      final sortedWords = wordFreq.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
-      topWords = sortedWords.take(6).toList();
+        final sortedWords = wordFreq.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+        topWords = sortedWords.take(6).toList();
 
-      // Phase 3: Full stats history
-      final now = DateTime.now();
-      dailyAvoidanceMapData = await DatabaseHelper.instance
-          .getDailyAvoidanceMap(now.year, now.month);
-      monthlyStatsData = await DatabaseHelper.instance.getMonthlyStats();
-    }
-
-    if (!mounted) return;
-
-    // Calculate savings by type and find longest streak (always loaded for overview cards + badges)
-    Map<CostType, double> totalSavings = {
-      for (var t in CostType.values) t: 0.0
-    };
-    Map<CostType, bool> hasType = {for (var t in CostType.values) t: false};
-    Duration longestStreak = Duration.zero;
-    final allTodos = await DatabaseHelper.instance.readAllTodos(includeArchived: true);
-
-    for (var todo in allTodos) {
-      hasType[todo.costType] = true;
-      if (todo.estimatedCost == null || todo.estimatedCost! <= 0) continue;
-
-      double saving = 0.0;
-      if (todo.isRecurring) {
-        final endTime = todo.isArchived ? todo.updatedAt : DateTime.now();
-        final streak = endTime.difference(todo.lastRelapsedAt);
-        final double streakDays = todo.isArchived
-            ? (streak.inDays >= 1 ? streak.inDays.toDouble() : 1.0)
-            : streak.inHours / 24.0;
-        if (streakDays > 0) {
-          saving = streakDays * todo.estimatedCost!;
-        }
-        if (streak > longestStreak) {
-          longestStreak = streak;
-        }
-      } else {
-        if (todo.isArchived) {
-          saving = todo.estimatedCost!;
-        }
+        // Phase 3: Full stats history
+        final now = DateTime.now();
+        dailyAvoidanceMapData = await DatabaseHelper.instance
+            .getDailyAvoidanceMap(now.year, now.month);
+        monthlyStatsData = await DatabaseHelper.instance.getMonthlyStats();
       }
 
-      if (saving > 0) {
-        totalSavings[todo.costType] =
-            (totalSavings[todo.costType] ?? 0.0) + saving;
-      }
-    }
+      if (!mounted) return;
 
-    final totalSavedMoney = totalSavings[CostType.money] ?? 0.0;
+      // Calculate savings by type and find longest streak (always loaded for overview cards + badges)
+      Map<CostType, double> totalSavings = {
+        for (var t in CostType.values) t: 0.0
+      };
+      Map<CostType, bool> hasType = {for (var t in CostType.values) t: false};
+      Duration longestStreak = Duration.zero;
+      final allTodos =
+          await DatabaseHelper.instance.readAllTodos(includeArchived: true);
 
-    // Badge checking — persist newly earned badges, retrieve all unlocked
-    final totalRelapses = await DatabaseHelper.instance.getTotalRelapseCount();
-    final firstHabitCreatedAt =
-        await DatabaseHelper.instance.getFirstHabitCreatedAt();
-    final badgeStats = BadgeCheckStats(
-      longestStreak: longestStreak,
-      totalSavedMoney: totalSavedMoney,
-      activeCount: active,
-      totalAvoided: avoided,
-      totalRelapses: totalRelapses,
-      firstHabitCreatedAt: firstHabitCreatedAt,
-    );
-    final newlyUnlocked =
-        await BadgeHelper.checkAndPersistNewBadges(badgeStats);
-    final allUnlocked = await DatabaseHelper.instance.getUnlockedBadges();
+      for (var todo in allTodos) {
+        hasType[todo.costType] = true;
+        if (todo.estimatedCost == null || todo.estimatedCost! <= 0) continue;
 
-    setState(() {
-      totalAvoided = avoided;
-      activeCount = active;
-      savingsByType = totalSavings;
-      hasTaskType = hasType;
-      tagBreakdown = tags;
-      tagMap = tagMapData;
-      priorityBreakdown = priorities;
-      weeklyStats = weekly;
-      _dailyStats = daily7;
-      mostAvoided = topAvoided;
-      recentRelapses = relapsesResult;
-      _unlockedBadges = allUnlocked;
-      relapsesByDay = dayBuckets;
-      topTriggerWords = topWords;
-      _dailyAvoidanceMap = dailyAvoidanceMapData;
-      _monthlyStats = monthlyStatsData;
-      _heatmapMonth = DateTime.now();
-      isLoading = false;
-    });
-
-    // Celebrate newly unlocked badges with a snackbar
-    if (newlyUnlocked.isNotEmpty && mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        for (final id in newlyUnlocked) {
-          if (!mounted) break;
-          final badge = BadgeHelper.findById(id);
-          if (badge == null) continue;
-          // Free users: only celebrate free-tier badge unlocks
-          if (badge.tier == BadgeTier.plus && !isPlus) continue;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Icon(badge.icon, color: Colors.white, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text('🏅 New badge: ${badge.title}!'),
-                  ),
-                ],
-              ),
-              backgroundColor: badge.color,
-              duration: const Duration(seconds: 3),
-            ),
-          );
+        double saving = 0.0;
+        if (todo.isRecurring) {
+          final endTime = todo.isArchived ? todo.updatedAt : DateTime.now();
+          final streak = endTime.difference(todo.lastRelapsedAt);
+          final double streakDays = todo.isArchived
+              ? (streak.inDays >= 1 ? streak.inDays.toDouble() : 1.0)
+              : streak.inHours / 24.0;
+          if (streakDays > 0) {
+            saving = streakDays * todo.estimatedCost!;
+          }
+          if (streak > longestStreak) {
+            longestStreak = streak;
+          }
+        } else {
+          if (todo.isArchived) {
+            saving = todo.estimatedCost!;
+          }
         }
+
+        if (saving > 0) {
+          totalSavings[todo.costType] =
+              (totalSavings[todo.costType] ?? 0.0) + saving;
+        }
+      }
+
+      final totalSavedMoney = totalSavings[CostType.money] ?? 0.0;
+
+      // Badge checking — persist newly earned badges, retrieve all unlocked
+      final totalRelapses =
+          await DatabaseHelper.instance.getTotalRelapseCount();
+      final firstHabitCreatedAt =
+          await DatabaseHelper.instance.getFirstHabitCreatedAt();
+      final badgeStats = BadgeCheckStats(
+        longestStreak: longestStreak,
+        totalSavedMoney: totalSavedMoney,
+        activeCount: active,
+        totalAvoided: avoided,
+        totalRelapses: totalRelapses,
+        firstHabitCreatedAt: firstHabitCreatedAt,
+      );
+      final newlyUnlocked =
+          await BadgeHelper.checkAndPersistNewBadges(badgeStats);
+      final allUnlocked = await DatabaseHelper.instance.getUnlockedBadges();
+
+      setState(() {
+        totalAvoided = avoided;
+        activeCount = active;
+        savingsByType = totalSavings;
+        hasTaskType = hasType;
+        tagBreakdown = tags;
+        tagMap = tagMapData;
+        priorityBreakdown = priorities;
+        weeklyStats = weekly;
+        _dailyStats = daily7;
+        mostAvoided = topAvoided;
+        recentRelapses = relapsesResult;
+        _unlockedBadges = allUnlocked;
+        relapsesByDay = dayBuckets;
+        topTriggerWords = topWords;
+        _dailyAvoidanceMap = dailyAvoidanceMapData;
+        _monthlyStats = monthlyStatsData;
+        _heatmapMonth = DateTime.now();
+        isLoading = false;
       });
-    }
+
+      // Celebrate newly unlocked badges with a snackbar
+      if (newlyUnlocked.isNotEmpty && mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          for (final id in newlyUnlocked) {
+            if (!mounted) break;
+            final badge = BadgeHelper.findById(id);
+            if (badge == null) continue;
+            // Free users: only celebrate free-tier badge unlocks
+            if (badge.tier == BadgeTier.plus && !isPlus) continue;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    Icon(badge.icon, color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text('🏅 New badge: ${badge.title}!'),
+                    ),
+                  ],
+                ),
+                backgroundColor: badge.color,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        });
+      }
     } catch (e, st) {
       debugPrint('[StatisticsScreen] _loadStatistics error: $e\n$st');
       if (mounted) {
@@ -274,7 +302,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           SnackBar(
             content: const Row(
               children: [
-                Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
+                Icon(Icons.warning_amber_rounded,
+                    color: Colors.white, size: 18),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -339,79 +368,76 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       ),
                     // FREE: overview cards always visible
                     _buildOverviewCards(l10n),
-                  const SizedBox(height: 24),
-                  if (totalAvoided == 0 && recentRelapses.isEmpty)
-                    _buildZeroState()
-                  else ...[
-                    // FREE: badges always visible
-                    _buildBadgesSection(l10n, isPlus),
                     const SizedBox(height: 24),
-                    // FREE: weekly chart (7-day window, no history needed)
-                    _buildWeeklyChart(isDark, l10n),
-                    const SizedBox(height: 24),
-                    // FREE: recent relapses (last 5)
-                    _buildRecentRelapses(isDark, l10n),
-                    const SizedBox(height: 24),
-                    // PLUS: tag breakdown
-                    if (isPlus)
-                      _buildTagPieChart(isDark, l10n)
-                    else
-                      _buildLockedSection(
-                        'Tag breakdown',
-                        'See which habit categories you struggle with most.',
-                        Icons.pie_chart_outline,
-                        context,
-                      ),
-                    const SizedBox(height: 24),
-                    // PLUS: relapse patterns by day
-                    if (isPlus)
-                      _buildRelapsePatterns(isDark)
-                    else
-                      _buildLockedSection(
-                        'Relapse patterns',
-                        'Discover which days of the week are your hardest.',
-                        Icons.bar_chart_outlined,
-                        context,
-                      ),
-                    const SizedBox(height: 24),
-                    // PLUS: most avoided list
-                    if (isPlus)
-                      _buildMostAvoidedList(l10n)
-                    else
-                      _buildLockedSection(
-                        'Most avoided items',
-                        'Track your biggest wins over time.',
-                        Icons.emoji_events_outlined,
-                        context,
-                      ),
-                    const SizedBox(height: 24),
-                    // PLUS: avoidance calendar heatmap
-                    if (isPlus)
-                      _buildCalendarHeatmap(isDark)
-                    else
-                      _buildLockedSection(
-                        'Avoidance Calendar',
-                        'See your daily avoidance activity as a visual monthly calendar.',
-                        Icons.calendar_month_outlined,
-                        context,
-                      ),
-                    const SizedBox(height: 24),
-                    // PLUS: monthly trends chart
-                    if (isPlus && _monthlyStats.isNotEmpty)
-                      _buildMonthlyTrendChart(isDark)
-                    else if (!isPlus)
-                      _buildLockedSection(
-                        'Monthly Trends',
-                        'Track your progress month-by-month over the last 12 months.',
-                        Icons.trending_up_outlined,
-                        context,
-                      ),
+                    if (totalAvoided == 0 && recentRelapses.isEmpty)
+                      _buildZeroState()
+                    else ...[
+                      // FREE: badges always visible
+                      _buildBadgesSection(l10n, isPlus),
+                      const SizedBox(height: 24),
+                      // FREE: weekly chart (7-day window, no history needed)
+                      _buildWeeklyChart(isDark, l10n),
+                      const SizedBox(height: 24),
+                      // PLUS: tag breakdown
+                      if (isPlus)
+                        _buildTagPieChart(isDark, l10n)
+                      else
+                        _buildLockedSection(
+                          'Tag breakdown',
+                          'See which habit categories you struggle with most.',
+                          Icons.pie_chart_outline,
+                          context,
+                        ),
+                      const SizedBox(height: 24),
+                      // PLUS: relapse patterns by day
+                      if (isPlus)
+                        _buildRelapsePatterns(isDark)
+                      else
+                        _buildLockedSection(
+                          'Relapse patterns',
+                          'Discover which days of the week are your hardest.',
+                          Icons.bar_chart_outlined,
+                          context,
+                        ),
+                      const SizedBox(height: 24),
+                      // PLUS: most avoided list
+                      if (isPlus)
+                        _buildMostAvoidedList(l10n)
+                      else
+                        _buildLockedSection(
+                          'Most avoided items',
+                          'Track your biggest wins over time.',
+                          Icons.emoji_events_outlined,
+                          context,
+                        ),
+                      const SizedBox(height: 24),
+                      // PLUS: avoidance calendar heatmap
+                      if (isPlus)
+                        _buildCalendarHeatmap(isDark)
+                      else
+                        _buildLockedSection(
+                          'Avoidance Calendar',
+                          'See your daily avoidance activity as a visual monthly calendar.',
+                          Icons.calendar_month_outlined,
+                          context,
+                        ),
+                      const SizedBox(height: 24),
+                      // PLUS: monthly trends chart
+                      if (isPlus && _monthlyStats.isNotEmpty)
+                        _buildMonthlyTrendChart(isDark)
+                      else if (!isPlus)
+                        _buildLockedSection(
+                          'Monthly Trends',
+                          'Track your progress month-by-month over the last 12 months.',
+                          Icons.trending_up_outlined,
+                          context,
+                        ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-          ),
-        );
+          );
 
     if (widget.embedded) return body;
     return Scaffold(
@@ -434,7 +460,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                         color: Colors.amber.shade700,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.lock, size: 8, color: Colors.white),
+                      child:
+                          const Icon(Icons.lock, size: 8, color: Colors.white),
                     ),
                   ),
               ],
@@ -569,8 +596,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       if (boundary == null) throw Exception('Render boundary not found');
 
       final image = await boundary.toImage(pixelRatio: 2.5);
-      final byteData =
-          await image.toByteData(format: ui.ImageByteFormat.png);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null) throw Exception('PNG encoding failed');
 
       final bytes = byteData.buffer.asUint8List();
@@ -741,7 +767,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest
+            .withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
@@ -800,7 +829,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                         Navigator.pop(ctx);
                         await context.read<PurchaseProvider>().purchasePlus();
                       },
-                      child: Text('Unlock — ${context.read<PurchaseProvider>().plusPriceString ?? '\$2.99'}'),
+                      child: Text(
+                          'Unlock — ${context.read<PurchaseProvider>().plusPriceString ?? '\$2.99'}'),
                     ),
                   ],
                 ),
@@ -861,9 +891,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             for (final type in CostType.values) {
               final amount = savingsByType[type] ?? 0.0;
               final hasThisTask = hasTaskType[type] ?? false;
-              if (amount <= 0 && !hasThisTask &&
-                  type != CostType.money && type != CostType.time &&
-                  type != CostType.mood && type != CostType.health) {
+              if (amount <= 0 &&
+                  !hasThisTask &&
+                  type != CostType.money &&
+                  type != CostType.time &&
+                  type != CostType.mood &&
+                  type != CostType.health) {
                 continue;
               }
               IconData icon;
@@ -1007,9 +1040,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           'Unlock Plus to continue levelling up',
                           style: TextStyle(
                             fontSize: 12,
-                            color: isDark
-                                ? Colors.white60
-                                : Colors.black54,
+                            color: isDark ? Colors.white60 : Colors.black54,
                           ),
                         )
                       else ...[
@@ -1097,8 +1128,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _buildBadgesSection(AppLocalizations? l10n, bool isPlus) {
-    final unlockedIds =
-        _unlockedBadges.map((b) => b['id'] as String).toSet();
+    final unlockedIds = _unlockedBadges.map((b) => b['id'] as String).toSet();
     final unlockedAtMap = {
       for (final b in _unlockedBadges)
         b['id'] as String: b['unlockedAt'] as String?,
@@ -1147,8 +1177,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         Row(
           children: [
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: Colors.amber.withAlpha(30),
                 borderRadius: BorderRadius.circular(8),
@@ -1180,11 +1209,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               TextButton.icon(
                 onPressed: _showUpgradeDialog,
                 icon: const Icon(Icons.lock_outline, size: 14),
-                label:
-                    const Text('Upgrade', style: TextStyle(fontSize: 12)),
+                label: const Text('Upgrade', style: TextStyle(fontSize: 12)),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 ),
               ),
             ],
@@ -1237,14 +1265,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         width: 110,
         margin: const EdgeInsets.only(right: 10),
         decoration: BoxDecoration(
-          color: isUnlocked
-              ? color.withAlpha(25)
-              : Colors.grey.withAlpha(20),
+          color: isUnlocked ? color.withAlpha(25) : Colors.grey.withAlpha(20),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isUnlocked
-                ? color.withAlpha(130)
-                : Colors.grey.withAlpha(60),
+            color:
+                isUnlocked ? color.withAlpha(130) : Colors.grey.withAlpha(60),
             width: isUnlocked ? 2 : 1,
           ),
         ),
@@ -1253,17 +1278,14 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 6, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       def.icon,
                       size: 30,
-                      color: isUnlocked
-                          ? color
-                          : Colors.grey.withAlpha(100),
+                      color: isUnlocked ? color : Colors.grey.withAlpha(100),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -1346,8 +1368,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             toY: (entry.value['count'] as int).toDouble(),
             color: AppThemes.lightPrimary,
             width: 20,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(4)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
           ),
         ],
       );
@@ -1381,7 +1402,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           if (i < 0 || i >= data.length) {
                             return const SizedBox.shrink();
                           }
-                          final weekday = ((data[i]['weekday'] as int?) ?? 1).clamp(1, 7);
+                          final weekday =
+                              ((data[i]['weekday'] as int?) ?? 1).clamp(1, 7);
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
@@ -1405,9 +1427,17 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     touchTooltipData: BarTouchTooltipData(
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         if (groupIndex >= data.length) return null;
-                        final weekday = ((data[groupIndex]['weekday'] as int?) ?? 1).clamp(1, 7);
+                        final weekday =
+                            ((data[groupIndex]['weekday'] as int?) ?? 1)
+                                .clamp(1, 7);
                         const dayNames = [
-                          'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
+                          'Mon',
+                          'Tue',
+                          'Wed',
+                          'Thu',
+                          'Fri',
+                          'Sat',
+                          'Sun'
                         ];
                         final count = (data[groupIndex]['count'] as int?) ?? 0;
                         return BarTooltipItem(
@@ -1570,48 +1600,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
-  Widget _buildRecentRelapses(bool isDark, AppLocalizations? l10n) {
-    if (recentRelapses.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _sectionHeader(
-              l10n?.recentRelapsesTriggers ?? 'Recent Relapses & Triggers',
-              'Your most recent slip-ups with the trigger note you wrote at the time.',
-            ),
-            const SizedBox(height: 16),
-            ...recentRelapses.map((data) {
-              final date = DateTime.tryParse(data['relapsedAt'] as String? ?? '');
-              final String timeAgo = date != null ? _timeAgo(date) : '';
-              final note = data['triggerNote'] as String?;
-
-              return ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const CircleAvatar(
-                  backgroundColor: tdAvoidRed,
-                  child: Icon(Icons.warning_amber_rounded,
-                      color: Colors.white, size: 20),
-                ),
-                title: Text(data['todoText'] as String? ?? '',
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: note != null && note.isNotEmpty
-                    ? Text('Trigger: $note\n$timeAgo')
-                    : Text(timeAgo),
-                isThreeLine: note != null && note.isNotEmpty,
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildRelapsePatterns(bool isDark) {
     final totalRelapses = relapsesByDay.fold(0, (a, b) => a + b);
     if (totalRelapses == 0 && topTriggerWords.isEmpty) {
@@ -1655,8 +1643,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             toY: e.value.toDouble(),
                             color: tdAvoidRed,
                             width: 18,
-                            borderRadius:
-                                const BorderRadius.vertical(top: Radius.circular(4)),
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(4)),
                           ),
                         ],
                       );
@@ -1668,8 +1656,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           showTitles: true,
                           getTitlesWidget: (value, meta) {
                             final i = value.toInt();
-                            if (i < 0 || i >= dayLabels.length) return const SizedBox.shrink();
-                            return Text(dayLabels[i], style: const TextStyle(fontSize: 11));
+                            if (i < 0 || i >= dayLabels.length) {
+                              return const SizedBox.shrink();
+                            }
+                            return Text(dayLabels[i],
+                                style: const TextStyle(fontSize: 11));
                           },
                         ),
                       ),
@@ -1713,29 +1704,24 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
-  String _timeAgo(DateTime date) {
-    final difference = DateTime.now().difference(date);
-    if (difference.inDays > 1) {
-      return '${difference.inDays} days ago';
-    } else if (difference.inDays == 1) {
-      return 'Yesterday';
-    } else if (difference.inHours >= 1) {
-      return '${difference.inHours} hours ago';
-    } else if (difference.inMinutes >= 1) {
-      return '${difference.inMinutes} mins ago';
-    } else {
-      return 'Just now';
-    }
-  }
-
   // ──────────────────────────────────────────────────────────────────
   // Phase 3 widgets
   // ──────────────────────────────────────────────────────────────────
 
   String _monthName(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return months[date.month - 1];
   }
@@ -1823,8 +1809,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color:
-                            isDark ? Colors.white54 : Colors.black45,
+                        color: isDark ? Colors.white54 : Colors.black45,
                       ),
                     ),
                   ),
@@ -1851,8 +1836,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 final dateStr =
                     '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
                 final count = _dailyAvoidanceMap[dateStr] ?? 0;
-                final isFuture =
-                    DateTime(year, month, day).isAfter(now);
+                final isFuture = DateTime(year, month, day).isAfter(now);
 
                 Color cellColor;
                 if (isFuture) {
@@ -1889,12 +1873,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           fontSize: 9,
                           color: count > 0
                               ? Colors.white.withValues(alpha: 0.85)
-                              : (isDark
-                                  ? Colors.white30
-                                  : Colors.black26),
-                          fontWeight: count > 0
-                              ? FontWeight.bold
-                              : FontWeight.normal,
+                              : (isDark ? Colors.white30 : Colors.black26),
+                          fontWeight:
+                              count > 0 ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
                     ),
@@ -1944,8 +1925,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   Widget _buildMonthlyTrendChart(bool isDark) {
     const monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
 
     // Build a lookup from existing DB data
@@ -1958,13 +1949,17 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final now = DateTime.now();
     final allMonths = List.generate(12, (i) {
       final d = DateTime(now.year, now.month - 11 + i, 1);
-      final key =
-          '${d.year}-${d.month.toString().padLeft(2, '0')}';
-      return {'month': key, 'count': existingMap[key] ?? 0, 'monthNum': d.month};
+      final key = '${d.year}-${d.month.toString().padLeft(2, '0')}';
+      return {
+        'month': key,
+        'count': existingMap[key] ?? 0,
+        'monthNum': d.month
+      };
     });
 
-    final maxCount =
-        allMonths.map((e) => e['count'] as int).fold(0, (a, b) => a > b ? a : b);
+    final maxCount = allMonths
+        .map((e) => e['count'] as int)
+        .fold(0, (a, b) => a > b ? a : b);
 
     final barGroups = allMonths.asMap().entries.map((entry) {
       return BarChartGroupData(
@@ -1974,8 +1969,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             toY: (entry.value['count'] as int).toDouble(),
             color: AppThemes.lightPrimary,
             width: 14,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(4)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
           ),
         ],
       );
@@ -2017,7 +2011,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           if (i < 0 || i >= allMonths.length) {
                             return const SizedBox.shrink();
                           }
-                          final monthNum = ((allMonths[i]['monthNum'] as int?) ?? 1).clamp(1, 12);
+                          final monthNum =
+                              ((allMonths[i]['monthNum'] as int?) ?? 1)
+                                  .clamp(1, 12);
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
@@ -2050,7 +2046,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     touchTooltipData: BarTouchTooltipData(
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         if (groupIndex >= allMonths.length) return null;
-                        final monthKey = allMonths[groupIndex]['month'] as String;
+                        final monthKey =
+                            allMonths[groupIndex]['month'] as String;
                         final count = allMonths[groupIndex]['count'] as int;
                         final parts = monthKey.split('-');
                         final label = parts.length == 2

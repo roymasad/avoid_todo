@@ -19,6 +19,7 @@ import '../helpers/xp_helper.dart';
 import '../providers/goal_provider.dart';
 import '../helpers/goal_helper.dart';
 import '../model/goal.dart';
+import '../model/trusted_support_contact.dart';
 import '../l10n/app_localizations.dart';
 import 'archive_screen.dart';
 import 'statistics_screen.dart';
@@ -36,9 +37,26 @@ import '../helpers/rating_helper.dart';
 import '../widgets/rating_dialog.dart';
 import '../widgets/language_settings_tile.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import '../helpers/trusted_support_helper.dart';
 // Note: Map implementation uses simple location names for now.
 
 enum SortOption { latest, oldest, avoidType, costType, priority }
+
+class _TrustedSupportChoice {
+  final String contactId;
+  final String contactName;
+  final TrustedSupportChannel channel;
+  final String destinationValue;
+  final String destinationLabel;
+
+  const _TrustedSupportChoice({
+    required this.contactId,
+    required this.contactName,
+    required this.channel,
+    required this.destinationValue,
+    required this.destinationLabel,
+  });
+}
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -66,7 +84,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   final GlobalKey _menuKey = GlobalKey();
   final GlobalKey _searchKey = GlobalKey();
   final GlobalKey _addKey = GlobalKey();
-  final GlobalKey<ArchiveScreenState> _archiveKey = GlobalKey<ArchiveScreenState>();
+  final GlobalKey<ArchiveScreenState> _archiveKey =
+      GlobalKey<ArchiveScreenState>();
 
   AvoidType _selectedType = AvoidType.generic;
   String? _selectedContactId;
@@ -91,6 +110,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
   // Phase 6: Cloud sync
   bool _syncEnabled = false;
+  TrustedSupportContact? _trustedSupportContact;
 
   // Phase 1 New Fields
   bool _isRecurring = true;
@@ -151,6 +171,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     _fetchTodos();
     _fetchTags();
     _loadNotificationPref();
+    _loadTrustedSupportContact();
     _loadAppVersion();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PurchaseProvider>().refresh();
@@ -213,6 +234,13 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       _widgetEnabled = prefs.getBool('widget_enabled') ?? false;
       _syncEnabled = prefs.getBool('sync_enabled') ?? false;
     });
+  }
+
+  Future<void> _loadTrustedSupportContact() async {
+    final contact = await DatabaseHelper.instance.getTrustedSupportContact();
+    if (mounted) {
+      setState(() => _trustedSupportContact = contact);
+    }
   }
 
   Future<void> _loadAppVersion() async {
@@ -442,23 +470,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     // Check streak milestones and award XP if any thresholds just crossed
     final isPlus = context.read<PurchaseProvider>().isPlus;
     final rawTodos = todos.map((t) => t.toMap()).toList();
-    final newMilestones = await context
-        .read<XpProvider>()
-        .awardStreakMilestonesIfNeeded(rawTodos);
-
-    // Plus: show "What Worked?" reflection sheet for each new milestone
-    if (isPlus && newMilestones.isNotEmpty && mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        for (final milestone in newMilestones) {
-          if (!mounted) break;
-          await _showWhatWorkedSheet(
-            milestone['todoId'] as String,
-            milestone['todoText'] as String,
-            milestone['milestoneDay'] as int,
-          );
-        }
-      });
-    }
+    await context.read<XpProvider>().awardStreakMilestonesIfNeeded(rawTodos);
 
     // Load goals and check for completions
     if (!mounted) return;
@@ -472,8 +484,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     if (mounted && isPlus && newlyCompleted.isNotEmpty) {
       final xp = context.read<XpProvider>();
       for (final goal in newlyCompleted) {
-        final xpAmount =
-            goal.type == GoalType.savingsMonth ? 100 : 50;
+        final xpAmount = goal.type == GoalType.savingsMonth ? 100 : 50;
         await xp.award('goal_complete:${goal.id}', xpAmount);
       }
       // Show celebration for each completed goal
@@ -481,8 +492,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                  '🎯 Goal complete! "${GoalHelper.description(goal)}"'),
+              content:
+                  Text('🎯 Goal complete! "${GoalHelper.description(goal)}"'),
               duration: const Duration(seconds: 3),
               behavior: SnackBarBehavior.floating,
             ),
@@ -495,8 +506,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                  '🎯 Goal complete! "${GoalHelper.description(goal)}"'),
+              content:
+                  Text('🎯 Goal complete! "${GoalHelper.description(goal)}"'),
               duration: const Duration(seconds: 3),
               behavior: SnackBarBehavior.floating,
             ),
@@ -529,16 +540,14 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
   /// Shows the daily commitment screen if:
   ///  - user is Plus, has active recurring habits, AND hasn't committed today.
-  Future<void> _maybeShowDailyCommitment(
-      List<ToDo> todos, bool isPlus) async {
+  Future<void> _maybeShowDailyCommitment(List<ToDo> todos, bool isPlus) async {
     if (_commitmentCheckDone) return;
     _commitmentCheckDone = true;
 
     if (!isPlus) return;
 
-    final activeTodos = todos
-        .where((t) => !t.isArchived && t.isRecurring)
-        .toList();
+    final activeTodos =
+        todos.where((t) => !t.isArchived && t.isRecurring).toList();
     if (activeTodos.isEmpty) return;
 
     final prefs = await SharedPreferences.getInstance();
@@ -550,8 +559,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     final committed = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            DailyCommitmentScreen(activeTodos: activeTodos),
+        builder: (_) => DailyCommitmentScreen(activeTodos: activeTodos),
         fullscreenDialog: true,
       ),
     );
@@ -618,7 +626,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
     if (!_isRecurring && _eventDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)?.selectEventDateError ?? 'Please select an event date.')),
+        SnackBar(
+            content: Text(AppLocalizations.of(context)?.selectEventDateError ??
+                'Please select an event date.')),
       );
       return;
     }
@@ -700,35 +710,36 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   }
 
   void _showItemAvoidedSnackBar(ToDo todo) {
-    final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    const snackBarDuration = Duration(seconds: 4);
+    var undone = false;
 
-    messenger.hideCurrentSnackBar();
-    final snackBarController = messenger.showSnackBar(
-      SnackBar(
-        content: Text('"${todo.todoText}" ${l10n?.itemAvoided ?? 'avoided!'}'),
-        duration: snackBarDuration,
-        behavior: SnackBarBehavior.floating,
-        action: SnackBarAction(
-          label: l10n?.undo ?? 'Undo',
-          onPressed: () async {
-            await DatabaseHelper.instance.restoreTodo(
-              int.parse(todo.id!),
-            );
-            _fetchTodos();
-          },
+    () async {
+      final controller = messenger.showSnackBar(
+        SnackBar(
+          content: Text('"${todo.todoText}" avoided'),
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          persist: false,
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () async {
+              undone = true;
+              await DatabaseHelper.instance.restoreTodo(
+                int.parse(todo.id!),
+              );
+              _fetchTodos();
+            },
+          ),
         ),
-      ),
-    );
+      );
 
-    // Ensure the snackbar does not remain visible indefinitely.
-    Future.delayed(snackBarDuration, () {
-      if (!mounted) return;
-      snackBarController.close();
+      await controller.closed;
+      if (!mounted || undone) return;
+      if (!undone) {
+        await _showAvoidReflectionPrompt(todo);
+      }
 
-      final streakDays =
-          DateTime.now().difference(todo.lastRelapsedAt).inDays;
+      final streakDays = DateTime.now().difference(todo.lastRelapsedAt).inDays;
       final tip = getTipForStreak(streakDays);
       if (tip != null && mounted) {
         messenger.showSnackBar(
@@ -739,7 +750,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           ),
         );
       }
-    });
+    }();
   }
 
   String _getPriorityLabel(TodoPriority priority) {
@@ -896,455 +907,91 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         builder: (context, setModalState) {
           capturedSetState = setModalState;
           return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16,
-            right: 16,
-            top: 16,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppLocalizations.of(context)?.addThingToAvoid ??
-                      'Add Thing to Avoid',
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _todoController,
-                  decoration: InputDecoration(
-                    hintText: AppLocalizations.of(context)?.whatToAvoid ??
-                        'What do you need to avoid?',
-                    prefixIcon: const Icon(Icons.block),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)?.addThingToAvoid ??
+                        'Add Thing to Avoid',
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  autofocus: true,
-                ),
-                // ── Autocomplete suggestions ──────────────────────
-                if (suggestions.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: suggestions.map((s) => Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: ActionChip(
-                          label: Text(
-                            s,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                          onPressed: () {
-                            _todoController.text = s;
-                            _todoController.selection =
-                                TextSelection.collapsed(offset: s.length);
-                            setModalState(() => suggestions = []);
-                          },
-                        ),
-                      )).toList(),
-                    ),
-                  ),
-                ],
-                // ─────────────────────────────────────────────────
-                const SizedBox(height: 16),
-                Text(AppLocalizations.of(context)?.avoidTypeLabel ?? 'Avoid Type:',
-                    style: const TextStyle(fontWeight: FontWeight.w500)),
-                const SizedBox(height: 8),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: AvoidType.values.map((type) {
-                      final isSelected = _selectedType == type;
-                      IconData icon;
-                      String label;
-                      switch (type) {
-                        case AvoidType.generic:
-                          icon = Icons.block;
-                          label = 'Habit';
-                          break;
-                        case AvoidType.people:
-                          icon = Icons.person;
-                          label = 'Person';
-                          break;
-                        case AvoidType.event:
-                          icon = Icons.event;
-                          label = 'Event';
-                          break;
-                        case AvoidType.place:
-                          icon = Icons.place;
-                          label = 'Place';
-                          break;
-                      }
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: ChoiceChip(
-                          avatar: Icon(icon, size: 16),
-                          label: Text(label),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            if (selected) {
-                              setModalState(() {
-                                _selectedType = type;
-                              });
-                            }
-                          },
-                          selectedColor: tdAvoidRed.withAlpha(200),
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : null,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-
-                if (_selectedType == AvoidType.people) ...[
                   const SizedBox(height: 16),
-                  Text(AppLocalizations.of(context)?.associatedPerson ?? 'Associated Person:',
-                      style: const TextStyle(fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      final granted = await FlutterContacts.requestPermission(readonly: true);
-                      if (!granted) return;
-                      final contact =
-                          await FlutterContacts.openExternalPick();
-                      if (contact != null) {
-                        setModalState(() {
-                          _selectedContactId = contact.id;
-                          _todoController.text = contact.displayName;
-                        });
-                      }
-                    },
-                    icon: const Icon(Icons.contact_phone),
-                    label: Text(_selectedContactId == null
-                        ? 'Select from Contacts'
-                        : 'Change Contact'),
-                  ),
-                ],
-
-                if (_selectedType == AvoidType.place) ...[
-                  const SizedBox(height: 16),
-                  Text(AppLocalizations.of(context)?.avoidLocation ?? 'Avoid Location:',
-                      style: const TextStyle(fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 8),
                   TextField(
-                    controller: locationController,
-                    onChanged: (val) => _locationName = val,
-                    decoration: const InputDecoration(
-                      hintText: 'Place name or address',
-                      prefixIcon: Icon(Icons.location_on),
+                    controller: _todoController,
+                    decoration: InputDecoration(
+                      hintText: AppLocalizations.of(context)?.whatToAvoid ??
+                          'What do you need to avoid?',
+                      prefixIcon: const Icon(Icons.block),
                     ),
+                    autofocus: true,
                   ),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MapPickerScreen(
-                            initialLat: _latitude,
-                            initialLng: _longitude,
-                          ),
-                        ),
-                      );
-                      if (result != null && result is Map<String, dynamic>) {
-                        setModalState(() {
-                          _latitude = result['lat'];
-                          _longitude = result['lng'];
-                          _locationName = result['address'];
-                          locationController.text = _locationName ?? '';
-                        });
-                      }
-                    },
-                    icon: const Icon(Icons.map),
-                    label: Text(AppLocalizations.of(context)?.pickOnMap ?? 'Pick on Map'),
-                  ),
-                ],
-
-                if (_selectedType == AvoidType.event) ...[
-                  const SizedBox(height: 16),
-                  Text(AppLocalizations.of(context)?.eventReminderLabel ?? 'Event Reminder:',
-                      style: const TextStyle(fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 8),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.alarm),
-                    title: Text(_reminderDateTime == null
-                        ? (AppLocalizations.of(context)?.setReminder ?? 'Set Reminder')
-                        : '${_reminderDateTime!.day}/${_reminderDateTime!.month} ${_reminderDateTime!.hour}:${_reminderDateTime!.minute}'),
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate:
-                            DateTime.now().add(const Duration(hours: 1)),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 365)),
-                      );
-                      if (date != null && context.mounted) {
-                        final time = await showTimePicker(
-                          context: context,
-                          initialTime: TimeOfDay.now(),
-                        );
-                        if (time != null) {
-                          setModalState(() {
-                            _reminderDateTime = DateTime(
-                              date.year,
-                              date.month,
-                              date.day,
-                              time.hour,
-                              time.minute,
-                            );
-                          });
-                        }
-                      }
-                    },
-                    trailing: _reminderDateTime != null
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
-                            onPressed: () => setModalState(() {
-                              _reminderDateTime = null;
-                            }),
-                          )
-                        : null,
-                  ),
-                ],
-
-                if (_selectedType != AvoidType.event) ...[
-                  const SizedBox(height: 16),
-                  Text(AppLocalizations.of(context)?.dailyReminderLabel ?? 'Daily Reminder Time:',
-                      style: const TextStyle(fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 8),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.alarm),
-                    title: Text(_reminderDateTime == null
-                        ? (AppLocalizations.of(context)?.setDailyReminder ?? 'Set Daily Reminder')
-                        : 'Every day at ${_reminderDateTime!.hour.toString().padLeft(2, '0')}:${_reminderDateTime!.minute.toString().padLeft(2, '0')}'),
-                    onTap: () async {
-                      final time = await showTimePicker(
-                        context: context,
-                        initialTime: _reminderDateTime != null
-                            ? TimeOfDay.fromDateTime(_reminderDateTime!)
-                            : const TimeOfDay(hour: 20, minute: 0),
-                      );
-                      if (time != null) {
-                        final now = DateTime.now();
-                        setModalState(() {
-                          _reminderDateTime = DateTime(
-                              now.year, now.month, now.day, time.hour, time.minute);
-                        });
-                      }
-                    },
-                    trailing: _reminderDateTime != null
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
-                            onPressed: () => setModalState(() {
-                              _reminderDateTime = null;
-                            }),
-                          )
-                        : null,
-                  ),
-                ],
-
-                const SizedBox(height: 16),
-                Text(AppLocalizations.of(context)?.tags ?? 'Tags:',
-                    style: const TextStyle(fontWeight: FontWeight.w500)),
-                const SizedBox(height: 8),
-                FutureBuilder<List<Tag>>(
-                  future: DatabaseHelper.instance.getAllTags(),
-                  builder: (context, snapshot) {
-                    final localTags = snapshot.data ?? _allTags;
-                    return SingleChildScrollView(
+                  // ── Autocomplete suggestions ──────────────────────
+                  if (suggestions.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
-                        children: [
-                          ...localTags.map((tag) {
-                            final isSelected = _selectedTagIds.contains(tag.id);
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: FilterChip(
-                                label: Text(tag.name),
-                                selected: isSelected,
-                                onSelected: (selected) {
-                                  setModalState(() {
-                                    if (selected) {
-                                      _selectedTagIds.add(tag.id);
-                                    } else {
-                                      _selectedTagIds.remove(tag.id);
-                                    }
-                                  });
-                                },
-                                selectedColor: tag.color.withAlpha(180),
-                                checkmarkColor: Colors.white,
-                                labelStyle: TextStyle(
-                                  color: isSelected ? Colors.white : null,
-                                ),
-                              ),
-                            );
-                          }),
-                          ActionChip(
-                            avatar: const Icon(Icons.add, size: 16),
-                            label: Text(AppLocalizations.of(context)?.newTag ??
-                                'New tag'),
-                            onPressed: () => _showCreateTagDialog(
-                                context, localTags, setModalState),
-                          ),
-                        ],
+                        children: suggestions
+                            .map((s) => Padding(
+                                  padding: const EdgeInsets.only(right: 6),
+                                  child: ActionChip(
+                                    label: Text(
+                                      s,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                    onPressed: () {
+                                      _todoController.text = s;
+                                      _todoController.selection =
+                                          TextSelection.collapsed(
+                                              offset: s.length);
+                                      setModalState(() => suggestions = []);
+                                    },
+                                  ),
+                                ))
+                            .toList(),
                       ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                Text(AppLocalizations.of(context)?.priority ?? 'Priority:',
-                    style: const TextStyle(fontWeight: FontWeight.w500)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: TodoPriority.values.map((priority) {
-                    final isSelected = _selectedPriority == priority;
-                    Color color;
-                    switch (priority) {
-                      case TodoPriority.high:
-                        color = AppThemes.priorityHigh;
-                        break;
-                      case TodoPriority.medium:
-                        color = AppThemes.priorityMedium;
-                        break;
-                      case TodoPriority.low:
-                        color = AppThemes.priorityLow;
-                        break;
-                    }
-                    return ChoiceChip(
-                      label: Text(_getPriorityLabel(priority)),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        if (selected) {
-                          setModalState(() {
-                            _selectedPriority = priority;
-                          });
-                        }
-                      },
-                      selectedColor: color,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : null,
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 16),
-
-                // Recurring vs Single Event Toggle
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                      AppLocalizations.of(context)?.isRecurring ??
-                          'Is this a recurring habit?',
-                      style: const TextStyle(fontWeight: FontWeight.w500)),
-                  value: _isRecurring,
-                  onChanged: (bool value) {
-                    setModalState(() {
-                      _isRecurring = value;
-                      if (value) {
-                        _eventDate = null; // Clear date if switching back
-                      }
-                    });
-                  },
-                  activeThumbColor: tdAvoidRed,
-                ),
-
-                if (!_isRecurring)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Row(
-                      children: [
-                        Text(
-                            '${AppLocalizations.of(context)?.eventDate ?? 'Event Date'}: ',
-                            style:
-                                const TextStyle(fontWeight: FontWeight.w500)),
-                        TextButton.icon(
-                          icon: const Icon(Icons.calendar_today, size: 18),
-                          label: Text(_eventDate == null
-                              ? (AppLocalizations.of(context)?.selectDate ??
-                                  'Select Date')
-                              : '${_eventDate!.day}/${_eventDate!.month}/${_eventDate!.year}'),
-                          onPressed: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate:
-                                  DateTime.now().add(const Duration(days: 1)),
-                              firstDate: DateTime.now(),
-                              lastDate:
-                                  DateTime.now().add(const Duration(days: 365)),
-                            );
-                            if (picked != null) {
-                              setModalState(() {
-                                _eventDate = picked;
-                              });
-                            }
-                          },
-                        ),
-                      ],
                     ),
-                  ),
-
-                // Advanced options toggle
-                TextButton.icon(
-                  onPressed: () =>
-                      setModalState(() => showAdvanced = !showAdvanced),
-                  icon: Icon(
-                    showAdvanced ? Icons.expand_less : Icons.expand_more,
-                    size: 18,
-                  ),
-                  label: Text(showAdvanced
-                      ? 'Advanced options'
-                      : 'Advanced options (cost tracking)'),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    foregroundColor:
-                        Theme.of(context).colorScheme.onSurface.withAlpha(150),
-                  ),
-                ),
-
-                if (showAdvanced) ...[
-                  const SizedBox(height: 8),
-                  Text(AppLocalizations.of(context)?.costTypeLabel ?? 'Cost Type:',
+                  ],
+                  // ─────────────────────────────────────────────────
+                  const SizedBox(height: 16),
+                  Text(
+                      AppLocalizations.of(context)?.avoidTypeLabel ??
+                          'Avoid Type:',
                       style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: CostType.values.where((t) => t != CostType.goodwill && t != CostType.patience).map((type) {
-                        final isSelected = _selectedCostType == type;
+                      children: AvoidType.values.map((type) {
+                        final isSelected = _selectedType == type;
                         IconData icon;
                         String label;
                         switch (type) {
-                          case CostType.money:
-                            icon = Icons.attach_money;
-                            label = AppLocalizations.of(context)?.costMoney ?? 'Money';
+                          case AvoidType.generic:
+                            icon = Icons.block;
+                            label = 'Habit';
                             break;
-                          case CostType.mood:
-                            icon = Icons.mood;
-                            label = AppLocalizations.of(context)?.costMood ?? 'Mood';
+                          case AvoidType.people:
+                            icon = Icons.person;
+                            label = 'Person';
                             break;
-                          case CostType.health:
-                            icon = Icons.health_and_safety;
-                            label = AppLocalizations.of(context)?.health ?? 'Health';
+                          case AvoidType.event:
+                            icon = Icons.event;
+                            label = 'Event';
                             break;
-                          case CostType.time:
-                            icon = Icons.timer;
-                            label = AppLocalizations.of(context)?.costTime ?? 'Time';
-                            break;
-                          case CostType.goodwill:
-                            icon = Icons.handshake;
-                            label = 'Goodwill';
-                            break;
-                          case CostType.patience:
-                            icon = Icons.hourglass_empty;
-                            label = 'Patience';
+                          case AvoidType.place:
+                            icon = Icons.place;
+                            label = 'Place';
                             break;
                         }
                         return Padding(
@@ -1356,11 +1003,11 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                             onSelected: (selected) {
                               if (selected) {
                                 setModalState(() {
-                                  _selectedCostType = type;
+                                  _selectedType = type;
                                 });
                               }
                             },
-                            selectedColor: Colors.blue.withAlpha(200),
+                            selectedColor: tdAvoidRed.withAlpha(200),
                             labelStyle: TextStyle(
                               color: isSelected ? Colors.white : null,
                             ),
@@ -1369,47 +1016,444 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                       }).toList(),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _costController,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      labelText:
-                          AppLocalizations.of(context)?.estimatedCostLabel ??
-                              'Cost Amount (per relapse/duration)',
-                      hintText: 'e.g., 5.0',
-                      prefixIcon: Icon(_getCostIcon(_selectedCostType)),
-                    ),
-                  ),
-                ],
 
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      _addTodo(_todoController.text);
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: tdAvoidRed,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  if (_selectedType == AvoidType.people) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                        AppLocalizations.of(context)?.associatedPerson ??
+                            'Associated Person:',
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final granted = await FlutterContacts.requestPermission(
+                            readonly: true);
+                        if (!granted) return;
+                        final contact =
+                            await FlutterContacts.openExternalPick();
+                        if (contact != null) {
+                          setModalState(() {
+                            _selectedContactId = contact.id;
+                            _todoController.text = contact.displayName;
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.contact_phone),
+                      label: Text(_selectedContactId == null
+                          ? 'Select from Contacts'
+                          : 'Change Contact'),
+                    ),
+                  ],
+
+                  if (_selectedType == AvoidType.place) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                        AppLocalizations.of(context)?.avoidLocation ??
+                            'Avoid Location:',
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: locationController,
+                      onChanged: (val) => _locationName = val,
+                      decoration: const InputDecoration(
+                        hintText: 'Place name or address',
+                        prefixIcon: Icon(Icons.location_on),
                       ),
                     ),
-                    child: Text(AppLocalizations.of(context)?.addToAvoidList ??
-                        'Add to Avoid List'),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MapPickerScreen(
+                              initialLat: _latitude,
+                              initialLng: _longitude,
+                            ),
+                          ),
+                        );
+                        if (result != null && result is Map<String, dynamic>) {
+                          setModalState(() {
+                            _latitude = result['lat'];
+                            _longitude = result['lng'];
+                            _locationName = result['address'];
+                            locationController.text = _locationName ?? '';
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.map),
+                      label: Text(AppLocalizations.of(context)?.pickOnMap ??
+                          'Pick on Map'),
+                    ),
+                  ],
+
+                  if (_selectedType == AvoidType.event) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                        AppLocalizations.of(context)?.eventReminderLabel ??
+                            'Event Reminder:',
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 8),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.alarm),
+                      title: Text(_reminderDateTime == null
+                          ? (AppLocalizations.of(context)?.setReminder ??
+                              'Set Reminder')
+                          : '${_reminderDateTime!.day}/${_reminderDateTime!.month} ${_reminderDateTime!.hour}:${_reminderDateTime!.minute}'),
+                      onTap: () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate:
+                              DateTime.now().add(const Duration(hours: 1)),
+                          firstDate: DateTime.now(),
+                          lastDate:
+                              DateTime.now().add(const Duration(days: 365)),
+                        );
+                        if (date != null && context.mounted) {
+                          final time = await showTimePicker(
+                            context: context,
+                            initialTime: TimeOfDay.now(),
+                          );
+                          if (time != null) {
+                            setModalState(() {
+                              _reminderDateTime = DateTime(
+                                date.year,
+                                date.month,
+                                date.day,
+                                time.hour,
+                                time.minute,
+                              );
+                            });
+                          }
+                        }
+                      },
+                      trailing: _reminderDateTime != null
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 18),
+                              onPressed: () => setModalState(() {
+                                _reminderDateTime = null;
+                              }),
+                            )
+                          : null,
+                    ),
+                  ],
+
+                  if (_selectedType != AvoidType.event) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                        AppLocalizations.of(context)?.dailyReminderLabel ??
+                            'Daily Reminder Time:',
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 8),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.alarm),
+                      title: Text(_reminderDateTime == null
+                          ? (AppLocalizations.of(context)?.setDailyReminder ??
+                              'Set Daily Reminder')
+                          : 'Every day at ${_reminderDateTime!.hour.toString().padLeft(2, '0')}:${_reminderDateTime!.minute.toString().padLeft(2, '0')}'),
+                      onTap: () async {
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: _reminderDateTime != null
+                              ? TimeOfDay.fromDateTime(_reminderDateTime!)
+                              : const TimeOfDay(hour: 20, minute: 0),
+                        );
+                        if (time != null) {
+                          final now = DateTime.now();
+                          setModalState(() {
+                            _reminderDateTime = DateTime(now.year, now.month,
+                                now.day, time.hour, time.minute);
+                          });
+                        }
+                      },
+                      trailing: _reminderDateTime != null
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 18),
+                              onPressed: () => setModalState(() {
+                                _reminderDateTime = null;
+                              }),
+                            )
+                          : null,
+                    ),
+                  ],
+
+                  const SizedBox(height: 16),
+                  Text(AppLocalizations.of(context)?.tags ?? 'Tags:',
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  FutureBuilder<List<Tag>>(
+                    future: DatabaseHelper.instance.getAllTags(),
+                    builder: (context, snapshot) {
+                      final localTags = snapshot.data ?? _allTags;
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            ...localTags.map((tag) {
+                              final isSelected =
+                                  _selectedTagIds.contains(tag.id);
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: FilterChip(
+                                  label: Text(tag.name),
+                                  selected: isSelected,
+                                  onSelected: (selected) {
+                                    setModalState(() {
+                                      if (selected) {
+                                        _selectedTagIds.add(tag.id);
+                                      } else {
+                                        _selectedTagIds.remove(tag.id);
+                                      }
+                                    });
+                                  },
+                                  selectedColor: tag.color.withAlpha(180),
+                                  checkmarkColor: Colors.white,
+                                  labelStyle: TextStyle(
+                                    color: isSelected ? Colors.white : null,
+                                  ),
+                                ),
+                              );
+                            }),
+                            ActionChip(
+                              avatar: const Icon(Icons.add, size: 16),
+                              label: Text(
+                                  AppLocalizations.of(context)?.newTag ??
+                                      'New tag'),
+                              onPressed: () => _showCreateTagDialog(
+                                  context, localTags, setModalState),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                ),
-                const SizedBox(height: 16),
-              ],
+                  const SizedBox(height: 16),
+                  Text(AppLocalizations.of(context)?.priority ?? 'Priority:',
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: TodoPriority.values.map((priority) {
+                      final isSelected = _selectedPriority == priority;
+                      Color color;
+                      switch (priority) {
+                        case TodoPriority.high:
+                          color = AppThemes.priorityHigh;
+                          break;
+                        case TodoPriority.medium:
+                          color = AppThemes.priorityMedium;
+                          break;
+                        case TodoPriority.low:
+                          color = AppThemes.priorityLow;
+                          break;
+                      }
+                      return ChoiceChip(
+                        label: Text(_getPriorityLabel(priority)),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setModalState(() {
+                              _selectedPriority = priority;
+                            });
+                          }
+                        },
+                        selectedColor: color,
+                        labelStyle: TextStyle(
+                          color: isSelected ? Colors.white : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Recurring vs Single Event Toggle
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                        AppLocalizations.of(context)?.isRecurring ??
+                            'Is this a recurring habit?',
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
+                    value: _isRecurring,
+                    onChanged: (bool value) {
+                      setModalState(() {
+                        _isRecurring = value;
+                        if (value) {
+                          _eventDate = null; // Clear date if switching back
+                        }
+                      });
+                    },
+                    activeThumbColor: tdAvoidRed,
+                  ),
+
+                  if (!_isRecurring)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Row(
+                        children: [
+                          Text(
+                              '${AppLocalizations.of(context)?.eventDate ?? 'Event Date'}: ',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w500)),
+                          TextButton.icon(
+                            icon: const Icon(Icons.calendar_today, size: 18),
+                            label: Text(_eventDate == null
+                                ? (AppLocalizations.of(context)?.selectDate ??
+                                    'Select Date')
+                                : '${_eventDate!.day}/${_eventDate!.month}/${_eventDate!.year}'),
+                            onPressed: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate:
+                                    DateTime.now().add(const Duration(days: 1)),
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime.now()
+                                    .add(const Duration(days: 365)),
+                              );
+                              if (picked != null) {
+                                setModalState(() {
+                                  _eventDate = picked;
+                                });
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Advanced options toggle
+                  TextButton.icon(
+                    onPressed: () =>
+                        setModalState(() => showAdvanced = !showAdvanced),
+                    icon: Icon(
+                      showAdvanced ? Icons.expand_less : Icons.expand_more,
+                      size: 18,
+                    ),
+                    label: Text(showAdvanced
+                        ? 'Advanced options'
+                        : 'Advanced options (cost tracking)'),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      foregroundColor: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withAlpha(150),
+                    ),
+                  ),
+
+                  if (showAdvanced) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                        AppLocalizations.of(context)?.costTypeLabel ??
+                            'Cost Type:',
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 8),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: CostType.values
+                            .where((t) =>
+                                t != CostType.goodwill &&
+                                t != CostType.patience)
+                            .map((type) {
+                          final isSelected = _selectedCostType == type;
+                          IconData icon;
+                          String label;
+                          switch (type) {
+                            case CostType.money:
+                              icon = Icons.attach_money;
+                              label = AppLocalizations.of(context)?.costMoney ??
+                                  'Money';
+                              break;
+                            case CostType.mood:
+                              icon = Icons.mood;
+                              label = AppLocalizations.of(context)?.costMood ??
+                                  'Mood';
+                              break;
+                            case CostType.health:
+                              icon = Icons.health_and_safety;
+                              label = AppLocalizations.of(context)?.health ??
+                                  'Health';
+                              break;
+                            case CostType.time:
+                              icon = Icons.timer;
+                              label = AppLocalizations.of(context)?.costTime ??
+                                  'Time';
+                              break;
+                            case CostType.goodwill:
+                              icon = Icons.handshake;
+                              label = 'Goodwill';
+                              break;
+                            case CostType.patience:
+                              icon = Icons.hourglass_empty;
+                              label = 'Patience';
+                              break;
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: ChoiceChip(
+                              avatar: Icon(icon, size: 16),
+                              label: Text(label),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setModalState(() {
+                                    _selectedCostType = type;
+                                  });
+                                }
+                              },
+                              selectedColor: Colors.blue.withAlpha(200),
+                              labelStyle: TextStyle(
+                                color: isSelected ? Colors.white : null,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _costController,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        labelText:
+                            AppLocalizations.of(context)?.estimatedCostLabel ??
+                                'Cost Amount (per relapse/duration)',
+                        hintText: 'e.g., 5.0',
+                        prefixIcon: Icon(_getCostIcon(_selectedCostType)),
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _addTodo(_todoController.text);
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: tdAvoidRed,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text(
+                          AppLocalizations.of(context)?.addToAvoidList ??
+                              'Add to Avoid List'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
-          ),
-          );  // closes return Padding
-        },    // closes builder block
+          ); // closes return Padding
+        }, // closes builder block
       ),
     ).whenComplete(() => _todoController.removeListener(updateSuggestions));
   }
@@ -1461,490 +1505,543 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         if (!didPop) setState(() => _selectedIndex = 0);
       },
       child: Scaffold(
-      backgroundColor:
-          isDark ? AppThemes.darkBackground : AppThemes.lightBackground,
-      appBar: _buildAppBar(),
-      endDrawer: _selectedIndex == 0 ? _buildDrawer(themeProvider) : null,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (i) {
-          setState(() => _selectedIndex = i);
-          if (i == 0) _fetchTodos();
-          if (i == 2) _archiveKey.currentState?.refresh();
-        },
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.home_outlined),
-            selectedIcon: const Icon(Icons.home),
-            label: AppLocalizations.of(context)?.navHome ?? 'Home',
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.bar_chart_outlined),
-            selectedIcon: const Icon(Icons.bar_chart),
-            label: AppLocalizations.of(context)?.statistics ?? 'Statistics',
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.archive_outlined),
-            selectedIcon: const Icon(Icons.archive),
-            label: AppLocalizations.of(context)?.archive ?? 'Archive',
-          ),
-        ],
-      ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: [
-          Stack(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 15,
+        backgroundColor:
+            isDark ? AppThemes.darkBackground : AppThemes.lightBackground,
+        appBar: _buildAppBar(),
+        endDrawer: _selectedIndex == 0 ? _buildDrawer(themeProvider) : null,
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: (i) {
+            setState(() => _selectedIndex = i);
+            if (i == 0) _fetchTodos();
+            if (i == 2) _archiveKey.currentState?.refresh();
+          },
+          destinations: [
+            NavigationDestination(
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home),
+              label: AppLocalizations.of(context)?.navHome ?? 'Home',
             ),
-            child: Column(
+            NavigationDestination(
+              icon: const Icon(Icons.bar_chart_outlined),
+              selectedIcon: const Icon(Icons.bar_chart),
+              label: AppLocalizations.of(context)?.statistics ?? 'Statistics',
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.archive_outlined),
+              selectedIcon: Icon(Icons.archive),
+              label: 'History',
+            ),
+          ],
+        ),
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: [
+            Stack(
               children: [
-                Row(
-                  children: [
-                    Expanded(child: _buildSearchBox(key: _searchKey)),
-                    const SizedBox(width: 10),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: PopupMenuButton<SortOption>(
-                        icon: const Icon(Icons.sort),
-                        onSelected: (SortOption result) {
-                          setState(() {
-                            _selectedSortOption = result;
-                            _runFilter(_searchController.text);
-                          });
-                        },
-                        itemBuilder: (BuildContext context) {
-                          final l10n = AppLocalizations.of(context);
-                          return <PopupMenuEntry<SortOption>>[
-                          PopupMenuItem<SortOption>(
-                            value: SortOption.latest,
-                            child: Text(l10n?.sortLatest ?? 'Latest'),
-                          ),
-                          PopupMenuItem<SortOption>(
-                            value: SortOption.oldest,
-                            child: Text(l10n?.sortOldest ?? 'Oldest'),
-                          ),
-                          PopupMenuItem<SortOption>(
-                            value: SortOption.avoidType,
-                            child: Text(l10n?.sortAvoidType ?? 'Avoid Type'),
-                          ),
-                          PopupMenuItem<SortOption>(
-                            value: SortOption.costType,
-                            child: Text(l10n?.sortCostType ?? 'Cost Type'),
-                          ),
-                          PopupMenuItem<SortOption>(
-                            value: SortOption.priority,
-                            child: Text(l10n?.priority ?? 'Priority'),
-                          ),
-                        ];},
-                      ),
-                    ),
-                  ],
-                ),
-                if (_foundToDo.isNotEmpty || _weeklyAvoided > 0) ...[
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const StatisticsScreen()),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: isDark
-                                ? Colors.black.withAlpha(40)
-                                : Colors.grey.withAlpha(40),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 15,
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: _buildSearchBox(key: _searchKey)),
+                          const SizedBox(width: 10),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: PopupMenuButton<SortOption>(
+                              icon: const Icon(Icons.sort),
+                              onSelected: (SortOption result) {
+                                setState(() {
+                                  _selectedSortOption = result;
+                                  _runFilter(_searchController.text);
+                                });
+                              },
+                              itemBuilder: (BuildContext context) {
+                                final l10n = AppLocalizations.of(context);
+                                return <PopupMenuEntry<SortOption>>[
+                                  PopupMenuItem<SortOption>(
+                                    value: SortOption.latest,
+                                    child: Text(l10n?.sortLatest ?? 'Latest'),
+                                  ),
+                                  PopupMenuItem<SortOption>(
+                                    value: SortOption.oldest,
+                                    child: Text(l10n?.sortOldest ?? 'Oldest'),
+                                  ),
+                                  PopupMenuItem<SortOption>(
+                                    value: SortOption.avoidType,
+                                    child: Text(
+                                        l10n?.sortAvoidType ?? 'Avoid Type'),
+                                  ),
+                                  PopupMenuItem<SortOption>(
+                                    value: SortOption.costType,
+                                    child:
+                                        Text(l10n?.sortCostType ?? 'Cost Type'),
+                                  ),
+                                  PopupMenuItem<SortOption>(
+                                    value: SortOption.priority,
+                                    child: Text(l10n?.priority ?? 'Priority'),
+                                  ),
+                                ];
+                              },
+                            ),
                           ),
                         ],
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.bolt,
-                                  size: 18, color: Colors.orange),
-                              const SizedBox(width: 6),
-                              Text(
-                                '${_foundToDo.length} active',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
+                      if (_foundToDo.isNotEmpty || _weeklyAvoided > 0) ...[
+                        const SizedBox(height: 10),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const StatisticsScreen()),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
                                   color: isDark
-                                      ? AppThemes.darkTextSecondary
-                                      : AppThemes.lightTextSecondary,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              if (_weeklyAvoided > 0) ...[
-                                const Icon(Icons.check_circle_outline,
-                                    size: 18, color: Colors.green),
-                                const SizedBox(width: 6),
-                                Text(
-                                  '$_weeklyAvoided avoided this week',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark
-                                        ? AppThemes.darkTextSecondary
-                                        : AppThemes.lightTextSecondary,
-                                  ),
-                                ),
-                              ] else ...[
-                                const Icon(Icons.electric_bolt,
-                                    size: 18, color: Colors.orange),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Keep going!',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark
-                                        ? AppThemes.darkTextSecondary
-                                        : AppThemes.lightTextSecondary,
-                                  ),
+                                      ? Colors.black.withAlpha(40)
+                                      : Colors.grey.withAlpha(40),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
                                 ),
                               ],
-                              const Spacer(),
-                              Icon(Icons.chevron_right,
-                                  size: 18,
-                                  color: isDark
-                                      ? AppThemes.darkTextSecondary
-                                      : AppThemes.lightTextSecondary),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Consumer<XpProvider>(
-                            builder: (_, xp, __) {
-                              final isPlus =
-                                  context.read<PurchaseProvider>().isPlus;
-                              final level = xp.levelCapped(isPlus);
-                              final title = xp.titleForLevel(level);
-                              final prog = xp.progress(isPlus);
-                              final atCap =
-                                  !isPlus && level >= XpHelper.maxFreeLevel;
-                              final textColor = isDark
-                                  ? AppThemes.darkTextSecondary
-                                  : AppThemes.lightTextSecondary;
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.star_rounded,
-                                          size: 13, color: Colors.amber),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Lv.$level · $title',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: textColor,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      if (atCap)
-                                        const Text(
-                                          '⭐ Plus to level up',
-                                          style: TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.amber),
-                                        )
-                                      else
-                                        Text(
-                                          '${xp.totalXp} / ${xp.xpCeiling(isPlus)} XP',
-                                          style: TextStyle(
-                                              fontSize: 11, color: textColor),
-                                        ),
-                                    ],
-                                  ),
-                                  if (!atCap) ...[
-                                    const SizedBox(height: 4),
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(2),
-                                      child: LinearProgressIndicator(
-                                        value: prog,
-                                        backgroundColor: isDark
-                                            ? Colors.white12
-                                            : Colors.black12,
-                                        valueColor:
-                                            const AlwaysStoppedAnimation<Color>(
-                                                Colors.amber),
-                                        minHeight: 4,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-                // ── Goals section ──────────────────────────────────
-                Consumer<GoalProvider>(
-                  builder: (_, goalProvider, __) {
-                    final goals = goalProvider.goals;
-                    final isPlus = context.read<PurchaseProvider>().isPlus;
-                    if (goals.isEmpty && !isPlus) {
-                      return const SizedBox.shrink();
-                    }
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 10),
-                        _buildGoalsSection(goals, isPlus, isDark),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: _isLoading
-                      ? _buildShimmerList(isDark)
-                      : _foundToDo.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.inbox_outlined,
-                                size: 64,
-                                color: isDark
-                                    ? AppThemes.darkTextSecondary
-                                    : AppThemes.lightTextSecondary,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                AppLocalizations.of(context)?.noItemsYet ??
-                                    'No items to avoid yet',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: isDark
-                                      ? AppThemes.darkTextSecondary
-                                      : AppThemes.lightTextSecondary,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Tap + to track your first habit to avoid',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: (isDark
-                                          ? AppThemes.darkTextSecondary
-                                          : AppThemes.lightTextSecondary)
-                                      .withAlpha(180),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              TextButton.icon(
-                                icon: const Icon(Icons.archive_outlined,
-                                    size: 16),
-                                label: const Text('View Archive →'),
-                                onPressed: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => const ArchiveScreen()),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          itemCount: _foundToDo.length,
-                          itemBuilder: (context, i) {
-                            final dismissible = Dismissible(
-                              key: ValueKey(_foundToDo[i].id),
-                              direction: DismissDirection.horizontal,
-                              background: Container(
-                                alignment: Alignment.centerLeft,
-                                padding: const EdgeInsets.only(left: 20),
-                                margin: const EdgeInsets.only(bottom: 12),
-                                decoration: BoxDecoration(
-                                  color: Colors.green,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(Icons.archive,
-                                        color: Colors.white),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      AppLocalizations.of(context)
-                                              ?.avoidedLabel ??
-                                          'Avoided!',
-                                      style:
-                                          const TextStyle(color: Colors.white),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              secondaryBackground: Container(
-                                alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.only(right: 20),
-                                margin: const EdgeInsets.only(bottom: 12),
-                                decoration: BoxDecoration(
-                                  color: tdAvoidRed.withAlpha(200),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.restore, color: Colors.white),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      'Relapse',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              confirmDismiss: (direction) async {
-                                if (direction == DismissDirection.endToStart) {
-                                  _triggerRelapse(_foundToDo[i]);
-                                  return false;
-                                }
-                                return true;
-                              },
-                              onDismissed: (_) async {
-                                final todo = _foundToDo[i];
-                                // Remove synchronously first so Flutter never
-                                // tries to rebuild a widget it already dismissed
-                                setState(() => _foundToDo.removeAt(i));
-                                await _archiveTodo(int.parse(todo.id!));
-                                if (mounted) {
-                                  _showItemAvoidedSnackBar(todo);
-                                }
-                              },
-                              child: ToDoItem(
-                                todo: _foundToDo[i],
-                                onEditItem: _editTodo,
-                              ),
-                            );
-
-                            // For the first item: wrap in an AnimatedBuilder
-                            // that renders real green/red hint backgrounds and
-                            // translates the card so they peek through.
-                            if (i != 0) return dismissible;
-                            return AnimatedBuilder(
-                              animation: _swipeHintController,
-                              builder: (context, _) {
-                                final dx = _swipeHintAnimation.value.dx;
-                                final pixelDx = dx *
-                                    MediaQuery.of(context).size.width;
-                                final showGreen = dx > 0.001;
-                                final showRed = dx < -0.001;
-                                return Stack(
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    if (showGreen || showRed)
-                                      Positioned.fill(
-                                        child: Container(
-                                          margin: const EdgeInsets.only(
-                                              bottom: 12),
-                                          decoration: BoxDecoration(
-                                            color: showGreen
-                                                ? Colors.green
-                                                : tdAvoidRed.withAlpha(200),
-                                            borderRadius:
-                                                BorderRadius.circular(20),
+                                    Expanded(
+                                      child: Wrap(
+                                        spacing: 16,
+                                        runSpacing: 8,
+                                        crossAxisAlignment:
+                                            WrapCrossAlignment.center,
+                                        children: [
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(Icons.bolt,
+                                                  size: 18,
+                                                  color: Colors.orange),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                '${_foundToDo.length} active',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: isDark
+                                                      ? AppThemes
+                                                          .darkTextSecondary
+                                                      : AppThemes
+                                                          .lightTextSecondary,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          alignment: showGreen
-                                              ? Alignment.centerLeft
-                                              : Alignment.centerRight,
-                                          padding: EdgeInsets.only(
-                                            left: showGreen ? 20 : 0,
-                                            right: showRed ? 20 : 0,
-                                          ),
-                                          child: Column(
+                                          Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Icon(
-                                                showGreen
-                                                    ? Icons.archive
-                                                    : Icons.restore,
-                                                color: Colors.white,
+                                                _weeklyAvoided > 0
+                                                    ? Icons.check_circle_outline
+                                                    : Icons.electric_bolt,
+                                                size: 18,
+                                                color: _weeklyAvoided > 0
+                                                    ? Colors.green
+                                                    : Colors.orange,
                                               ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                _weeklyAvoided > 0
+                                                    ? '$_weeklyAvoided avoided this week'
+                                                    : 'Keep going!',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: isDark
+                                                      ? AppThemes
+                                                          .darkTextSecondary
+                                                      : AppThemes
+                                                          .lightTextSecondary,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Icon(Icons.chevron_right,
+                                        size: 18,
+                                        color: isDark
+                                            ? AppThemes.darkTextSecondary
+                                            : AppThemes.lightTextSecondary),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Consumer<XpProvider>(
+                                  builder: (_, xp, __) {
+                                    final isPlus =
+                                        context.read<PurchaseProvider>().isPlus;
+                                    final level = xp.levelCapped(isPlus);
+                                    final title = xp.titleForLevel(level);
+                                    final prog = xp.progress(isPlus);
+                                    final atCap = !isPlus &&
+                                        level >= XpHelper.maxFreeLevel;
+                                    final textColor = isDark
+                                        ? AppThemes.darkTextSecondary
+                                        : AppThemes.lightTextSecondary;
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.star_rounded,
+                                                size: 13, color: Colors.amber),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'Lv.$level · $title',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: textColor,
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            if (atCap)
+                                              const Text(
+                                                '⭐ Plus to level up',
+                                                style: TextStyle(
+                                                    fontSize: 11,
+                                                    color: Colors.amber),
+                                              )
+                                            else
+                                              Text(
+                                                '${xp.totalXp} / ${xp.xpCeiling(isPlus)} XP',
+                                                style: TextStyle(
+                                                    fontSize: 11,
+                                                    color: textColor),
+                                              ),
+                                          ],
+                                        ),
+                                        if (!atCap) ...[
+                                          const SizedBox(height: 4),
+                                          ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(2),
+                                            child: LinearProgressIndicator(
+                                              value: prog,
+                                              backgroundColor: isDark
+                                                  ? Colors.white12
+                                                  : Colors.black12,
+                                              valueColor:
+                                                  const AlwaysStoppedAnimation<
+                                                      Color>(Colors.amber),
+                                              minHeight: 4,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                      // ── Goals section ──────────────────────────────────
+                      Consumer<GoalProvider>(
+                        builder: (_, goalProvider, __) {
+                          final goals = goalProvider.goals;
+                          final isPlus =
+                              context.read<PurchaseProvider>().isPlus;
+                          if (goals.isEmpty && !isPlus) {
+                            return const SizedBox.shrink();
+                          }
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 10),
+                              _buildGoalsSection(goals, isPlus, isDark),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      Expanded(
+                        child: _isLoading
+                            ? _buildShimmerList(isDark)
+                            : _foundToDo.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.inbox_outlined,
+                                          size: 64,
+                                          color: isDark
+                                              ? AppThemes.darkTextSecondary
+                                              : AppThemes.lightTextSecondary,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          AppLocalizations.of(context)
+                                                  ?.noItemsYet ??
+                                              'No items to avoid yet',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            color: isDark
+                                                ? AppThemes.darkTextSecondary
+                                                : AppThemes.lightTextSecondary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Tap + to track your first habit to avoid',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: (isDark
+                                                    ? AppThemes
+                                                        .darkTextSecondary
+                                                    : AppThemes
+                                                        .lightTextSecondary)
+                                                .withAlpha(180),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 20),
+                                        TextButton.icon(
+                                          icon: const Icon(
+                                              Icons.archive_outlined,
+                                              size: 16),
+                                          label: const Text('View History →'),
+                                          onPressed: () => Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (_) =>
+                                                    const ArchiveScreen()),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 8),
+                                    itemCount: _foundToDo.length,
+                                    itemBuilder: (context, i) {
+                                      final dismissible = Dismissible(
+                                        key: ValueKey(_foundToDo[i].id),
+                                        direction: DismissDirection.horizontal,
+                                        background: Container(
+                                          alignment: Alignment.centerLeft,
+                                          padding:
+                                              const EdgeInsets.only(left: 20),
+                                          margin:
+                                              const EdgeInsets.only(bottom: 12),
+                                          decoration: BoxDecoration(
+                                            color: Colors.green,
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              const Icon(Icons.archive,
+                                                  color: Colors.white),
                                               const SizedBox(height: 4),
                                               Text(
-                                                showGreen
-                                                    ? (AppLocalizations.of(
-                                                                context)
-                                                            ?.avoidedLabel ??
-                                                        'Avoided!')
-                                                    : 'Relapse',
+                                                AppLocalizations.of(context)
+                                                        ?.avoidedLabel ??
+                                                    'Avoided!',
                                                 style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 12),
+                                                    color: Colors.white),
                                               ),
                                             ],
                                           ),
                                         ),
-                                      ),
-                                    Transform.translate(
-                                      offset: Offset(pixelDx, 0),
-                                      child: dismissible,
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                        ),
+                                        secondaryBackground: Container(
+                                          alignment: Alignment.centerRight,
+                                          padding:
+                                              const EdgeInsets.only(right: 20),
+                                          margin:
+                                              const EdgeInsets.only(bottom: 12),
+                                          decoration: BoxDecoration(
+                                            color: tdAvoidRed.withAlpha(200),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          child: const Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(Icons.restore,
+                                                  color: Colors.white),
+                                              SizedBox(height: 4),
+                                              Text(
+                                                'Relapse',
+                                                style: TextStyle(
+                                                    color: Colors.white),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        confirmDismiss: (direction) async {
+                                          if (direction ==
+                                              DismissDirection.endToStart) {
+                                            _triggerRelapse(_foundToDo[i]);
+                                            return false;
+                                          }
+                                          return true;
+                                        },
+                                        onDismissed: (_) async {
+                                          final todo = _foundToDo[i];
+                                          // Remove synchronously first so Flutter never
+                                          // tries to rebuild a widget it already dismissed
+                                          setState(
+                                              () => _foundToDo.removeAt(i));
+                                          await _archiveTodo(
+                                              int.parse(todo.id!));
+                                          if (mounted) {
+                                            _showItemAvoidedSnackBar(todo);
+                                          }
+                                        },
+                                        child: ToDoItem(
+                                          todo: _foundToDo[i],
+                                          onEditItem: _editTodo,
+                                        ),
+                                      );
+
+                                      // For the first item: wrap in an AnimatedBuilder
+                                      // that renders real green/red hint backgrounds and
+                                      // translates the card so they peek through.
+                                      if (i != 0) return dismissible;
+                                      return AnimatedBuilder(
+                                        animation: _swipeHintController,
+                                        builder: (context, _) {
+                                          final dx =
+                                              _swipeHintAnimation.value.dx;
+                                          final pixelDx = dx *
+                                              MediaQuery.of(context).size.width;
+                                          final showGreen = dx > 0.001;
+                                          final showRed = dx < -0.001;
+                                          return Stack(
+                                            clipBehavior: Clip.none,
+                                            children: [
+                                              if (showGreen || showRed)
+                                                Positioned.fill(
+                                                  child: Container(
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                            bottom: 12),
+                                                    decoration: BoxDecoration(
+                                                      color: showGreen
+                                                          ? Colors.green
+                                                          : tdAvoidRed
+                                                              .withAlpha(200),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              20),
+                                                    ),
+                                                    alignment: showGreen
+                                                        ? Alignment.centerLeft
+                                                        : Alignment.centerRight,
+                                                    padding: EdgeInsets.only(
+                                                      left: showGreen ? 20 : 0,
+                                                      right: showRed ? 20 : 0,
+                                                    ),
+                                                    child: Column(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          showGreen
+                                                              ? Icons.archive
+                                                              : Icons.restore,
+                                                          color: Colors.white,
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 4),
+                                                        Text(
+                                                          showGreen
+                                                              ? (AppLocalizations.of(
+                                                                          context)
+                                                                      ?.avoidedLabel ??
+                                                                  'Avoided!')
+                                                              : 'Relapse',
+                                                          style:
+                                                              const TextStyle(
+                                                                  color: Colors
+                                                                      .white,
+                                                                  fontSize: 12),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              Transform.translate(
+                                                offset: Offset(pixelDx, 0),
+                                                child: dismissible,
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                      ),
+                    ],
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: ConfettiWidget(
+                    confettiController: _confettiController,
+                    blastDirectionality: BlastDirectionality.explosive,
+                    shouldLoop: false,
+                    colors: const [
+                      Colors.green,
+                      Colors.blue,
+                      Colors.pink,
+                      Colors.orange,
+                      Colors.purple,
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-          Align(
-            alignment: Alignment.topCenter,
-            child: ConfettiWidget(
-              confettiController: _confettiController,
-              blastDirectionality: BlastDirectionality.explosive,
-              shouldLoop: false,
-              colors: const [
-                Colors.green,
-                Colors.blue,
-                Colors.pink,
-                Colors.orange,
-                Colors.purple,
-              ],
-            ),
-          ),
-        ],
+            const StatisticsScreen(embedded: true),
+            ArchiveScreen(key: _archiveKey, embedded: true),
+          ],
+        ),
+        floatingActionButton: _selectedIndex == 0
+            ? FloatingActionButton.extended(
+                key: _addKey,
+                onPressed: _showAddTodoDialog,
+                icon: const Icon(Icons.add),
+                label: const Text('Add'),
+              )
+            : null,
       ),
-          const StatisticsScreen(embedded: true),
-          ArchiveScreen(key: _archiveKey, embedded: true),
-        ],
-      ),
-      floatingActionButton: _selectedIndex == 0
-          ? FloatingActionButton.extended(
-              key: _addKey,
-              onPressed: _showAddTodoDialog,
-              icon: const Icon(Icons.add),
-              label: const Text('Add'),
-            )
-          : null,
-    ),
     );
   }
 
@@ -2001,7 +2098,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   autofocus: true,
                 ),
                 const SizedBox(height: 16),
-                Text(AppLocalizations.of(context)?.avoidTypeLabel ?? 'Avoid Type:',
+                Text(
+                    AppLocalizations.of(context)?.avoidTypeLabel ??
+                        'Avoid Type:',
                     style: const TextStyle(fontWeight: FontWeight.w500)),
                 const SizedBox(height: 8),
                 SingleChildScrollView(
@@ -2053,15 +2152,17 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                 ),
                 if (editType == AvoidType.people) ...[
                   const SizedBox(height: 16),
-                  Text(AppLocalizations.of(context)?.associatedPerson ?? 'Associated Person:',
+                  Text(
+                      AppLocalizations.of(context)?.associatedPerson ??
+                          'Associated Person:',
                       style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
                     onPressed: () async {
-                      final granted = await FlutterContacts.requestPermission(readonly: true);
+                      final granted = await FlutterContacts.requestPermission(
+                          readonly: true);
                       if (!granted) return;
-                      final contact =
-                          await FlutterContacts.openExternalPick();
+                      final contact = await FlutterContacts.openExternalPick();
                       if (contact != null) {
                         setModalState(() {
                           editContactId = contact.id;
@@ -2077,7 +2178,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                 ],
                 if (editType == AvoidType.place) ...[
                   const SizedBox(height: 16),
-                  Text(AppLocalizations.of(context)?.avoidLocation ?? 'Avoid Location:',
+                  Text(
+                      AppLocalizations.of(context)?.avoidLocation ??
+                          'Avoid Location:',
                       style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   TextField(
@@ -2110,19 +2213,23 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                       }
                     },
                     icon: const Icon(Icons.map),
-                    label: Text(AppLocalizations.of(context)?.pickOnMap ?? 'Pick on Map'),
+                    label: Text(AppLocalizations.of(context)?.pickOnMap ??
+                        'Pick on Map'),
                   ),
                 ],
                 if (editType == AvoidType.event) ...[
                   const SizedBox(height: 16),
-                  Text(AppLocalizations.of(context)?.eventReminderLabel ?? 'Event Reminder:',
+                  Text(
+                      AppLocalizations.of(context)?.eventReminderLabel ??
+                          'Event Reminder:',
                       style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.alarm),
                     title: Text(editReminderDateTime == null
-                        ? (AppLocalizations.of(context)?.setReminder ?? 'Set Reminder')
+                        ? (AppLocalizations.of(context)?.setReminder ??
+                            'Set Reminder')
                         : '${editReminderDateTime!.day}/${editReminderDateTime!.month} ${editReminderDateTime!.hour}:${editReminderDateTime!.minute}'),
                     onTap: () async {
                       final date = await showDatePicker(
@@ -2164,14 +2271,17 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                 ],
                 if (editType != AvoidType.event) ...[
                   const SizedBox(height: 16),
-                  Text(AppLocalizations.of(context)?.dailyReminderLabel ?? 'Daily Reminder Time:',
+                  Text(
+                      AppLocalizations.of(context)?.dailyReminderLabel ??
+                          'Daily Reminder Time:',
                       style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.alarm),
                     title: Text(editReminderDateTime == null
-                        ? (AppLocalizations.of(context)?.setDailyReminder ?? 'Set Daily Reminder')
+                        ? (AppLocalizations.of(context)?.setDailyReminder ??
+                            'Set Daily Reminder')
                         : 'Every day at ${editReminderDateTime!.hour.toString().padLeft(2, '0')}:${editReminderDateTime!.minute.toString().padLeft(2, '0')}'),
                     onTap: () async {
                       final time = await showTimePicker(
@@ -2183,8 +2293,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                       if (time != null) {
                         final now = DateTime.now();
                         setModalState(() {
-                          editReminderDateTime = DateTime(
-                              now.year, now.month, now.day, time.hour, time.minute);
+                          editReminderDateTime = DateTime(now.year, now.month,
+                              now.day, time.hour, time.minute);
                         });
                       }
                     },
@@ -2330,8 +2440,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   ),
                 // Advanced options toggle (edit form)
                 TextButton.icon(
-                  onPressed: () => setModalState(
-                      () => editShowAdvanced = !editShowAdvanced),
+                  onPressed: () =>
+                      setModalState(() => editShowAdvanced = !editShowAdvanced),
                   icon: Icon(
                     editShowAdvanced ? Icons.expand_less : Icons.expand_more,
                     size: 18,
@@ -2348,32 +2458,41 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
                 if (editShowAdvanced) ...[
                   const SizedBox(height: 8),
-                  Text(AppLocalizations.of(context)?.costTypeLabel ?? 'Cost Type:',
+                  Text(
+                      AppLocalizations.of(context)?.costTypeLabel ??
+                          'Cost Type:',
                       style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: CostType.values.where((t) => t != CostType.goodwill && t != CostType.patience).map((type) {
+                      children: CostType.values
+                          .where((t) =>
+                              t != CostType.goodwill && t != CostType.patience)
+                          .map((type) {
                         final isSelected = editCostType == type;
                         IconData icon;
                         String label;
                         switch (type) {
                           case CostType.money:
                             icon = Icons.attach_money;
-                            label = AppLocalizations.of(context)?.costMoney ?? 'Money';
+                            label = AppLocalizations.of(context)?.costMoney ??
+                                'Money';
                             break;
                           case CostType.mood:
                             icon = Icons.mood;
-                            label = AppLocalizations.of(context)?.costMood ?? 'Mood';
+                            label = AppLocalizations.of(context)?.costMood ??
+                                'Mood';
                             break;
                           case CostType.health:
                             icon = Icons.health_and_safety;
-                            label = AppLocalizations.of(context)?.health ?? 'Health';
+                            label = AppLocalizations.of(context)?.health ??
+                                'Health';
                             break;
                           case CostType.time:
                             icon = Icons.timer;
-                            label = AppLocalizations.of(context)?.costTime ?? 'Time';
+                            label = AppLocalizations.of(context)?.costTime ??
+                                'Time';
                             break;
                           case CostType.goodwill:
                             icon = Icons.handshake;
@@ -2412,7 +2531,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
                     decoration: InputDecoration(
-                      labelText: AppLocalizations.of(context)?.estimatedCostLabel ?? 'Cost Amount (per relapse/duration)',
+                      labelText:
+                          AppLocalizations.of(context)?.estimatedCostLabel ??
+                              'Cost Amount (per relapse/duration)',
                       hintText: 'e.g., 5.0',
                       prefixIcon: Icon(_getCostIcon(editCostType)),
                     ),
@@ -2434,7 +2555,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                         onPressed: () async {
                           if (!editIsRecurring && editEventDate == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(AppLocalizations.of(context)?.selectEventDateError ?? 'Please select an event date.')),
+                              SnackBar(
+                                  content: Text(AppLocalizations.of(context)
+                                          ?.selectEventDateError ??
+                                      'Please select an event date.')),
                             );
                             return;
                           }
@@ -2495,9 +2619,133 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   }
 
   Future<void> _triggerRelapse(ToDo todo) async {
-    final noteController = TextEditingController();
     final xpProvider = context.read<XpProvider>();
     final isPlus = context.read<PurchaseProvider>().isPlus;
+    final messenger = ScaffoldMessenger.of(context);
+    final updatedTodo = todo.copyWith(
+      lastRelapsedAt: DateTime.now(),
+      relapseCount: todo.relapseCount + 1,
+    );
+    await DatabaseHelper.instance.update(updatedTodo);
+
+    final relapseLogId = await DatabaseHelper.instance.addRelapseLog(
+      RelapseLog(todoId: todo.id!),
+    );
+
+    await xpProvider.award(
+      XpHelper.sourceRelapse,
+      XpHelper.xpRelapse,
+    );
+
+    if (isPlus) {
+      await NotificationHelper().scheduleRelapseFollowUp();
+    }
+
+    _fetchTodos();
+    if (!mounted) return;
+
+    await _showRelapseReflectionPrompt(
+      todo: todo,
+      relapseLogId: relapseLogId,
+      isPlus: isPlus,
+    );
+
+    final trustedSupport = _trustedSupportContact;
+    if (trustedSupport?.isEnabled ?? false) {
+      await _showTrustedSupportPrompt(trustedSupport!);
+    }
+
+    final tip = getTipForRelapse();
+    if (tip != null) {
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text('💡 $tip'),
+              duration: const Duration(seconds: 6),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      });
+    }
+  }
+
+  SnackBar _buildPromptSnackBar({
+    required String message,
+    required String actionLabel,
+    required IconData icon,
+    required Color actionColor,
+    required VoidCallback onAction,
+  }) {
+    return SnackBar(
+      content: Row(
+        children: [
+          Icon(icon, color: Colors.white, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+      duration: const Duration(seconds: 10),
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: Colors.black.withAlpha(230),
+      persist: false,
+      showCloseIcon: true,
+      closeIconColor: Colors.white70,
+      action: SnackBarAction(
+        label: actionLabel,
+        textColor: actionColor,
+        onPressed: onAction,
+      ),
+    );
+  }
+
+  Future<void> _showRelapseReflectionPrompt({
+    required ToDo todo,
+    required int relapseLogId,
+    required bool isPlus,
+  }) async {
+    if (!mounted) return;
+
+    var tapped = false;
+    final messenger = ScaffoldMessenger.of(context);
+    final controller = messenger.showSnackBar(
+      _buildPromptSnackBar(
+        message: '"${todo.todoText}" relapsed. Add why?',
+        actionLabel: 'Reflect',
+        icon: Icons.edit_note_outlined,
+        actionColor: const Color(0xFFFFC9C9),
+        onAction: () {
+          tapped = true;
+        },
+      ),
+    );
+
+    final reason = await controller.closed;
+    if (!mounted || !tapped || reason != SnackBarClosedReason.action) return;
+
+    await _showRelapseReflectionSheet(
+      relapseLogId: relapseLogId,
+      isPlus: isPlus,
+    );
+  }
+
+  Future<void> _showRelapseReflectionSheet({
+    required int relapseLogId,
+    required bool isPlus,
+  }) async {
+    if (!mounted) return;
+    final xpProvider = context.read<XpProvider>();
+    final noteController = TextEditingController();
+    String? selectedCause;
 
     const causeOptions = [
       'Stress',
@@ -2508,189 +2756,168 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       'Other',
     ];
 
-    await showModalBottomSheet(
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (sheetCtx) {
-        String? selectedCause;
-        return StatefulBuilder(
-          builder: (ctx, setSheetState) => Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(ctx).viewInsets.bottom,
-              left: 16,
-              right: 16,
-              top: 16,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(ctx)?.relapseDialogTitle ??
-                        'Oh no! What triggered this?',
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold),
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'What triggered it?',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Optional. You can review this later in History.',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                if (isPlus) ...[
+                  const SizedBox(height: 16),
+                  const Text(
+                    'What caused it?',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    AppLocalizations.of(ctx)?.relapseDialogSubtitle ??
-                        'Logging your triggers helps you avoid them in the future.',
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: causeOptions.map((cause) {
+                      final selected = selectedCause == cause;
+                      return FilterChip(
+                        label:
+                            Text(cause, style: const TextStyle(fontSize: 12)),
+                        selected: selected,
+                        onSelected: (_) => setSheetState(() {
+                          selectedCause = selected ? null : cause;
+                        }),
+                        selectedColor: tdAvoidRed.withAlpha(30),
+                        checkmarkColor: tdAvoidRed,
+                        side: BorderSide(
+                          color: selected
+                              ? tdAvoidRed.withAlpha(150)
+                              : Colors.grey.withAlpha(80),
+                        ),
+                      );
+                    }).toList(),
                   ),
-                  // Plus: quick-tap cause chips
-                  if (isPlus) ...[
-                    const SizedBox(height: 16),
-                    const Text(
-                      'What caused it?',
-                      style: TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w600),
+                ],
+                const SizedBox(height: 16),
+                TextField(
+                  controller: noteController,
+                  decoration: const InputDecoration(
+                    hintText: 'Optional notes...',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Cancel'),
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: causeOptions.map((cause) {
-                        final selected = selectedCause == cause;
-                        return FilterChip(
-                          label: Text(cause,
-                              style: const TextStyle(fontSize: 12)),
-                          selected: selected,
-                          onSelected: (_) => setSheetState(() {
-                            selectedCause = selected ? null : cause;
-                          }),
-                          selectedColor: tdAvoidRed.withAlpha(30),
-                          checkmarkColor: tdAvoidRed,
-                          side: BorderSide(
-                            color: selected
-                                ? tdAvoidRed.withAlpha(150)
-                                : Colors.grey.withAlpha(80),
-                          ),
-                        );
-                      }).toList(),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          final note = noteController.text.trim();
+                          await DatabaseHelper.instance.updateRelapseLogDetails(
+                            relapseLogId,
+                            triggerNote: note.isEmpty ? null : note,
+                            causeTag: selectedCause,
+                          );
+
+                          if (note.isNotEmpty) {
+                            await xpProvider.award(
+                              XpHelper.sourceTriggerNote,
+                              XpHelper.xpTriggerNote,
+                            );
+                          }
+                          if (isPlus && selectedCause != null) {
+                            await xpProvider.award(
+                              XpHelper.sourceFollowUpCause,
+                              XpHelper.xpFollowUpCause,
+                            );
+                          }
+
+                          if (!mounted || !ctx.mounted) return;
+                          Navigator.pop(ctx);
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                note.isNotEmpty || selectedCause != null
+                                    ? 'Reflection saved.'
+                                    : 'Nothing was added.',
+                              ),
+                            ),
+                          );
+                        },
+                        child: const Text('Save'),
+                      ),
                     ),
                   ],
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: noteController,
-                    decoration: InputDecoration(
-                      hintText:
-                          AppLocalizations.of(ctx)?.relapseDialogHint ??
-                              'Optional notes...',
-                      border: const OutlineInputBorder(),
-                    ),
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: Text(
-                              AppLocalizations.of(ctx)?.cancel ?? 'Cancel'),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            // Capture context-dependent values before any awaits
-                            final messenger = ScaffoldMessenger.of(context);
-                            final l10n = AppLocalizations.of(context);
-                            final updatedTodo = todo.copyWith(
-                              lastRelapsedAt: DateTime.now(),
-                              relapseCount: todo.relapseCount + 1,
-                            );
-                            await DatabaseHelper.instance.update(updatedTodo);
-
-                            final log = RelapseLog(
-                              todoId: todo.id!,
-                              triggerNote: noteController.text.isNotEmpty
-                                  ? noteController.text
-                                  : null,
-                              causeTag: selectedCause,
-                            );
-                            await DatabaseHelper.instance.addRelapseLog(log);
-
-                            // XP: honesty award for logging the relapse
-                            await xpProvider.award(
-                                XpHelper.sourceRelapse, XpHelper.xpRelapse);
-                            // Bonus XP for trigger note
-                            if (log.triggerNote != null &&
-                                log.triggerNote!.isNotEmpty) {
-                              await xpProvider.award(
-                                  XpHelper.sourceTriggerNote,
-                                  XpHelper.xpTriggerNote);
-                            }
-                            // Plus: +10 XP for tagging a cause chip
-                            if (isPlus && selectedCause != null) {
-                              await xpProvider.award(
-                                  XpHelper.sourceFollowUpCause,
-                                  XpHelper.xpFollowUpCause);
-                            }
-
-                            // Phase 2B: schedule next-morning follow-up (Plus)
-                            if (isPlus) {
-                              await NotificationHelper()
-                                  .scheduleRelapseFollowUp();
-                            }
-
-                            _fetchTodos();
-                            if (ctx.mounted && mounted) {
-                              Navigator.pop(ctx);
-                              messenger.showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      l10n?.relapseSuccess ??
-                                          'Streak reset. Don\'t give up!'),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                              final tip = getTipForRelapse();
-                              if (tip != null) {
-                                Future.delayed(const Duration(seconds: 2),
-                                    () {
-                                  if (mounted) {
-                                    messenger.showSnackBar(
-                                      SnackBar(
-                                        content: Text('💡 $tip'),
-                                        duration: const Duration(seconds: 6),
-                                        behavior: SnackBarBehavior.floating,
-                                      ),
-                                    );
-                                  }
-                                });
-                              }
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: tdAvoidRed,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: Text(
-                              AppLocalizations.of(ctx)?.confirmRelapse ??
-                                  'Confirm Relapse'),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
-  /// Shows the "What Worked?" milestone reflection bottom sheet (Plus only).
+  Future<void> _showAvoidReflectionPrompt(ToDo todo) async {
+    if (!mounted || todo.id == null) return;
+
+    var tapped = false;
+    final messenger = ScaffoldMessenger.of(context);
+    final controller = messenger.showSnackBar(
+      _buildPromptSnackBar(
+        message: '"${todo.todoText}" avoided. What worked?',
+        actionLabel: 'Reflect',
+        icon: Icons.lightbulb_outline,
+        actionColor: const Color(0xFFB8F5E0),
+        onAction: () {
+          tapped = true;
+        },
+      ),
+    );
+
+    final reason = await controller.closed;
+    if (!mounted || !tapped || reason != SnackBarClosedReason.action) return;
+
+    await _showWhatWorkedSheet(
+      todo.id!,
+      todo.todoText ?? 'This item',
+      0,
+      reflectionType: 'avoid',
+    );
+  }
+
+  /// Shows the optional "What Worked?" reflection bottom sheet.
   Future<void> _showWhatWorkedSheet(
-      String todoId, String todoText, int milestoneDays) async {
+    String todoId,
+    String todoText,
+    int milestoneDays, {
+    required String reflectionType,
+  }) async {
     if (!mounted) return;
     final xpProvider = context.read<XpProvider>();
     final noteController = TextEditingController();
@@ -2736,13 +2963,16 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _milestoneCelebTitle(milestoneDays),
+                              reflectionType == 'milestone'
+                                  ? _milestoneCelebTitle(milestoneDays)
+                                  : 'Nice save! 💪',
                               style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold),
+                                  fontSize: 22, fontWeight: FontWeight.bold),
                             ),
                             Text(
-                              '$milestoneDays days avoiding "$todoText"',
+                              reflectionType == 'milestone'
+                                  ? '$milestoneDays days avoiding "$todoText"'
+                                  : 'You avoided "$todoText"',
                               style: const TextStyle(
                                   fontSize: 13, color: Colors.grey),
                             ),
@@ -2754,8 +2984,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   const SizedBox(height: 24),
                   const Text(
                     'What helped you stay strong?',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
                   const Text(
@@ -2769,8 +2998,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     children: chipOptions.map((chip) {
                       final selected = selectedChip == chip;
                       return FilterChip(
-                        label: Text(chip,
-                            style: const TextStyle(fontSize: 13)),
+                        label: Text(chip, style: const TextStyle(fontSize: 13)),
                         selected: selected,
                         onSelected: (_) => setSheetState(() {
                           selectedChip = selected ? null : chip;
@@ -2797,31 +3025,40 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                       const Spacer(),
                       FilledButton(
                         onPressed: () async {
+                          final note = noteController.text.trim();
+                          final hasReflection =
+                              selectedChip != null || note.isNotEmpty;
                           Navigator.pop(ctx);
-                          await DatabaseHelper.instance
-                              .addMilestoneReflection(
-                            todoId: todoId,
-                            milestoneDays: milestoneDays,
-                            chipTag: selectedChip,
-                            note: noteController.text.isNotEmpty
-                                ? noteController.text
-                                : null,
-                          );
-                          await xpProvider.award(
-                            XpHelper.sourceWhatWorked,
-                            XpHelper.xpWhatWorked,
-                          );
+                          if (hasReflection) {
+                            await DatabaseHelper.instance
+                                .addMilestoneReflection(
+                              todoId: todoId,
+                              milestoneDays: milestoneDays,
+                              reflectionType: reflectionType,
+                              chipTag: selectedChip,
+                              note: note.isNotEmpty ? note : null,
+                            );
+                          }
+                          if (hasReflection) {
+                            await xpProvider.award(
+                              XpHelper.sourceWhatWorked,
+                              XpHelper.xpWhatWorked,
+                            );
+                          }
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('+10 XP — Keep going! 💪'),
-                                duration: Duration(seconds: 2),
+                              SnackBar(
+                                content: Text(
+                                  hasReflection
+                                      ? '+10 XP — Reflection saved! 💪'
+                                      : 'No reflection added.',
+                                ),
+                                duration: const Duration(seconds: 2),
                               ),
                             );
                           }
                         },
-                        child:
-                            const Text('Share & earn +10 XP'),
+                        child: const Text('Save reflection'),
                       ),
                     ],
                   ),
@@ -2904,11 +3141,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   // Goals UI
   // ─────────────────────────────────────────────────────────────
 
-  Widget _buildGoalsSection(
-      List<Goal> goals, bool isPlus, bool isDark) {
-    final textSecondary = isDark
-        ? AppThemes.darkTextSecondary
-        : AppThemes.lightTextSecondary;
+  Widget _buildGoalsSection(List<Goal> goals, bool isPlus, bool isDark) {
+    final textSecondary =
+        isDark ? AppThemes.darkTextSecondary : AppThemes.lightTextSecondary;
 
     // ── Collapsed strip ──────────────────────────────────────────
     if (!_goalsExpanded) {
@@ -2927,13 +3162,11 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       return GestureDetector(
         onTap: () => setState(() => _goalsExpanded = true),
         child: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-                color: Colors.teal.withValues(alpha: 0.22)),
+            border: Border.all(color: Colors.teal.withValues(alpha: 0.22)),
           ),
           child: Row(
             children: [
@@ -2959,8 +3192,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     borderRadius: BorderRadius.circular(2),
                     child: LinearProgressIndicator(
                       value: prog,
-                      backgroundColor:
-                          isDark ? Colors.white12 : Colors.black12,
+                      backgroundColor: isDark ? Colors.white12 : Colors.black12,
                       valueColor: AlwaysStoppedAnimation<Color>(
                           prog >= 1.0 ? Colors.green : Colors.teal),
                       minHeight: 4,
@@ -2974,8 +3206,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                 ),
               ],
               const SizedBox(width: 6),
-              Icon(Icons.expand_more,
-                  size: 16, color: textSecondary),
+              Icon(Icons.expand_more, size: 16, color: textSecondary),
             ],
           ),
         ),
@@ -3024,8 +3255,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             const SizedBox(width: 8),
             GestureDetector(
               onTap: () => setState(() => _goalsExpanded = false),
-              child:
-                  Icon(Icons.expand_less, size: 18, color: textSecondary),
+              child: Icon(Icons.expand_less, size: 18, color: textSecondary),
             ),
           ],
         ),
@@ -3043,8 +3273,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               itemCount: goals.length,
               separatorBuilder: (_, __) => const SizedBox(width: 10),
               itemBuilder: (_, i) => SizedBox(
-                  width: 280,
-                  child: _buildGoalCard(goals[i], isPlus, isDark)),
+                  width: 280, child: _buildGoalCard(goals[i], isPlus, isDark)),
             ),
           ),
       ],
@@ -3071,7 +3300,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withAlpha(30) : Colors.grey.withAlpha(30),
+            color:
+                isDark ? Colors.black.withAlpha(30) : Colors.grey.withAlpha(30),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -3107,10 +3337,13 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                 GestureDetector(
                   onTap: () {
                     if (goal.id != null) {
-                      context.read<GoalProvider>().removeGoal(goal.id!, isPlus: isPlus);
+                      context
+                          .read<GoalProvider>()
+                          .removeGoal(goal.id!, isPlus: isPlus);
                     }
                   },
-                  child: Icon(Icons.close, size: 14,
+                  child: Icon(Icons.close,
+                      size: 14,
                       color: isDark
                           ? AppThemes.darkTextSecondary
                           : AppThemes.lightTextSecondary),
@@ -3148,18 +3381,15 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     return GestureDetector(
       onTap: () => _showAddGoalSheet(context),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-              color: Colors.teal.withValues(alpha: 0.25)),
+          border: Border.all(color: Colors.teal.withValues(alpha: 0.25)),
         ),
         child: const Row(
           children: [
-            Icon(Icons.add_circle_outline,
-                color: Colors.teal, size: 20),
+            Icon(Icons.add_circle_outline, color: Colors.teal, size: 20),
             SizedBox(width: 10),
             Text(
               'Tap to add a goal',
@@ -3177,8 +3407,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
   void _showAddGoalSheet(BuildContext context) {
     GoalType type = GoalType.streak;
-    ToDo? selectedTodo =
-        todosList.isNotEmpty ? todosList.first : null;
+    ToDo? selectedTodo = todosList.isNotEmpty ? todosList.first : null;
     final targetController = TextEditingController(text: '7');
 
     showModalBottomSheet(
@@ -3201,8 +3430,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             children: [
               const Text(
                 'Add a Goal',
-                style:
-                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               // Goal type selector
@@ -3212,8 +3440,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     child: _typeChip(
                       label: '🏃 Streak',
                       selected: type == GoalType.streak,
-                      onTap: () =>
-                          setSheetState(() => type = GoalType.streak),
+                      onTap: () => setSheetState(() => type = GoalType.streak),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -3221,8 +3448,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     child: _typeChip(
                       label: '💰 Monthly Savings',
                       selected: type == GoalType.savingsMonth,
-                      onTap: () => setSheetState(
-                          () => type = GoalType.savingsMonth),
+                      onTap: () =>
+                          setSheetState(() => type = GoalType.savingsMonth),
                     ),
                   ),
                 ],
@@ -3244,8 +3471,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                 overflow: TextOverflow.ellipsis),
                           ))
                       .toList(),
-                  onChanged: (val) =>
-                      setSheetState(() => selectedTodo = val),
+                  onChanged: (val) => setSheetState(() => selectedTodo = val),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -3276,14 +3502,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   Expanded(
                     child: FilledButton(
                       onPressed: () {
-                        final target =
-                            double.tryParse(targetController.text);
+                        final target = double.tryParse(targetController.text);
                         if (target == null || target <= 0) return;
                         final goal = Goal(
                           type: type,
-                          todoId: type == GoalType.streak
-                              ? selectedTodo?.id
-                              : null,
+                          todoId:
+                              type == GoalType.streak ? selectedTodo?.id : null,
                           todoText: type == GoalType.streak
                               ? selectedTodo?.todoText
                               : null,
@@ -3314,16 +3538,14 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: selected
               ? Colors.teal.withValues(alpha: 0.15)
               : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color:
-                selected ? Colors.teal : Colors.grey.withValues(alpha: 0.3),
+            color: selected ? Colors.teal : Colors.grey.withValues(alpha: 0.3),
           ),
         ),
         child: Center(
@@ -3333,6 +3555,417 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: selected ? Colors.teal : null,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _trustedSupportSubtitle() {
+    final contact = _trustedSupportContact;
+    if (contact == null) {
+      return 'Prepare a message to one saved supporter after a relapse';
+    }
+
+    final channel =
+        contact.channel == TrustedSupportChannel.sms ? 'SMS' : 'Email';
+    final masked = TrustedSupportHelper.maskDestination(
+      contact.channel,
+      contact.destinationValue,
+    );
+    final status = contact.isEnabled ? 'On' : 'Off';
+    return '${contact.contactName} · $channel · $masked · $status';
+  }
+
+  Widget _buildPlusBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade700,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: const Text(
+        'Plus',
+        style: TextStyle(
+          fontSize: 10,
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  String _labelText(Object? label, String fallback) {
+    if (label == null) return fallback;
+    final text = label.toString();
+    if (text.contains('.')) {
+      return text.split('.').last;
+    }
+    return text;
+  }
+
+  Future<_TrustedSupportChoice?> _pickTrustedSupportChoice() async {
+    final granted = await FlutterContacts.requestPermission(readonly: true);
+    if (!granted) return null;
+
+    final contact = await FlutterContacts.openExternalPick();
+    if (contact == null) return null;
+
+    final choices = <_TrustedSupportChoice>[
+      for (final phone in contact.phones)
+        if (phone.number.trim().isNotEmpty)
+          _TrustedSupportChoice(
+            contactId: contact.id,
+            contactName: contact.displayName,
+            channel: TrustedSupportChannel.sms,
+            destinationValue: phone.number.trim(),
+            destinationLabel: _labelText(phone.label, 'Phone'),
+          ),
+      for (final email in contact.emails)
+        if (email.address.trim().isNotEmpty)
+          _TrustedSupportChoice(
+            contactId: contact.id,
+            contactName: contact.displayName,
+            channel: TrustedSupportChannel.email,
+            destinationValue: email.address.trim(),
+            destinationLabel: _labelText(email.label, 'Email'),
+          ),
+    ];
+
+    if (choices.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('That contact has no phone number or email to use.'),
+          ),
+        );
+      }
+      return null;
+    }
+
+    if (choices.length == 1) return choices.first;
+
+    if (!mounted) return null;
+    return showModalBottomSheet<_TrustedSupportChoice>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text('Choose how to reach ${contact.displayName}'),
+              subtitle:
+                  const Text('Pick the exact destination to prepare later'),
+            ),
+            for (final choice in choices)
+              ListTile(
+                leading: Icon(
+                  choice.channel == TrustedSupportChannel.sms
+                      ? Icons.sms_outlined
+                      : Icons.email_outlined,
+                ),
+                title: Text(
+                  choice.channel == TrustedSupportChannel.sms ? 'SMS' : 'Email',
+                ),
+                subtitle: Text(
+                  '${choice.destinationLabel} · ${choice.destinationValue}',
+                ),
+                onTap: () => Navigator.pop(ctx, choice),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showTrustedSupportSettings() async {
+    TrustedSupportContact? draft = _trustedSupportContact;
+    var enabled = draft?.isEnabled ?? true;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Trusted Support',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Avoid opens a message for your saved supporter. You review and send it yourself.',
+                    style: TextStyle(color: Colors.grey, height: 1.4),
+                  ),
+                  const SizedBox(height: 16),
+                  Card(
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: tdAvoidRed.withAlpha(25),
+                        child: const Icon(Icons.favorite_border,
+                            color: tdAvoidRed),
+                      ),
+                      title:
+                          Text(draft?.contactName ?? 'No supporter selected'),
+                      subtitle: Text(
+                        draft == null
+                            ? 'Choose one trusted person from your phone contacts'
+                            : (() {
+                                final currentDraft = draft!;
+                                final channel = currentDraft.channel ==
+                                        TrustedSupportChannel.sms
+                                    ? 'SMS'
+                                    : 'Email';
+                                final masked =
+                                    TrustedSupportHelper.maskDestination(
+                                  currentDraft.channel,
+                                  currentDraft.destinationValue,
+                                );
+                                return '$channel · ${currentDraft.destinationLabel} · $masked';
+                              })(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton.icon(
+                    onPressed: () async {
+                      final choice = await _pickTrustedSupportChoice();
+                      if (choice == null) return;
+                      setSheetState(() {
+                        draft = TrustedSupportContact(
+                          id: draft?.id,
+                          contactId: choice.contactId,
+                          contactName: choice.contactName,
+                          channel: choice.channel,
+                          destinationValue: choice.destinationValue,
+                          destinationLabel: choice.destinationLabel,
+                          isEnabled: enabled,
+                          createdAt: draft?.createdAt,
+                        );
+                      });
+                    },
+                    icon: const Icon(Icons.contact_phone_outlined),
+                    label: Text(draft == null
+                        ? 'Select trusted supporter'
+                        : 'Change supporter'),
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Enable after relapse'),
+                    subtitle: const Text(
+                      'Show the prepared message sheet after you log a relapse',
+                    ),
+                    value: enabled && draft != null,
+                    onChanged: draft == null
+                        ? null
+                        : (value) => setSheetState(() => enabled = value),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      if (_trustedSupportContact != null)
+                        TextButton(
+                          onPressed: () async {
+                            await DatabaseHelper.instance
+                                .deleteTrustedSupportContact();
+                            if (!mounted) return;
+                            setState(() => _trustedSupportContact = null);
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Trusted support removed.'),
+                              ),
+                            );
+                          },
+                          child: const Text('Remove'),
+                        ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: draft == null
+                            ? null
+                            : () async {
+                                final saved = draft!.copyWith(
+                                  isEnabled: enabled,
+                                );
+                                await DatabaseHelper.instance
+                                    .upsertTrustedSupportContact(saved);
+                                if (!mounted) return;
+                                setState(() => _trustedSupportContact = saved);
+                                if (ctx.mounted) Navigator.pop(ctx);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      enabled
+                                          ? 'Trusted support is ready.'
+                                          : 'Trusted support saved but turned off.',
+                                    ),
+                                  ),
+                                );
+                              },
+                        child: const Text('Save'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showTrustedSupportPrompt(TrustedSupportContact contact) async {
+    final templates = TrustedSupportHelper.buildTemplates(contact.contactName);
+    var selectedIndex = 0;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Reach out to ${contact.contactName}?',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'A message is ready. Avoid will open the composer for your saved supporter.',
+                  style: TextStyle(color: Colors.grey, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                Card(
+                  child: ListTile(
+                    leading: Icon(
+                      contact.channel == TrustedSupportChannel.sms
+                          ? Icons.sms_outlined
+                          : Icons.email_outlined,
+                      color: tdAvoidRed,
+                    ),
+                    title: Text(contact.contactName),
+                    subtitle: Text(
+                      '${contact.channel == TrustedSupportChannel.sms ? 'SMS' : 'Email'} · ${TrustedSupportHelper.maskDestination(contact.channel, contact.destinationValue)}',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Choose a message',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                RadioGroup<int>(
+                  groupValue: selectedIndex,
+                  onChanged: (value) {
+                    if (value != null) {
+                      setSheetState(() => selectedIndex = value);
+                    }
+                  },
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < templates.length; i++)
+                        RadioListTile<int>(
+                          contentPadding: EdgeInsets.zero,
+                          value: i,
+                          title: Text(templates[i].label),
+                          subtitle: Text(templates[i].body),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Not now'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          final body = templates[selectedIndex].body;
+                          Navigator.pop(ctx);
+                          await Future<void>.delayed(
+                            const Duration(milliseconds: 100),
+                          );
+                          final result = await TrustedSupportHelper
+                              .composeTrustedSupportMessage(
+                            contact: contact,
+                            body: body,
+                          );
+                          if (!mounted) return;
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                switch (result) {
+                                  TrustedSupportComposeResult.opened =>
+                                    'Composer opened for ${contact.contactName}.',
+                                  TrustedSupportComposeResult.sent =>
+                                    'Message sent to ${contact.contactName}.',
+                                  TrustedSupportComposeResult.cancelled =>
+                                    'Message canceled.',
+                                  TrustedSupportComposeResult.unavailable =>
+                                    'This device cannot open that messaging option right now.',
+                                  TrustedSupportComposeResult.error =>
+                                    'Could not open the message composer.',
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                        child: const Text('Open message'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
             ),
           ),
         ),
@@ -3375,23 +4008,59 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             const SizedBox(height: 12),
             const Text('What you unlock:'),
             const SizedBox(height: 10),
-            const Row(children: [Text('♾️', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Unlimited active habits (free: 10)'))]),
+            const Row(children: [
+              Text('♾️', style: TextStyle(fontSize: 16)),
+              SizedBox(width: 8),
+              Expanded(child: Text('Unlimited active habits (free: 10)'))
+            ]),
             const SizedBox(height: 6),
-            const Row(children: [Text('📅', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Full stats history & heatmap'))]),
+            const Row(children: [
+              Text('📅', style: TextStyle(fontSize: 16)),
+              SizedBox(width: 8),
+              Expanded(child: Text('Full stats history & heatmap'))
+            ]),
             const SizedBox(height: 6),
-            const Row(children: [Text('🎯', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Daily commitment flow & goals'))]),
+            const Row(children: [
+              Text('🎯', style: TextStyle(fontSize: 16)),
+              SizedBox(width: 8),
+              Expanded(child: Text('Daily commitment flow & goals'))
+            ]),
             const SizedBox(height: 6),
-            const Row(children: [Text('🔔', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Smart scheduled notifications'))]),
+            const Row(children: [
+              Text('🔔', style: TextStyle(fontSize: 16)),
+              SizedBox(width: 8),
+              Expanded(child: Text('Smart scheduled notifications'))
+            ]),
             const SizedBox(height: 6),
-            const Row(children: [Text('🏅', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('All achievement medals'))]),
+            const Row(children: [
+              Text('🏅', style: TextStyle(fontSize: 16)),
+              SizedBox(width: 8),
+              Expanded(child: Text('All achievement medals'))
+            ]),
             const SizedBox(height: 6),
-            const Row(children: [Text('📈', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('XP levels beyond 20 & titles'))]),
+            const Row(children: [
+              Text('📈', style: TextStyle(fontSize: 16)),
+              SizedBox(width: 8),
+              Expanded(child: Text('XP levels beyond 20 & titles'))
+            ]),
             const SizedBox(height: 6),
-            const Row(children: [Text('🏠', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Home screen widget'))]),
+            const Row(children: [
+              Text('🏠', style: TextStyle(fontSize: 16)),
+              SizedBox(width: 8),
+              Expanded(child: Text('Home screen widget'))
+            ]),
             const SizedBox(height: 6),
-            const Row(children: [Text('☁️', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Cloud sync across devices'))]),
+            const Row(children: [
+              Text('☁️', style: TextStyle(fontSize: 16)),
+              SizedBox(width: 8),
+              Expanded(child: Text('Cloud sync across devices'))
+            ]),
             const SizedBox(height: 6),
-            const Row(children: [Text('📤', style: TextStyle(fontSize: 16)), SizedBox(width: 8), Expanded(child: Text('Export your data'))]),
+            const Row(children: [
+              Text('📤', style: TextStyle(fontSize: 16)),
+              SizedBox(width: 8),
+              Expanded(child: Text('Export your data'))
+            ]),
           ],
         ),
         actions: [
@@ -3401,7 +4070,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               final restored = await purchase.restorePurchases();
               if (mounted) {
                 messenger.showSnackBar(SnackBar(
-                  content: Text(restored ? 'Purchase restored!' : 'No purchase found to restore.'),
+                  content: Text(restored
+                      ? 'Purchase restored!'
+                      : 'No purchase found to restore.'),
                 ));
               }
             },
@@ -3417,7 +4088,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               final success = await purchase.purchasePlus();
               if (mounted && !success) {
                 messenger.showSnackBar(
-                  const SnackBar(content: Text('Purchase failed or was cancelled.')),
+                  const SnackBar(
+                      content: Text('Purchase failed or was cancelled.')),
                 );
               }
             },
@@ -3453,7 +4125,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             setState(() => _selectedIndex = 0);
           },
         ),
-        title: const Text('Archive'),
+        title: const Text('History'),
       );
     }
     return AppBar(
@@ -3631,7 +4303,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     ],
                   ),
                   subtitle: Text(
-                    l10n?.homeScreenWidgetDesc ?? 'Shows your top streak on the home screen',
+                    l10n?.homeScreenWidgetDesc ??
+                        'Shows your top streak on the home screen',
                     style: TextStyle(color: isPlus ? null : Colors.grey),
                   ),
                   value: isPlus && _widgetEnabled,
@@ -3648,14 +4321,16 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                           }
                         }
                       : (_) => _showPlusDialog(context,
-                          subtitle:
-                              l10n?.homeScreenWidgetPlusHint ?? 'Home screen widget is a Plus feature.'),
+                          subtitle: l10n?.homeScreenWidgetPlusHint ??
+                              'Home screen widget is a Plus feature.'),
                 ),
                 if (isPlus && _widgetEnabled)
                   ListTile(
                     leading: const Icon(Icons.add_to_home_screen),
-                    title: Text(l10n?.addWidgetToHomeScreen ?? 'Add widget to home screen'),
-                    subtitle: Text(l10n?.addWidgetInstructions ?? 'Instructions & quick-add button'),
+                    title: Text(l10n?.addWidgetToHomeScreen ??
+                        'Add widget to home screen'),
+                    subtitle: Text(l10n?.addWidgetInstructions ??
+                        'Instructions & quick-add button'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
                       Navigator.pop(context);
@@ -3710,7 +4385,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     ],
                   ),
                   subtitle: Text(
-                    l10n?.cloudSyncDesc ?? 'Auto-backup to iCloud / Google Drive',
+                    l10n?.cloudSyncDesc ??
+                        'Auto-backup to iCloud / Google Drive',
                     style: TextStyle(color: isPlus ? null : Colors.grey),
                   ),
                   value: isPlus && _syncEnabled,
@@ -3724,8 +4400,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                           }
                         }
                       : (_) => _showPlusDialog(context,
-                          subtitle:
-                              l10n?.cloudSyncPlusHint ?? 'Cloud sync is a Plus feature.'),
+                          subtitle: l10n?.cloudSyncPlusHint ??
+                              'Cloud sync is a Plus feature.'),
                 ),
                 if (isPlus && _syncEnabled)
                   ListTile(
@@ -3735,12 +4411,55 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                       Navigator.pop(context);
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (_) => const SyncScreen()),
+                        MaterialPageRoute(builder: (_) => const SyncScreen()),
                       );
                     },
                   ),
               ],
+            );
+          }),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: Text(
+              'Trusted Support',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ),
+          Builder(builder: (context) {
+            final isPlus = context.read<PurchaseProvider>().isPlus;
+            return ListTile(
+              leading: Icon(
+                Icons.support_agent_outlined,
+                color: isPlus ? null : Colors.grey,
+              ),
+              title: Row(
+                children: [
+                  const Text('Trusted Support'),
+                  if (!isPlus) ...[
+                    const SizedBox(width: 8),
+                    _buildPlusBadge(),
+                  ],
+                ],
+              ),
+              subtitle: Text(
+                _trustedSupportSubtitle(),
+                style: TextStyle(color: isPlus ? null : Colors.grey),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                if (!isPlus) {
+                  _showPlusDialog(
+                    context,
+                    subtitle:
+                        'Trusted Support is a Plus feature. Save one supporter and prepare a message after a relapse.',
+                  );
+                  return;
+                }
+                Navigator.pop(context);
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) _showTrustedSupportSettings();
+                });
+              },
             );
           }),
           const Divider(),
@@ -3766,7 +4485,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                 builder: (BuildContext context) {
                   return AlertDialog(
                     title: Text(l10n?.appTitle ?? 'Avoid Todo App'),
-                    content: Text('${l10n?.aboutDescription ?? 'Never forget what you need to avoid anymore.'}\n\nVersion $_appVersion'),
+                    content: Text(
+                        '${l10n?.aboutDescription ?? 'Never forget what you need to avoid anymore.'}\n\nVersion $_appVersion'),
                     actions: [
                       TextButton(
                         child: Text(l10n?.close ?? 'Close'),
