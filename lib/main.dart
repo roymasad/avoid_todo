@@ -109,10 +109,7 @@ class MyApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          supportedLocales: const [
-            Locale('en'),
-            Locale('fr'),
-          ],
+          supportedLocales: AppLocalizations.supportedLocales,
           home: hasSeenOnboarding ? const Home() : const OnboardingScreen(),
         );
       },

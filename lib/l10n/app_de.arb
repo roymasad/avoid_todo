@@ -1,214 +1,214 @@
 {
-  "@@locale": "fr",
+  "@@locale": "de",
   "appTitle": "Avoid Things Todo",
   "@appTitle": {
     "description": "The app name."
   },
-  "appTagline": "Restez productif en évitant !",
+  "appTagline": "Bleib produktiv, indem du vermeidest, was dich bremst.",
   "@appTagline": {
     "description": "App tagline shown on onboarding."
   },
-  "language": "Langue",
+  "language": "Sprache",
   "@language": {
     "description": "Label for language selector."
   },
-  "addThingToAvoid": "Ajouter une chose à éviter",
+  "addThingToAvoid": "Etwas zum Vermeiden hinzufugen",
   "@addThingToAvoid": {
     "description": "Button to add a new habit."
   },
-  "whatToAvoid": "Que devez-vous éviter ?",
+  "whatToAvoid": "Was musst du vermeiden?",
   "@whatToAvoid": {
     "description": "Input hint in add-habit dialog."
   },
-  "category": "Catégorie",
+  "category": "Kategorie",
   "@category": {
     "description": "Label for category field."
   },
-  "priority": "Priorité",
+  "priority": "Prioritat",
   "@priority": {
     "description": "Label for priority field."
   },
-  "addToAvoidList": "Ajouter à la liste d'évitement",
+  "addToAvoidList": "Zur Liste hinzufugen",
   "@addToAvoidList": {
     "description": "Confirm button in add-habit dialog."
   },
-  "cancel": "Annuler",
+  "cancel": "Abbrechen",
   "@cancel": {
     "description": "Generic cancel button."
   },
-  "save": "Enregistrer",
+  "save": "Speichern",
   "@save": {
     "description": "Generic save button."
   },
-  "editItem": "Modifier l'élément",
+  "editItem": "Eintrag bearbeiten",
   "@editItem": {
     "description": "Title of edit dialog."
   },
-  "search": "Rechercher",
+  "search": "Suchen",
   "@search": {
     "description": "Search bar hint."
   },
-  "noItemsYet": "Aucun élément à éviter pour le moment",
+  "noItemsYet": "Noch keine Dinge zum Vermeiden",
   "@noItemsYet": {
     "description": "Empty state message on home screen."
   },
-  "archive": "Archives",
+  "archive": "Archiv",
   "@archive": {
     "description": "Archive screen label."
   },
-  "statistics": "Statistiques",
+  "statistics": "Statistiken",
   "@statistics": {
     "description": "Statistics screen label."
   },
-  "menu": "Menu",
+  "menu": "Menü",
   "@menu": {
     "description": "Menu label."
   },
-  "about": "À propos",
+  "about": "Info",
   "@about": {
     "description": "About menu item."
   },
-  "aboutDescription": "N'oubliez plus jamais ce que vous devez éviter.",
+  "aboutDescription": "Vergiss nie wieder, was du vermeiden musst.",
   "@aboutDescription": {
     "description": "Short app description shown in About dialog."
   },
-  "close": "Fermer",
+  "close": "Schliessen",
   "@close": {
     "description": "Generic close button."
   },
-  "theme": "Thème",
+  "theme": "Design",
   "@theme": {
     "description": "Theme selector label."
   },
-  "system": "Système",
+  "system": "Systemstandard",
   "@system": {
     "description": "System theme option."
   },
-  "light": "Clair",
+  "light": "Hell",
   "@light": {
     "description": "Light theme option."
   },
-  "dark": "Sombre",
+  "dark": "Dunkel",
   "@dark": {
     "description": "Dark theme option."
   },
-  "noArchivedItems": "Aucun élément archivé pour le moment",
+  "noArchivedItems": "Noch keine archivierten Eintrage",
   "@noArchivedItems": {
     "description": "Empty state in archive screen."
   },
-  "avoidedOn": "Évité le",
+  "avoidedOn": "Vermeidungsdatum",
   "@avoidedOn": {
     "description": "Label showing date item was archived."
   },
-  "restore": "Restaurer",
+  "restore": "Wiederherstellen",
   "@restore": {
     "description": "Restore archived item button."
   },
-  "deletePermanently": "Supprimer définitivement",
+  "deletePermanently": "Dauerhaft loschen",
   "@deletePermanently": {
     "description": "Permanent delete button."
   },
-  "deleteConfirmation": "Cette action ne peut pas être annulée. Êtes-vous sûr ?",
+  "deleteConfirmation": "Diese Aktion kann nicht ruckgangig gemacht werden. Bist du sicher?",
   "@deleteConfirmation": {
     "description": "Confirmation message before permanent delete."
   },
-  "delete": "Supprimer",
+  "delete": "Loschen",
   "@delete": {
     "description": "Generic delete button."
   },
-  "weeklyActivity": "Activité hebdomadaire",
+  "weeklyActivity": "Wochentliche Aktivitat",
   "@weeklyActivity": {
     "description": "Stats section title."
   },
-  "byCategory": "Par catégorie",
+  "byCategory": "Nach Kategorie",
   "@byCategory": {
     "description": "Stats section title."
   },
-  "mostAvoided": "Les plus évités",
+  "mostAvoided": "Am meisten vermieden",
   "@mostAvoided": {
     "description": "Stats section title."
   },
-  "times": "fois",
+  "times": "Mal",
   "@times": {
     "description": "Unit suffix for count of avoidances."
   },
-  "avoided": "Évités",
+  "avoided": "Vermieden",
   "@avoided": {
     "description": "Stats label for avoided count."
   },
-  "active": "Actifs",
+  "active": "Aktiv",
   "@active": {
     "description": "Label for active habits count."
   },
-  "swipeToAvoid": "Glissez vers la droite pour marquer comme évité !",
+  "swipeToAvoid": "Wische nach rechts, um als vermieden zu markieren",
   "@swipeToAvoid": {
     "description": "Swipe hint shown on home screen."
   },
-  "itemRestored": "Élément restauré dans la liste active",
+  "itemRestored": "Eintrag zur aktiven Liste wiederhergestellt",
   "@itemRestored": {
     "description": "Toast shown after restoring an item."
   },
-  "itemAvoided": "évité !",
+  "itemAvoided": "vermieden!",
   "@itemAvoided": {
     "description": "Suffix in toast after marking item avoided."
   },
-  "undo": "Annuler",
+  "undo": "Ruckgangig",
   "@undo": {
     "description": "Undo action in snackbar."
   },
-  "health": "Santé",
+  "health": "Gesundheit",
   "@health": {
     "description": "Health category label."
   },
-  "productivity": "Productivité",
+  "productivity": "Produktivitat",
   "@productivity": {
     "description": "Productivity category label."
   },
-  "social": "Social",
+  "social": "Soziales",
   "@social": {
     "description": "Social category label."
   },
-  "other": "Autre",
+  "other": "Andere",
   "@other": {
     "description": "Other category label."
   },
-  "high": "Haute",
+  "high": "Hoch",
   "@high": {
     "description": "High priority label."
   },
-  "medium": "Moyenne",
+  "medium": "Mittel",
   "@medium": {
     "description": "Medium priority label."
   },
-  "low": "Basse",
+  "low": "Niedrig",
   "@low": {
     "description": "Low priority label."
   },
-  "english": "English",
+  "english": "Englisch",
   "@english": {
     "description": "English language option."
   },
-  "french": "Français",
+  "french": "Französisch",
   "@french": {
     "description": "French language option."
   },
-  "systemDefault": "Par defaut du systeme",
+  "systemDefault": "Systemstandard",
   "@systemDefault": {
     "description": "System default language option."
   },
-  "followDeviceLanguage": "Suivre la langue de l'appareil",
+  "followDeviceLanguage": "Geratesprache verwenden",
   "@followDeviceLanguage": {
     "description": "Subtitle for system default language option."
   },
-  "spanish": "Espanol",
+  "spanish": "Spanisch",
   "@spanish": {
     "description": "Spanish language option."
   },
-  "italian": "Italiano",
+  "italian": "Italienisch",
   "@italian": {
     "description": "Italian language option."
   },
-  "portuguese": "Portugues",
+  "portuguese": "Portugiesisch",
   "@portuguese": {
     "description": "Portuguese language option."
   },
@@ -216,471 +216,471 @@
   "@german": {
     "description": "German language option."
   },
-  "avoidedLabel": "Évité !",
+  "avoidedLabel": "Vermieden!",
   "@avoidedLabel": {
     "description": "Badge shown on avoided items."
   },
-  "totalAvoided": "Total Évités",
+  "totalAvoided": "Insgesamt vermieden",
   "@totalAvoided": {
     "description": "Stats label for total avoidances."
   },
-  "byPriority": "Par priorité",
+  "byPriority": "Nach Prioritat",
   "@byPriority": {
     "description": "Stats section title."
   },
-  "moneySaved": "Argent économisé",
+  "moneySaved": "Gespartes Geld",
   "@moneySaved": {
     "description": "Stats label for money saved."
   },
-  "tags": "Étiquettes",
+  "tags": "Schlagwörter",
   "@tags": {
     "description": "Tags section label."
   },
-  "newTag": "Nouvelle étiquette",
+  "newTag": "Neuer Tag",
   "@newTag": {
     "description": "Button to create a new tag."
   },
-  "tagName": "Nom de l'étiquette",
+  "tagName": "Tag-Name",
   "@tagName": {
     "description": "Input hint for tag name."
   },
-  "create": "Créer",
+  "create": "Erstellen",
   "@create": {
     "description": "Generic create button."
   },
-  "relapseTrigger": "Déclencheur de rechute",
+  "relapseTrigger": "Ausloser fur Ruckfall",
   "@relapseTrigger": {
     "description": "Label for relapse trigger field."
   },
-  "triggerNote": "Note de déclenchement",
+  "triggerNote": "Notiz zum Ausloser",
   "@triggerNote": {
     "description": "Label for trigger note field."
   },
-  "badges": "Badges et Jalons",
+  "badges": "Abzeichen und Meilensteine",
   "@badges": {
     "description": "Badges section title."
   },
-  "badge24hTitle": "24h de Liberté",
+  "badge24hTitle": "24 Stunden frei",
   "@badge24hTitle": {
     "description": "Title of 24h badge."
   },
-  "badge24hDesc": "Sans rechute pendant 24 heures",
+  "badge24hDesc": "Du bist 24 Stunden standhaft geblieben",
   "@badge24hDesc": {
     "description": "Description of 24h badge."
   },
-  "badge7dTitle": "Guerrier de 7 Jours",
+  "badge7dTitle": "7-Tage-Krieger",
   "@badge7dTitle": {
     "description": "Title of 7-day badge."
   },
-  "badge7dDesc": "Sans rechute pendant 7 jours",
+  "badge7dDesc": "Du bist 7 Tage standhaft geblieben",
   "@badge7dDesc": {
     "description": "Description of 7-day badge."
   },
-  "badgeBudgetTitle": "Économiseur Budget",
+  "badgeBudgetTitle": "Sparfuchs",
   "@badgeBudgetTitle": {
     "description": "Title of budget saver badge."
   },
-  "badgeBudgetDesc": "Plus de 50 $ économisés",
+  "badgeBudgetDesc": "Du hast mehr als $50 gespart",
   "@badgeBudgetDesc": {
     "description": "Description of budget saver badge."
   },
-  "badgeMegaTitle": "Méga Économiseur",
+  "badgeMegaTitle": "Mega-Sparer",
   "@badgeMegaTitle": {
     "description": "Title of mega saver badge."
   },
-  "badgeMegaDesc": "Plus de 200 $ économisés",
+  "badgeMegaDesc": "Du hast mehr als $200 gespart",
   "@badgeMegaDesc": {
     "description": "Description of mega saver badge."
   },
-  "badgeConsistencyTitle": "Constance",
+  "badgeConsistencyTitle": "Beständigkeit",
   "@badgeConsistencyTitle": {
     "description": "Title of consistency badge."
   },
-  "badgeConsistencyDesc": "Plus de 5 habitudes actives",
+  "badgeConsistencyDesc": "5+ aktive Gewohnheiten",
   "@badgeConsistencyDesc": {
     "description": "Description of consistency badge."
   },
-  "locked": "Verrouillé",
+  "locked": "Gesperrt",
   "@locked": {
     "description": "Label for locked badge."
   },
-  "unlocked": "Déverrouillé",
+  "unlocked": "Freigeschaltet",
   "@unlocked": {
     "description": "Label for unlocked badge."
   },
-  "byTag": "Par étiquette",
+  "byTag": "Nach Tag",
   "@byTag": {
     "description": "Stats section title."
   },
-  "isRecurring": "S'agit-il d'une habitude récurrente ?",
+  "isRecurring": "Ist dies eine wiederkehrende Gewohnheit?",
   "@isRecurring": {
     "description": "Toggle label for recurring habit."
   },
-  "eventDate": "Date de l'événement",
+  "eventDate": "Ereignisdatum",
   "@eventDate": {
     "description": "Label for one-time event date."
   },
-  "selectDate": "Choisir une date",
+  "selectDate": "Datum auswahlen",
   "@selectDate": {
     "description": "Button to pick a date."
   },
-  "estimatedCostLabel": "Coût estimé par rechute/durée",
+  "estimatedCostLabel": "Geschatzte Kosten pro Ruckfall/Dauer",
   "@estimatedCostLabel": {
     "description": "Label for cost input field."
   },
-  "relapseDialogTitle": "Oh non ! Quel a été le déclencheur ?",
+  "relapseDialogTitle": "Oh nein! Was hat das ausgelost?",
   "@relapseDialogTitle": {
     "description": "Title of relapse dialog."
   },
-  "relapseDialogSubtitle": "Noter vos déclencheurs vous aide à les éviter à l'avenir.",
+  "relapseDialogSubtitle": "Wenn du Ausloser notierst, kannst du sie kunftig besser vermeiden.",
   "@relapseDialogSubtitle": {
     "description": "Subtitle of relapse dialog."
   },
-  "relapseDialogHint": "Notes optionnelles...",
+  "relapseDialogHint": "Optionale Notizen...",
   "@relapseDialogHint": {
     "description": "Hint in relapse notes field."
   },
-  "confirmRelapse": "Confirmer la rechute",
+  "confirmRelapse": "Ruckfall bestatigen",
   "@confirmRelapse": {
     "description": "Confirm button in relapse dialog."
   },
-  "relapseSuccess": "Série réinitialisée. N'abandonnez pas !",
+  "relapseSuccess": "Die Serie wurde zuruckgesetzt. Gib nicht auf!",
   "@relapseSuccess": {
     "description": "Toast shown after logging a relapse."
   },
-  "onboardingWelcomeTitle": "Arrêtez les habitudes qui vous freinent",
+  "onboardingWelcomeTitle": "Stoppe die Gewohnheiten, die dich ausbremsen",
   "@onboardingWelcomeTitle": {
     "description": "Onboarding slide 1 title."
   },
-  "onboardingWelcomeDesc": "La plupart des applis suivent ce que vous devez FAIRE. Avoid suit ce que vous devez ARRÊTER — les habitudes, les envies et les schémas qui vous bloquent. Ajoutez ce que vous voulez quitter, notez vos rechutes et construisez des séries qui comptent.",
+  "onboardingWelcomeDesc": "Die meisten Apps verfolgen, was du TUN sollst. Avoid verfolgt, womit du AUFHÖREN willst: Gewohnheiten, Impulse und Muster, die dir im Weg stehen. Füge hinzu, was du loswerden willst, protokolliere Rückfälle und baue Serien auf, die wirklich zählen.",
   "@onboardingWelcomeDesc": {
     "description": "Onboarding slide 1 description."
   },
-  "onboardingTagsTitle": "Organisez avec des Étiquettes",
+  "onboardingTagsTitle": "Organisiere dich mit Schlagwörtern",
   "@onboardingTagsTitle": {
     "description": "Onboarding slide 2 title."
   },
-  "onboardingTagsDesc": "Regroupez vos habitudes par domaine de vie — Santé, Travail, Social. Voyez d'un coup d'œil quelle partie de votre vie nécessite le plus d'attention en ce moment.",
+  "onboardingTagsDesc": "Gruppiere Gewohnheiten nach Lebensbereichen: Gesundheit, Arbeit, Soziales. So siehst du auf einen Blick, welcher Teil deines Lebens gerade am meisten Aufmerksamkeit braucht.",
   "@onboardingTagsDesc": {
     "description": "Onboarding slide 2 description."
   },
-  "onboardingMoneyTitle": "Chaque rechute a un coût",
+  "onboardingMoneyTitle": "Jeder Rückfall hat einen Preis",
   "@onboardingMoneyTitle": {
     "description": "Onboarding slide 3 title."
   },
-  "onboardingMoneyDesc": "Définissez un coût estimé par rechute (ex. un paquet de cigarettes, un repas à emporter). Avoid le multiplie par votre série pour vous montrer l'argent réellement économisé.",
+  "onboardingMoneyDesc": "Lege geschätzte Kosten pro Rückfall fest, zum Beispiel eine Zigarettenschachtel oder eine Take-away-Mahlzeit. Avoid multipliziert das mit deiner Serie und zeigt dir, wie viel Geld du wirklich gespart hast.",
   "@onboardingMoneyDesc": {
     "description": "Onboarding slide 3 description."
   },
-  "onboardingRelapseTitle": "Une rechute ? C'est OK — Notez-la",
+  "onboardingRelapseTitle": "Rückfällig geworden? Ist okay – protokolliere es",
   "@onboardingRelapseTitle": {
     "description": "Onboarding slide 4 title."
   },
-  "onboardingRelapseDesc": "Appuyez sur Rechute pour noter ce qui vous a déclenché. Avec le temps, Avoid repère vos schémas pour que vous puissiez les anticiper. Sans jugement, juste de la conscience.",
+  "onboardingRelapseDesc": "Tippe auf Rückfall, um festzuhalten, was dich ausgelöst hat. Mit der Zeit erkennt Avoid deine Muster, damit du ihnen zuvor kommen kannst. Kein Urteil, nur Bewusstsein.",
   "@onboardingRelapseDesc": {
     "description": "Onboarding slide 4 description."
   },
-  "onboardingBadgesTitle": "Gagnez des récompenses en chemin",
+  "onboardingBadgesTitle": "Belohnungen auf dem Weg verdienen",
   "@onboardingBadgesTitle": {
     "description": "Onboarding slide 5 title."
   },
-  "onboardingBadgesDesc": "Débloquez des badges pour vos séries et économies. Complétez des objectifs, gagnez de l'XP et montez de niveau parmi 50 paliers au fil de vos progrès.",
+  "onboardingBadgesDesc": "Schalte Abzeichen für Serien und Spar-Meilensteine frei. Erreiche Ziele, sammle XP und steige durch 50 Stufen auf, während deine Gewohnheiten stärker werden.",
   "@onboardingBadgesDesc": {
     "description": "Onboarding slide 5 description."
   },
-  "getStarted": "Commencer",
+  "getStarted": "Loslegen",
   "@getStarted": {
     "description": "Button on last onboarding slide."
   },
-  "next": "Suivant",
+  "next": "Weiter",
   "@next": {
     "description": "Next button on onboarding slides."
   },
-  "skip": "Passer",
+  "skip": "Uberspringen",
   "@skip": {
     "description": "Skip button on onboarding slides."
   },
-  "help": "Aide et Guide",
+  "help": "Hilfe und Anleitung",
   "@help": {
     "description": "Help menu item label."
   },
-  "helpTitle": "Guide de l'application et FAQ",
+  "helpTitle": "App-Anleitung und FAQ",
   "@helpTitle": {
     "description": "Title of the help screen."
   },
-  "helpWhatIsAvoidTitle": "Qu'est-ce qu'Avoid ?",
+  "helpWhatIsAvoidTitle": "Was ist Avoid?",
   "@helpWhatIsAvoidTitle": {
     "description": "Help screen intro section title."
   },
-  "helpWhatIsAvoidDesc": "Avoid vous aide à briser les mauvaises habitudes en suivant ce que vous voulez ARRÊTER de faire. Ajoutez une habitude, notez vos rechutes et identifiez ce qui les déclenche. Avec le temps, vous repérerez vos schémas, construirez de longues séries et mesurerez l'impact réel — en argent, humeur ou temps — de rester propre.",
+  "helpWhatIsAvoidDesc": "Avoid hilft dir, schlechte Gewohnheiten zu durchbrechen, indem es verfolgt, womit du AUFHÖREN willst. Füge eine Gewohnheit hinzu, protokolliere Rückfälle und notiere, was sie ausgelöst hat. Mit der Zeit erkennst du deine Muster, baust lange Serien auf und siehst die echte Wirkung – in Geld, Stimmung oder Zeit – davon, standhaft zu bleiben.",
   "@helpWhatIsAvoidDesc": {
     "description": "Help screen intro section description."
   },
-  "faq1Question": "Comment ajouter quelque chose à éviter ?",
+  "faq1Question": "Wie füge ich etwas zum Vermeiden hinzu?",
   "@faq1Question": {
     "description": "FAQ 1 question."
   },
-  "faq1Answer": "Appuyez sur le bouton + en bas à droite. Vous pouvez ajouter une habitude récurrente (comme fumer ou la malbouffe), un événement ponctuel (comme éviter une fête), une personne ou même un lieu. Définissez un coût optionnel et un rappel pour rester responsable.",
+  "faq1Answer": "Tippe unten rechts auf die +-Schaltfläche. Du kannst eine wiederkehrende Gewohnheit hinzufügen, zum Beispiel Rauchen oder Junkfood, ein einmaliges Ereignis wie das Auslassen einer Party, eine Person, die du vermeiden willst, oder sogar einen Ort. Lege optional Kosten und eine Erinnerung fest, um dran zu bleiben.",
   "@faq1Answer": {
     "description": "FAQ 1 answer."
   },
-  "faq2Question": "Qu'est-ce qu'une rechute et comment l'enregistrer ?",
+  "faq2Question": "Was ist ein Rückfall und wie protokolliere ich ihn?",
   "@faq2Question": {
     "description": "FAQ 2 question."
   },
-  "faq2Answer": "Une rechute, c'est quand vous cédez à quelque chose que vous essayez d'éviter. Appuyez sur le bouton rouge Rechute de n'importe quelle carte. Vous pouvez ajouter une note rapide sur ce qui vous a déclenché — cela enrichit votre historique et vous aide à repérer vos schémas.",
+  "faq2Answer": "Ein Rückfall passiert, wenn du bei etwas nachgibst, das du eigentlich vermeiden willst. Tippe auf einer Gewohnheitskarte auf die rote Rückfall-Schaltfläche. Du kannst eine kurze Notiz dazu schreiben, was dich ausgelöst hat – so entsteht deine Trigger-Historie und du erkennst mit der Zeit Muster.",
   "@faq2Answer": {
     "description": "FAQ 2 answer."
   },
-  "faq3Question": "Comment les séries sont-elles calculées ?",
+  "faq3Question": "Wie werden Serien berechnet?",
   "@faq3Question": {
     "description": "FAQ 3 question."
   },
-  "faq3Answer": "Votre série compte les jours depuis votre dernière rechute. Pour les habitudes récurrentes, elle se remet à zéro à chaque rechute. Pour les événements ponctuels, elle est suivie jusqu'à l'archivage.",
+  "faq3Answer": "Deine Serie zählt die Tage seit deinem letzten Rückfall. Bei wiederkehrenden Gewohnheiten wird sie bei jedem Rückfall zurückgesetzt. Bei einmaligen Ereignissen läuft sie weiter, bis du den Eintrag archivierst.",
   "@faq3Answer": {
     "description": "FAQ 3 answer."
   },
-  "faq4Question": "Comment fonctionne le suivi de l'argent (ou du temps/humeur) ?",
+  "faq4Question": "Wie funktioniert das Tracking von Geld, Zeit oder Stimmung?",
   "@faq4Question": {
     "description": "FAQ 4 question."
   },
-  "faq4Answer": "Lors de l'ajout d'une habitude, définissez un coût estimé par rechute — en argent, heures ou points d'humeur. Avoid le multiplie par la durée de votre série pour afficher le total économisé en restant propre.",
+  "faq4Answer": "Wenn du eine Gewohnheit hinzufügst, legst du geschätzte Kosten pro Rückfall fest – in Geld, Stunden oder Stimmungspunkten. Avoid multipliziert das mit der Dauer deiner Serie und zeigt dir, wie viel du insgesamt durch dein Dranbleiben gespart hast.",
   "@faq4Answer": {
     "description": "FAQ 4 answer."
   },
-  "faq5Question": "Que sont les objectifs et comment les utiliser ?",
+  "faq5Question": "Was sind Ziele und wie nutze ich sie?",
   "@faq5Question": {
     "description": "FAQ 5 question."
   },
-  "faq5Answer": "Les objectifs vous donnent une cible précise, comme atteindre 7 jours de série sur votre habitude la plus difficile. Chacun reçoit un objectif auto-généré basé sur l'habitude avec le plus de rechutes. Les utilisateurs Plus peuvent aussi créer des objectifs personnalisés et suivre des cibles d'économies.",
+  "faq5Answer": "Ziele geben dir ein klares Vorhaben, zum Beispiel eine 7-Tage-Serie bei deiner schwierigsten Gewohnheit. Jede Person bekommt automatisch ein Ziel auf Basis der Gewohnheit mit den meisten Rückfällen. Plus-Nutzer können außerdem eigene Ziele erstellen und Sparziele verfolgen.",
   "@faq5Answer": {
     "description": "FAQ 5 answer."
   },
-  "faq6Question": "Comment fonctionnent l'XP et les niveaux ?",
+  "faq6Question": "Wie funktionieren XP und Level?",
   "@faq6Question": {
     "description": "FAQ 6 question."
   },
-  "faq6Answer": "Vous gagnez de l'XP en évitant les rechutes, en complétant des objectifs et en faisant l'engagement quotidien. Il y a 50 niveaux — les utilisateurs gratuits progressent jusqu'au niveau 20, Plus débloque les 50.",
+  "faq6Answer": "Du erhältst XP, indem du Rückfälle vermeidest, Ziele abschließt und das tägliche Commitment machst. Es gibt 50 Level mit Titeln; kostenlose Nutzer kommen bis Level 20, Plus schaltet alle 50 frei.",
   "@faq6Answer": {
     "description": "FAQ 6 answer."
   },
-  "faq7Question": "Qu'est-ce que l'Engagement Quotidien ? (Plus)",
+  "faq7Question": "Was ist das tägliche Commitment? (Plus)",
   "@faq7Question": {
     "description": "FAQ 7 question."
   },
-  "faq7Answer": "Les utilisateurs Plus voient chaque matin un écran pour s'engager envers leurs habitudes actives. Chaque engagement rapporte +20 XP et renforce un rituel quotidien autour de vos objectifs.",
+  "faq7Answer": "Plus-Nutzer sehen einmal pro Tag morgens einen Bildschirm, auf dem sie sich zu ihren aktiven Gewohnheiten bekennen. Jedes Commitment bringt +20 XP und schafft ein tägliches Ritual rund um deine Ziele.",
   "@faq7Answer": {
     "description": "FAQ 7 answer."
   },
-  "faq8Question": "Puis-je suivre des personnes ou des lieux à éviter ?",
+  "faq8Question": "Kann ich Personen oder Orte erfassen, die ich vermeiden will?",
   "@faq8Question": {
     "description": "FAQ 8 question."
   },
-  "faq8Answer": "Oui ! Lors de l'ajout d'une habitude, choisissez 'Personne' pour la lier à un contact de votre répertoire, ou 'Lieu' pour épingler un endroit sur la carte. Idéal pour éviter des personnes difficiles ou des environnements déclencheurs.",
+  "faq8Answer": "Ja. Wenn du eine Gewohnheit hinzufügst, wähle Person, um sie mit einem Kontakt aus deinem Telefonbuch zu verknüpfen, oder Ort, um einen Punkt auf der Karte zu markieren. Das ist ideal, um schwierige Personen oder triggernde Umgebungen zu vermeiden.",
   "@faq8Answer": {
     "description": "FAQ 8 answer."
   },
-  "faq9Question": "Qu'inclut Avoid Plus ?",
+  "faq9Question": "Was beinhaltet Avoid Plus?",
   "@faq9Question": {
     "description": "FAQ 9 question."
   },
-  "faq9Answer": "Plus est un achat unique qui débloque : habitudes illimitées, historique complet des stats & carte de chaleur, analyse des schémas de rechute, objectifs personnalisés, engagement quotidien (+XP), notifications intelligentes, widget d'écran d'accueil, sauvegarde cloud et export de données.",
+  "faq9Answer": "Plus ist ein Einmalkauf und schaltet unbegrenzte Gewohnheiten, vollständige Statistik-Historie und Heatmap, Analyse von Rückfallmustern, eigene Ziele, tägliches Commitment (+XP), smarte Benachrichtigungen auf Basis von Mustern, ein Startbildschirm-Widget, Cloud-Backup und Datenexport frei.",
   "@faq9Answer": {
     "description": "FAQ 9 answer."
   },
-  "coachMarkAddTitle": "Ajoutez votre première habitude",
+  "coachMarkAddTitle": "Füge deine erste Gewohnheit hinzu",
   "@coachMarkAddTitle": {
     "description": "Coach mark step 1 title."
   },
-  "coachMarkAddDesc": "Appuyez sur + pour ajouter quelque chose que vous voulez arrêter — une habitude récurrente, un événement ponctuel, une personne ou un lieu.",
+  "coachMarkAddDesc": "Tippe auf +, um etwas hinzuzufügen, womit du aufhören willst: eine wiederkehrende Gewohnheit, ein einmaliges Ereignis, eine Person oder einen Ort.",
   "@coachMarkAddDesc": {
     "description": "Coach mark step 1 description."
   },
-  "coachMarkFilterTitle": "Trouvez vos habitudes rapidement",
+  "coachMarkFilterTitle": "Finde deine Gewohnheiten schnell",
   "@coachMarkFilterTitle": {
     "description": "Coach mark step 2 title."
   },
-  "coachMarkFilterDesc": "Recherchez par nom ou appuyez sur une étiquette pour filtrer vos habitudes par catégorie.",
+  "coachMarkFilterDesc": "Suche nach Namen oder tippe auf ein Schlagwort, um Gewohnheiten nach Kategorie zu filtern.",
   "@coachMarkFilterDesc": {
     "description": "Coach mark step 2 description."
   },
-  "coachMarkStatsTitle": "Suivez votre progression",
+  "coachMarkStatsTitle": "Sieh deinen Fortschritt",
   "@coachMarkStatsTitle": {
     "description": "Coach mark step 3 title."
   },
-  "coachMarkStatsDesc": "Appuyez sur l'icône graphique ici pour voir vos séries, économies et analyses d'habitudes.",
+  "coachMarkStatsDesc": "Tippe hier auf das Diagramm-Symbol, um deine Serien, Sparverläufe und Einblicke in deine Gewohnheiten zu sehen.",
   "@coachMarkStatsDesc": {
     "description": "Coach mark step 3 description."
   },
-  "coachMarkMenuTitle": "Paramètres & plus",
+  "coachMarkMenuTitle": "Einstellungen und mehr",
   "@coachMarkMenuTitle": {
     "description": "Coach mark step 4 title."
   },
-  "coachMarkMenuDesc": "Ouvrez les paramètres pour changer la langue, le thème et accéder au guide d'Aide ou à la synchro cloud.",
+  "coachMarkMenuDesc": "Öffne die Einstellungen, um Sprache und Design zu ändern und Hilfe oder Cloud-Sync aufzurufen.",
   "@coachMarkMenuDesc": {
     "description": "Coach mark step 4 description."
   },
-  "resetTutorial": "Réinitialiser le tutoriel",
+  "resetTutorial": "Tutorial zurucksetzen",
   "@resetTutorial": {
     "description": "Menu item to reset the coach mark tutorial."
   },
-  "tutorialResetSuccess": "Tutoriel réinitialisé. Redémarrez l'application pour revoir le guide.",
+  "tutorialResetSuccess": "Tutorial wurde zuruckgesetzt. Starte die App neu, um die Einfuhrung erneut zu sehen.",
   "@tutorialResetSuccess": {
     "description": "Toast shown after resetting the tutorial."
   },
-  "savingsSummary": "Économies par type d'article",
+  "savingsSummary": "Ersparnisse nach Eintragstyp",
   "@savingsSummary": {
     "description": "Stats section title for savings breakdown."
   },
-  "navHome": "Accueil",
+  "navHome": "Start",
   "@navHome": {
     "description": "Bottom nav Home tab label."
   },
-  "costTypeLabel": "Type de coût :",
+  "costTypeLabel": "Kostentyp:",
   "@costTypeLabel": {
     "description": "Label for cost type selector."
   },
-  "costMoney": "Argent",
+  "costMoney": "Geld",
   "@costMoney": {
     "description": "Money cost type option."
   },
-  "costMood": "Humeur",
+  "costMood": "Stimmung",
   "@costMood": {
     "description": "Mood cost type option."
   },
-  "costTime": "Temps",
+  "costTime": "Zeit",
   "@costTime": {
     "description": "Time cost type option."
   },
-  "streakLabel": "Série",
+  "streakLabel": "Serie",
   "@streakLabel": {
     "description": "Label for streak counter."
   },
-  "slipButton": "Rechute",
+  "slipButton": "Ruckfall",
   "@slipButton": {
     "description": "Button to log a relapse."
   },
-  "justNow": "À l'instant",
+  "justNow": "Gerade eben",
   "@justNow": {
     "description": "Relative time label for very recent events."
   },
-  "sortLatest": "Plus récent",
+  "sortLatest": "Neueste",
   "@sortLatest": {
     "description": "Sort by latest option."
   },
-  "sortOldest": "Plus ancien",
+  "sortOldest": "Alteste",
   "@sortOldest": {
     "description": "Sort by oldest option."
   },
-  "sortAvoidType": "Type d'évitement",
+  "sortAvoidType": "Vermeidungstyp",
   "@sortAvoidType": {
     "description": "Sort by avoid type option."
   },
-  "sortCostType": "Type de coût",
+  "sortCostType": "Kostentyp",
   "@sortCostType": {
     "description": "Sort by cost type option."
   },
-  "avoidTypeLabel": "Type d'évitement :",
+  "avoidTypeLabel": "Vermeidungstyp:",
   "@avoidTypeLabel": {
     "description": "Label for avoid type selector."
   },
-  "associatedPerson": "Personne associée :",
+  "associatedPerson": "Zugeordnete Person:",
   "@associatedPerson": {
     "description": "Label for associated person field."
   },
-  "avoidLocation": "Lieu à éviter :",
+  "avoidLocation": "Zu vermeidender Ort:",
   "@avoidLocation": {
     "description": "Label for location to avoid."
   },
-  "pickOnMap": "Choisir sur la carte",
+  "pickOnMap": "Auf Karte auswahlen",
   "@pickOnMap": {
     "description": "Button to open map picker."
   },
-  "eventReminderLabel": "Rappel d'événement :",
+  "eventReminderLabel": "Erinnerung fur Ereignis:",
   "@eventReminderLabel": {
     "description": "Label for event reminder setting."
   },
-  "dailyReminderLabel": "Heure du rappel quotidien :",
+  "dailyReminderLabel": "Zeit der taglichen Erinnerung:",
   "@dailyReminderLabel": {
     "description": "Label for daily reminder time setting."
   },
-  "setReminder": "Définir un rappel",
+  "setReminder": "Erinnerung festlegen",
   "@setReminder": {
     "description": "Button to set an event reminder."
   },
-  "setDailyReminder": "Rappel quotidien",
+  "setDailyReminder": "Tagliche Erinnerung festlegen",
   "@setDailyReminder": {
     "description": "Button to set a daily reminder."
   },
-  "selectEventDateError": "Veuillez sélectionner une date d'événement.",
+  "selectEventDateError": "Bitte ein Ereignisdatum auswahlen.",
   "@selectEventDateError": {
     "description": "Validation error for missing event date."
   },
-  "recentRelapsesTriggers": "Rechutes récentes & déclencheurs",
+  "recentRelapsesTriggers": "Letzte Ruckfalle und Ausloser",
   "@recentRelapsesTriggers": {
     "description": "Stats section title for recent relapses."
   },
-  "ratingDialogTitle": "Vous aimez Avoid Todo ?",
+  "ratingDialogTitle": "Gefällt dir Avoid Todo?",
   "@ratingDialogTitle": {
     "description": "Title of the app rating dialog."
   },
-  "ratingDialogSubtitle": "Touchez une étoile pour noter votre expérience",
+  "ratingDialogSubtitle": "Tippe auf einen Stern, um deine Erfahrung zu bewerten",
   "@ratingDialogSubtitle": {
     "description": "Subtitle of the app rating dialog."
   },
-  "ratingDialogNotNow": "Plus tard",
+  "ratingDialogNotNow": "Nicht jetzt",
   "@ratingDialogNotNow": {
     "description": "Dismiss button on rating dialog."
   },
-  "ratingDialogContinue": "Continuer",
+  "ratingDialogContinue": "Weiter",
   "@ratingDialogContinue": {
     "description": "Continue button on rating dialog."
   },
-  "ratingHighTitle": "Merci !",
+  "ratingHighTitle": "Danke!",
   "@ratingHighTitle": {
     "description": "Title shown after high rating."
   },
-  "ratingHighBody": "Pourriez-vous nous noter ? Ça nous aide vraiment !",
+  "ratingHighBody": "Hättest du kurz Zeit, uns zu bewerten? Das hilft uns sehr!",
   "@ratingHighBody": {
     "description": "Body text after high rating."
   },
-  "ratingHighRateNow": "Noter maintenant",
+  "ratingHighRateNow": "Jetzt bewerten",
   "@ratingHighRateNow": {
     "description": "Rate now button after high rating."
   },
-  "ratingHighNoThanks": "Non merci",
+  "ratingHighNoThanks": "Nein danke",
   "@ratingHighNoThanks": {
     "description": "Decline button after high rating."
   },
-  "ratingLowTitle": "Aidez-nous à nous améliorer",
+  "ratingLowTitle": "Hilf uns, besser zu werden",
   "@ratingLowTitle": {
     "description": "Title shown after low rating."
   },
-  "ratingLowBody": "Que pouvons-nous faire mieux ?",
+  "ratingLowBody": "Was können wir besser machen?",
   "@ratingLowBody": {
     "description": "Body text after low rating."
   },
-  "ratingLowHint": "Votre avis...",
+  "ratingLowHint": "Dein Feedback...",
   "@ratingLowHint": {
     "description": "Input hint in low-rating feedback form."
   },
-  "ratingLowSend": "Envoyer",
+  "ratingLowSend": "Senden",
   "@ratingLowSend": {
     "description": "Send button on low-rating feedback form."
   },
-  "ratingLowSkip": "Ignorer",
+  "ratingLowSkip": "Überspringen",
   "@ratingLowSkip": {
     "description": "Skip button on low-rating feedback form."
   },
-  "ratingThanks": "Merci pour votre retour !",
+  "ratingThanks": "Danke für dein Feedback!",
   "@ratingThanks": {
     "description": "Toast shown after submitting feedback."
   },
-  "notifications": "Notifications",
+  "notifications": "Benachrichtigungen",
   "@notifications": {
     "description": "Notifications section header in settings drawer."
   },
-  "enableNotifications": "Activer les notifications",
+  "enableNotifications": "Benachrichtigungen aktivieren",
   "@enableNotifications": {
     "description": "Toggle to enable or disable notifications."
   },
@@ -688,43 +688,43 @@
   "@drawerWidget": {
     "description": "Widget section header in settings drawer."
   },
-  "homeScreenWidget": "Widget d'écran d'accueil",
+  "homeScreenWidget": "Startbildschirm-Widget",
   "@homeScreenWidget": {
     "description": "Toggle title for home screen widget."
   },
-  "homeScreenWidgetDesc": "Affiche votre meilleure série sur l'écran d'accueil",
+  "homeScreenWidgetDesc": "Zeigt deine beste Serie auf dem Startbildschirm",
   "@homeScreenWidgetDesc": {
     "description": "Subtitle for home screen widget toggle."
   },
-  "homeScreenWidgetPlusHint": "Le widget d'écran d'accueil est une fonctionnalité Plus.",
+  "homeScreenWidgetPlusHint": "Das Startbildschirm-Widget ist eine Plus-Funktion.",
   "@homeScreenWidgetPlusHint": {
     "description": "Hint shown when free user taps widget toggle."
   },
-  "addWidgetToHomeScreen": "Ajouter le widget à l'écran d'accueil",
+  "addWidgetToHomeScreen": "Widget zum Startbildschirm hinzufugen",
   "@addWidgetToHomeScreen": {
     "description": "ListTile title for widget setup."
   },
-  "addWidgetInstructions": "Instructions et bouton d'ajout rapide",
+  "addWidgetInstructions": "Anleitung und Schnellzugriff",
   "@addWidgetInstructions": {
     "description": "Subtitle for widget setup tile."
   },
-  "cloudSync": "Synchro cloud",
+  "cloudSync": "Cloud-Sync",
   "@cloudSync": {
     "description": "Cloud Sync section header and toggle title."
   },
-  "cloudSyncDesc": "Sauvegarde auto. sur iCloud / Google Drive",
+  "cloudSyncDesc": "Automatisches Backup in iCloud / Google Drive",
   "@cloudSyncDesc": {
     "description": "Subtitle for cloud sync toggle."
   },
-  "cloudSyncPlusHint": "La synchro cloud est une fonctionnalité Plus.",
+  "cloudSyncPlusHint": "Cloud-Sync ist eine Plus-Funktion.",
   "@cloudSyncPlusHint": {
     "description": "Hint shown when free user taps cloud sync toggle."
   },
-  "manageSync": "Gérer la synchro",
+  "manageSync": "Sync verwalten",
   "@manageSync": {
     "description": "ListTile title for sync management screen."
   },
-  "syncCloudBackupTitle": "Sauvegarde {cloudName}",
+  "syncCloudBackupTitle": "{cloudName}-Backup",
   "@syncCloudBackupTitle": {
     "description": "Card header showing cloud service name. {cloudName} replaced at runtime with iCloud or Google Drive.",
     "placeholders": {
@@ -734,55 +734,55 @@
       }
     }
   },
-  "syncNeverSynced": "Jamais synchronisé.",
+  "syncNeverSynced": "Noch nie synchronisiert.",
   "@syncNeverSynced": {
     "description": "Status shown when no backup has been made."
   },
-  "syncLastSynced": "Dernière synchro :",
+  "syncLastSynced": "Zuletzt synchronisiert:",
   "@syncLastSynced": {
     "description": "Label before last sync timestamp."
   },
-  "syncUploadSuccess": "✓ Sauvegarde envoyée avec succès.",
+  "syncUploadSuccess": "✓ Backup erfolgreich hochgeladen.",
   "@syncUploadSuccess": {
     "description": "Status shown after successful backup upload."
   },
-  "syncUploadFailed": "Échec de l'envoi. Vérifiez votre connexion et réessayez.",
+  "syncUploadFailed": "Upload fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.",
   "@syncUploadFailed": {
     "description": "Status shown after failed backup upload."
   },
-  "syncNoBackupFound": "Aucune sauvegarde trouvée dans le cloud. Appuyez sur le bouton ci-dessous pour en créer une.",
+  "syncNoBackupFound": "In der Cloud wurde noch kein Backup gefunden. Tippe unten auf die Schaltfläche, um eines zu erstellen.",
   "@syncNoBackupFound": {
     "description": "Status when no cloud backup exists."
   },
-  "syncBackupFoundTitle": "Sauvegarde trouvée",
+  "syncBackupFoundTitle": "Backup gefunden",
   "@syncBackupFoundTitle": {
     "description": "Dialog title when a cloud backup is available to restore."
   },
-  "syncRestoreWarning": "⚠️ Cela remplacera vos données actuelles par la sauvegarde cloud.\n\nToute modification depuis votre dernière sauvegarde sera perdue. Voulez-vous vraiment restaurer ?",
+  "syncRestoreWarning": "⚠️ Dadurch werden deine aktuellen Daten mit dem Cloud-Backup überschrieben.\n\nAlle Änderungen seit deinem letzten Backup gehen verloren. Möchtest du wirklich wiederherstellen?",
   "@syncRestoreWarning": {
     "description": "Warning text in the restore confirmation dialog."
   },
-  "syncUploading": "Envoi en cours…",
+  "syncUploading": "Wird hochgeladen…",
   "@syncUploading": {
     "description": "Label on backup button while uploading."
   },
-  "syncBackupNow": "Sauvegarder maintenant",
+  "syncBackupNow": "Jetzt sichern",
   "@syncBackupNow": {
     "description": "Button to trigger an immediate backup."
   },
-  "syncChecking": "Vérification…",
+  "syncChecking": "Wird geprüft…",
   "@syncChecking": {
     "description": "Label on check button while looking for a backup."
   },
-  "syncCheckForBackup": "Chercher une sauvegarde",
+  "syncCheckForBackup": "Nach Backup suchen",
   "@syncCheckForBackup": {
     "description": "Button to look for an existing cloud backup."
   },
-  "syncHowItWorksTitle": "Comment ça fonctionne",
+  "syncHowItWorksTitle": "So funktioniert es",
   "@syncHowItWorksTitle": {
     "description": "Title of the info card in the sync screen."
   },
-  "syncHowItWorksBody": "• Vos données sont sauvegardées dans votre {cloudName} — Avoid n'y a jamais accès.\n• Les sauvegardes se font automatiquement (au plus toutes les 10 minutes) après les actions importantes.\n• Pour restaurer sur un nouvel appareil : installez Avoid, connectez-vous, puis appuyez sur « Chercher une sauvegarde ».",
+  "syncHowItWorksBody": "• Deine Daten werden in deinem eigenen {cloudName}-Konto gesichert; Avoid sieht sie nie.\n• Backups passieren automatisch, höchstens alle 10 Minuten, nach wichtigen Aktionen.\n• Zum Wiederherstellen auf einem neuen Gerät: Installiere Avoid, melde dich an und tippe auf \"Nach Backup suchen\".",
   "@syncHowItWorksBody": {
     "description": "Body of how-it-works card. {cloudName} is replaced at runtime with iCloud or Google Drive.",
     "placeholders": {
@@ -792,147 +792,147 @@
       }
     }
   },
-  "syncNotAvailable": "La synchro cloud n'est pas disponible sur cette plateforme.",
+  "syncNotAvailable": "Cloud-Sync ist auf dieser Plattform nicht verfugbar.",
   "@syncNotAvailable": {
     "description": "Message shown when cloud sync is unsupported on the current platform."
   },
-  "widgetSetupTitleIos": "🍎 iOS — Ajouter le widget",
+  "widgetSetupTitleIos": "iOS - Widget hinzufugen",
   "@widgetSetupTitleIos": {
     "description": "AppBar title for iOS widget setup screen."
   },
-  "widgetSetupTitleAndroid": "🤖 Android — Ajouter le widget",
+  "widgetSetupTitleAndroid": "Android - Widget hinzufugen",
   "@widgetSetupTitleAndroid": {
     "description": "AppBar title for Android widget setup screen."
   },
-  "widgetColorLabel": "Couleur du widget",
+  "widgetColorLabel": "Widget-Farbe",
   "@widgetColorLabel": {
     "description": "Label above the colour picker in widget setup."
   },
-  "colorForest": "Forêt",
+  "colorForest": "Wald",
   "@colorForest": {
     "description": "Forest widget colour theme name."
   },
-  "colorMidnight": "Minuit",
+  "colorMidnight": "Mitternacht",
   "@colorMidnight": {
     "description": "Midnight widget colour theme name."
   },
-  "colorOcean": "Océan",
+  "colorOcean": "Ozean",
   "@colorOcean": {
     "description": "Ocean widget colour theme name."
   },
-  "colorPurple": "Violet",
+  "colorPurple": "Lila",
   "@colorPurple": {
     "description": "Purple widget colour theme name."
   },
-  "widgetAddButton": "Ajouter le widget à l'écran d'accueil",
+  "widgetAddButton": "Widget zum Startbildschirm hinzufugen",
   "@widgetAddButton": {
     "description": "Button to pin the widget to the home screen (Android)."
   },
-  "widgetDialogOpened": "Fenêtre widget ouverte !",
+  "widgetDialogOpened": "Widget-Dialog geoffnet!",
   "@widgetDialogOpened": {
     "description": "Label shown after the pin-widget dialog is triggered."
   },
-  "widgetLauncherHint": "Votre lanceur vous demandera où le placer.",
+  "widgetLauncherHint": "Dein Launcher fragt, wo es platziert werden soll.",
   "@widgetLauncherHint": {
     "description": "Hint shown below the add-widget button."
   },
-  "widgetFollowSteps": "Suivez ces étapes :",
+  "widgetFollowSteps": "Folge diesen Schritten:",
   "@widgetFollowSteps": {
     "description": "Header above the manual step list."
   },
-  "widgetManualSteps": "Le lanceur ne prend pas en charge le bouton ? Essayez manuellement :",
+  "widgetManualSteps": "Unterstutzt dein Launcher die Schaltflache nicht? Versuche es manuell:",
   "@widgetManualSteps": {
     "description": "Header shown when the launcher doesn't support pin-widget."
   },
-  "widgetDone": "Terminé",
+  "widgetDone": "Fertig",
   "@widgetDone": {
     "description": "Done button on widget setup screen."
   },
-  "widgetIosStep1Title": "Aller à l'écran d'accueil",
+  "widgetIosStep1Title": "Gehe zu deinem Home-Bildschirm",
   "@widgetIosStep1Title": {
     "description": "iOS widget setup step 1 title."
   },
-  "widgetIosStep1Desc": "Appuyez sur le bouton Accueil ou glissez vers le haut.",
+  "widgetIosStep1Desc": "Drücke Home oder wische aus einer beliebigen App nach oben.",
   "@widgetIosStep1Desc": {
     "description": "iOS widget setup step 1 description."
   },
-  "widgetIosStep2Title": "Appui long sur une zone vide",
+  "widgetIosStep2Title": "Halte einen leeren Bereich gedrückt",
   "@widgetIosStep2Title": {
     "description": "iOS widget setup step 2 title."
   },
-  "widgetIosStep2Desc": "Maintenez jusqu'à ce que les icônes se mettent à trembler.",
+  "widgetIosStep2Desc": "Halte gedrückt, bis die Symbole anfangen zu wackeln.",
   "@widgetIosStep2Desc": {
     "description": "iOS widget setup step 2 description."
   },
-  "widgetIosStep3Title": "Appuyez sur le bouton +",
+  "widgetIosStep3Title": "Tippe auf die +-Schaltfläche",
   "@widgetIosStep3Title": {
     "description": "iOS widget setup step 3 title."
   },
-  "widgetIosStep3Desc": "Coin supérieur gauche.",
+  "widgetIosStep3Desc": "Oben links.",
   "@widgetIosStep3Desc": {
     "description": "iOS widget setup step 3 description."
   },
-  "widgetIosStep4Title": "Recherchez « Avoid »",
+  "widgetIosStep4Title": "Suche nach \"Avoid\"",
   "@widgetIosStep4Title": {
     "description": "iOS widget setup step 4 title."
   },
-  "widgetIosStep4Desc": "Tapez dans la barre de recherche.",
+  "widgetIosStep4Desc": "Gib es in die Suchleiste ein.",
   "@widgetIosStep4Desc": {
     "description": "iOS widget setup step 4 description."
   },
-  "widgetIosStep5Title": "Sélectionnez le widget Avoid",
+  "widgetIosStep5Title": "Wähle das Avoid-Widget aus",
   "@widgetIosStep5Title": {
     "description": "iOS widget setup step 5 title."
   },
-  "widgetIosStep5Desc": "Appuyez dessus, choisissez une taille, puis « Ajouter le widget ».",
+  "widgetIosStep5Desc": "Tippe darauf, wähle eine Größe und tippe dann auf \"Widget hinzufügen\".",
   "@widgetIosStep5Desc": {
     "description": "iOS widget setup step 5 description."
   },
-  "widgetIosStep6Title": "Appuyez sur Terminé",
+  "widgetIosStep6Title": "Tippe auf Fertig",
   "@widgetIosStep6Title": {
     "description": "iOS widget setup step 6 title."
   },
-  "widgetIosStep6Desc": "Coin supérieur droit pour terminer.",
+  "widgetIosStep6Desc": "Oben rechts, um abzuschließen.",
   "@widgetIosStep6Desc": {
     "description": "iOS widget setup step 6 description."
   },
-  "widgetAndroidStep1Title": "Aller à l'écran d'accueil",
+  "widgetAndroidStep1Title": "Gehe zu deinem Home-Bildschirm",
   "@widgetAndroidStep1Title": {
     "description": "Android widget setup step 1 title."
   },
-  "widgetAndroidStep1Desc": "Appuyez sur le bouton Accueil.",
+  "widgetAndroidStep1Desc": "Drücke die Home-Taste.",
   "@widgetAndroidStep1Desc": {
     "description": "Android widget setup step 1 description."
   },
-  "widgetAndroidStep2Title": "Appui long sur une zone vide",
+  "widgetAndroidStep2Title": "Halte einen leeren Bereich gedrückt",
   "@widgetAndroidStep2Title": {
     "description": "Android widget setup step 2 title."
   },
-  "widgetAndroidStep2Desc": "Maintenez jusqu'à l'apparition du mode édition.",
+  "widgetAndroidStep2Desc": "Halte auf einer freien Stelle gedrückt, bis der Bearbeitungsmodus erscheint.",
   "@widgetAndroidStep2Desc": {
     "description": "Android widget setup step 2 description."
   },
-  "widgetAndroidStep3Title": "Appuyez sur « Widgets »",
+  "widgetAndroidStep3Title": "Tippe auf \"Widgets\"",
   "@widgetAndroidStep3Title": {
     "description": "Android widget setup step 3 title."
   },
-  "widgetAndroidStep3Desc": "Regardez en bas de l'écran.",
+  "widgetAndroidStep3Desc": "Unten auf dem Bildschirm.",
   "@widgetAndroidStep3Desc": {
     "description": "Android widget setup step 3 description."
   },
-  "widgetAndroidStep4Title": "Trouvez « Avoid Todo »",
+  "widgetAndroidStep4Title": "Finde \"Avoid Todo\"",
   "@widgetAndroidStep4Title": {
     "description": "Android widget setup step 4 title."
   },
-  "widgetAndroidStep4Desc": "Faites défiler jusqu'à la section A.",
+  "widgetAndroidStep4Desc": "Scrolle bis zum Abschnitt mit A.",
   "@widgetAndroidStep4Desc": {
     "description": "Android widget setup step 4 description."
   },
-  "widgetAndroidStep5Title": "Appui long & glisser",
+  "widgetAndroidStep5Title": "Gedrückt halten und ziehen",
   "@widgetAndroidStep5Title": {
     "description": "Android widget setup step 5 title."
   },
-  "widgetAndroidStep5Desc": "Faites glisser le widget vers un endroit vide de votre écran d'accueil.",
+  "widgetAndroidStep5Desc": "Ziehe das Widget an eine freie Stelle auf deinem Home-Bildschirm.",
   "@widgetAndroidStep5Desc": {
     "description": "Android widget setup step 5 description."
   }

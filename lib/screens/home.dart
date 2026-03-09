@@ -13,7 +13,6 @@ import '../widgets/todo_item.dart';
 import '../helpers/database_helper.dart';
 import '../helpers/notification_helper.dart';
 import '../providers/theme_provider.dart';
-import '../providers/locale_provider.dart';
 import '../providers/purchase_provider.dart';
 import '../providers/xp_provider.dart';
 import '../helpers/xp_helper.dart';
@@ -35,6 +34,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import '../helpers/rating_helper.dart';
 import '../widgets/rating_dialog.dart';
+import '../widgets/language_settings_tile.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 // Note: Map implementation uses simple location names for now.
 
@@ -3486,7 +3486,6 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   }
 
   Drawer _buildDrawer(ThemeProvider themeProvider) {
-    final localeProvider = Provider.of<LocaleProvider>(context);
     final l10n = AppLocalizations.of(context);
 
     return Drawer(
@@ -3534,26 +3533,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ),
-          RadioGroup<Locale>(
-            groupValue: localeProvider.locale,
-            onChanged: (value) {
-              if (value != null) localeProvider.setLocale(value);
-            },
-            child: Column(
-              children: [
-                RadioListTile<Locale>(
-                  title: Text(l10n?.english ?? 'English'),
-                  value: const Locale('en'),
-                  secondary: const Text('🇺🇸'),
-                ),
-                RadioListTile<Locale>(
-                  title: Text(l10n?.french ?? 'Français'),
-                  value: const Locale('fr'),
-                  secondary: const Text('🇫🇷'),
-                ),
-              ],
-            ),
-          ),
+          const LanguageSettingsTile(),
           const Divider(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

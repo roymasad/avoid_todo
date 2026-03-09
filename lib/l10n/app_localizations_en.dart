@@ -154,6 +154,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get french => 'Français';
 
   @override
+  String get systemDefault => 'System Default';
+
+  @override
+  String get followDeviceLanguage => 'Follow device language';
+
+  @override
+  String get spanish => 'Espanol';
+
+  @override
+  String get italian => 'Italiano';
+
+  @override
+  String get portuguese => 'Portugues';
+
+  @override
+  String get german => 'Deutsch';
+
+  @override
   String get avoidedLabel => 'Avoided!';
 
   @override
@@ -557,7 +575,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageSync => 'Manage sync';
 
   @override
-  String syncCloudBackupTitle(Object cloudName) {
+  String syncCloudBackupTitle(String cloudName) {
     return '$cloudName Backup';
   }
 
@@ -601,7 +619,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncHowItWorksTitle => 'How it works';
 
   @override
-  String syncHowItWorksBody(Object cloudName) {
+  String syncHowItWorksBody(String cloudName) {
     return '• Your data is backed up to your own $cloudName — Avoid never sees it.\n• Backups happen automatically (at most every 10 minutes) after major actions.\n• To restore on a new device: install Avoid, sign in, then tap \"Check for backup\".';
   }
 

@@ -156,6 +156,24 @@ class AppLocalizationsFr extends AppLocalizations {
   String get french => 'Français';
 
   @override
+  String get systemDefault => 'Par defaut du systeme';
+
+  @override
+  String get followDeviceLanguage => 'Suivre la langue de l\'appareil';
+
+  @override
+  String get spanish => 'Espanol';
+
+  @override
+  String get italian => 'Italiano';
+
+  @override
+  String get portuguese => 'Portugues';
+
+  @override
+  String get german => 'Deutsch';
+
+  @override
   String get avoidedLabel => 'Évité !';
 
   @override
@@ -568,7 +586,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get manageSync => 'Gérer la synchro';
 
   @override
-  String syncCloudBackupTitle(Object cloudName) {
+  String syncCloudBackupTitle(String cloudName) {
     return 'Sauvegarde $cloudName';
   }
 
@@ -612,7 +630,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get syncHowItWorksTitle => 'Comment ça fonctionne';
 
   @override
-  String syncHowItWorksBody(Object cloudName) {
+  String syncHowItWorksBody(String cloudName) {
     return '• Vos données sont sauvegardées dans votre $cloudName — Avoid n\'y a jamais accès.\n• Les sauvegardes se font automatiquement (au plus toutes les 10 minutes) après les actions importantes.\n• Pour restaurer sur un nouvel appareil : installez Avoid, connectez-vous, puis appuyez sur « Chercher une sauvegarde ».';
   }
 
