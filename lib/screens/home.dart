@@ -1701,10 +1701,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               selectedIcon: const Icon(Icons.bar_chart),
               label: AppLocalizations.of(context)?.statistics ?? 'Statistics',
             ),
-            const NavigationDestination(
-              icon: Icon(Icons.archive_outlined),
-              selectedIcon: Icon(Icons.archive),
-              label: 'History',
+            NavigationDestination(
+              icon: const Icon(Icons.archive_outlined),
+              selectedIcon: const Icon(Icons.archive),
+              label: AppLocalizations.of(context)?.historyTitle ?? 'History',
             ),
           ],
         ),
@@ -1815,7 +1815,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                                   color: Colors.orange),
                                               const SizedBox(width: 6),
                                               Text(
-                                                '${_foundToDo.length} active',
+                                                '${_foundToDo.length} ${AppLocalizations.of(context)!.active.toLowerCase()}',
                                                 style: TextStyle(
                                                   fontSize: 13,
                                                   fontWeight: FontWeight.w600,
@@ -1843,8 +1843,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                               const SizedBox(width: 6),
                                               Text(
                                                 _weeklyAvoided > 0
-                                                    ? '$_weeklyAvoided avoided this week'
-                                                    : 'Keep going!',
+                                                    ? AppLocalizations.of(context)!
+                                                        .avoidedThisWeek(
+                                                          _weeklyAvoided,
+                                                        )
+                                                    : AppLocalizations.of(context)!
+                                                        .keepGoing,
                                                 style: TextStyle(
                                                   fontSize: 13,
                                                   fontWeight: FontWeight.w600,
@@ -1999,7 +2003,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
-                                          'Tap + to track your first habit to avoid',
+                                          AppLocalizations.of(context)
+                                                  ?.tapPlusToTrackFirstHabit ??
+                                              'Tap + to track your first habit to avoid',
                                           style: TextStyle(
                                             fontSize: 14,
                                             color: (isDark
@@ -2015,7 +2021,11 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                           icon: const Icon(
                                               Icons.archive_outlined,
                                               size: 16),
-                                          label: const Text('View History →'),
+                                          label: Text(
+                                            AppLocalizations.of(context)
+                                                    ?.viewHistory ??
+                                                'View History',
+                                          ),
                                           onPressed: () => Navigator.push(
                                             context,
                                             MaterialPageRoute(
@@ -2249,7 +2259,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                             focusElevation: 0,
                             splashColor: Colors.white.withValues(alpha: 0.14),
                             icon: const Icon(Icons.add),
-                            label: const Text('Add'),
+                            label: Text(
+                              AppLocalizations.of(context)?.addButtonLabel ??
+                                  'Add',
+                            ),
                           ),
                           Positioned.fill(
                             child: IgnorePointer(
@@ -3385,6 +3398,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   // ─────────────────────────────────────────────────────────────
 
   Widget _buildGoalsSection(List<Goal> goals, bool isPlus, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     final textSecondary =
         isDark ? AppThemes.darkTextSecondary : AppThemes.lightTextSecondary;
 
@@ -3400,7 +3414,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           : '';
       final desc = first != null
           ? GoalHelper.description(first)
-          : (isPlus ? 'Tap to add a goal' : '');
+          : (isPlus ? l10n.tapToAddGoal : '');
 
       return GestureDetector(
         onTap: () => setState(() => _goalsExpanded = true),
@@ -3467,8 +3481,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             const SizedBox(width: 6),
             Text(
               isPlus
-                  ? 'Goals${goals.isNotEmpty ? ' (${goals.length})' : ''}'
-                  : 'Your Goal',
+                  ? '${l10n.goalsTitle}${goals.isNotEmpty ? ' (${goals.length})' : ''}'
+                  : l10n.yourGoal,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -3479,14 +3493,14 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             if (isPlus)
               GestureDetector(
                 onTap: () => _showAddGoalSheet(context),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.add_circle_outline,
+                    const Icon(Icons.add_circle_outline,
                         size: 16, color: Colors.teal),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text(
-                      'Add Goal',
-                      style: TextStyle(
+                      l10n.addGoal,
+                      style: const TextStyle(
                         fontSize: 12,
                         color: Colors.teal,
                         fontWeight: FontWeight.w600,
@@ -3621,6 +3635,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   }
 
   Widget _buildEmptyGoalCard(bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: () => _showAddGoalSheet(context),
       child: Container(
@@ -3630,13 +3645,13 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: Colors.teal.withValues(alpha: 0.25)),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            Icon(Icons.add_circle_outline, color: Colors.teal, size: 20),
-            SizedBox(width: 10),
+            const Icon(Icons.add_circle_outline, color: Colors.teal, size: 20),
+            const SizedBox(width: 10),
             Text(
-              'Tap to add a goal',
-              style: TextStyle(
+              l10n.tapToAddGoal,
+              style: const TextStyle(
                 fontSize: 13,
                 color: Colors.teal,
                 fontWeight: FontWeight.w500,
@@ -3649,6 +3664,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   }
 
   void _showAddGoalSheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     GoalType type = GoalType.streak;
     ToDo? selectedTodo = todosList.isNotEmpty ? todosList.first : null;
     final targetController = TextEditingController(text: '7');
@@ -3671,9 +3687,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Add a Goal',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                l10n.addAGoal,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               // Goal type selector
@@ -3681,7 +3697,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                 children: [
                   Expanded(
                     child: _typeChip(
-                      label: '🏃 Streak',
+                      label: '🏃 ${l10n.goalTypeStreak}',
                       selected: type == GoalType.streak,
                       onTap: () => setSheetState(() => type = GoalType.streak),
                     ),
@@ -3689,7 +3705,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _typeChip(
-                      label: '💰 Monthly Savings',
+                      label: '💰 ${l10n.goalTypeMonthlySavings}',
                       selected: type == GoalType.savingsMonth,
                       onTap: () =>
                           setSheetState(() => type = GoalType.savingsMonth),
@@ -3700,8 +3716,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               const SizedBox(height: 16),
               // Habit picker (streak only)
               if (type == GoalType.streak && todosList.isNotEmpty) ...[
-                const Text('Habit',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                Text(l10n.goalHabit,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<ToDo>(
                   initialValue: selectedTodo,
@@ -3721,8 +3737,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               // Target value
               Text(
                 type == GoalType.streak
-                    ? 'Target streak (days)'
-                    : 'Target savings (\$)',
+                    ? l10n.goalTargetStreakDays
+                    : l10n.goalTargetSavings,
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 6),
@@ -3738,7 +3754,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Cancel'),
+                      child: Text(l10n.cancel),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -3760,7 +3776,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                         context.read<GoalProvider>().addGoal(goal);
                         Navigator.pop(ctx);
                       },
-                      child: const Text('Create Goal'),
+                      child: Text(l10n.createGoal),
                     ),
                   ),
                 ],
@@ -4310,7 +4326,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => setState(() => _selectedIndex = 0),
         ),
-        title: const Text('Statistics'),
+        title: Text(AppLocalizations.of(context)?.statistics ?? 'Statistics'),
       );
     }
     if (_selectedIndex == 2) {
@@ -4322,7 +4338,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             setState(() => _selectedIndex = 0);
           },
         ),
-        title: const Text('History'),
+        title: Text(AppLocalizations.of(context)?.historyTitle ?? 'History'),
       );
     }
     return AppBar(

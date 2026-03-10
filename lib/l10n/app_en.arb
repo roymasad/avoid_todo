@@ -140,6 +140,63 @@
   "@active": {
     "description": "Label for active habits count."
   },
+  "keepGoing": "Keep going!",
+  "@keepGoing": {
+    "description": "Encouragement shown in the stats preview when there are no weekly avoided items."
+  },
+  "avoidedThisWeek": "{count} avoided this week",
+  "@avoidedThisWeek": {
+    "description": "Stats preview label for the number of avoided items this week.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "goalsTitle": "Goals",
+  "@goalsTitle": {
+    "description": "Goals section title on the home screen."
+  },
+  "yourGoal": "Your Goal",
+  "@yourGoal": {
+    "description": "Home screen goal title for free users."
+  },
+  "addGoal": "Add Goal",
+  "@addGoal": {
+    "description": "Action label to add a goal."
+  },
+  "addAGoal": "Add a Goal",
+  "@addAGoal": {
+    "description": "Title for the add goal form."
+  },
+  "tapToAddGoal": "Tap to add a goal",
+  "@tapToAddGoal": {
+    "description": "Empty state prompt for goals."
+  },
+  "goalTypeStreak": "Streak",
+  "@goalTypeStreak": {
+    "description": "Goal type label for streak goals."
+  },
+  "goalTypeMonthlySavings": "Monthly Savings",
+  "@goalTypeMonthlySavings": {
+    "description": "Goal type label for monthly savings goals."
+  },
+  "goalHabit": "Habit",
+  "@goalHabit": {
+    "description": "Field label for selecting a habit in the goal form."
+  },
+  "goalTargetStreakDays": "Target streak (days)",
+  "@goalTargetStreakDays": {
+    "description": "Field label for streak goal target in days."
+  },
+  "goalTargetSavings": "Target savings ($)",
+  "@goalTargetSavings": {
+    "description": "Field label for savings goal target."
+  },
+  "createGoal": "Create Goal",
+  "@createGoal": {
+    "description": "Action label to create a goal."
+  },
   "swipeToAvoid": "Swipe right to mark as avoided!",
   "@swipeToAvoid": {
     "description": "Swipe hint shown on home screen."
@@ -544,6 +601,34 @@
   "@navHome": {
     "description": "Bottom nav Home tab label."
   },
+  "historyTitle": "History",
+  "@historyTitle": {
+    "description": "History screen title and bottom nav label."
+  },
+  "archivedTab": "Archived",
+  "@archivedTab": {
+    "description": "History sub-tab for archived items."
+  },
+  "slipsTab": "Slips",
+  "@slipsTab": {
+    "description": "History sub-tab for relapse reflections."
+  },
+  "winsTab": "Wins",
+  "@winsTab": {
+    "description": "History sub-tab for success reflections."
+  },
+  "addButtonLabel": "Add",
+  "@addButtonLabel": {
+    "description": "Extended floating action button label on the home screen."
+  },
+  "tapPlusToTrackFirstHabit": "Tap + to track your first habit to avoid",
+  "@tapPlusToTrackFirstHabit": {
+    "description": "Empty state hint on the home screen."
+  },
+  "viewHistory": "View History",
+  "@viewHistory": {
+    "description": "Button label to open the history screen."
+  },
   "costTypeLabel": "Cost Type:",
   "@costTypeLabel": {
     "description": "Label for cost type selector."
@@ -782,7 +867,7 @@
   "@syncChecking": {
     "description": "Label on check button while looking for a backup."
   },
-  "syncCheckForBackup": "Check for backup",
+  "syncCheckForBackup": "Check and Restore",
   "@syncCheckForBackup": {
     "description": "Button to look for an existing cloud backup."
   },
@@ -790,7 +875,7 @@
   "@syncHowItWorksTitle": {
     "description": "Title of the info card in the sync screen."
   },
-  "syncHowItWorksBody": "• Your data is backed up to your own {cloudName} — Avoid never sees it.\n• Backups happen automatically (at most every 10 minutes) after major actions.\n• To restore on a new device: install Avoid, sign in, then tap \"Check for backup\".",
+  "syncHowItWorksBody": "• Your data is backed up to your own {cloudName} — Avoid never sees it.\n• Backups happen automatically (at most every 10 minutes) after major actions.\n• To restore on a new device: install Avoid, sign in, then tap \"Check and Restore\".",
   "@syncHowItWorksBody": {
     "description": "Body of how-it-works card. {cloudName} is replaced at runtime with iCloud or Google Drive.",
     "placeholders": {

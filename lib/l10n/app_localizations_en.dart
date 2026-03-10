@@ -115,6 +115,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get active => 'Active';
 
   @override
+  String get keepGoing => 'Keep going!';
+
+  @override
+  String avoidedThisWeek(int count) {
+    return '$count avoided this week';
+  }
+
+  @override
+  String get goalsTitle => 'Goals';
+
+  @override
+  String get yourGoal => 'Your Goal';
+
+  @override
+  String get addGoal => 'Add Goal';
+
+  @override
+  String get addAGoal => 'Add a Goal';
+
+  @override
+  String get tapToAddGoal => 'Tap to add a goal';
+
+  @override
+  String get goalTypeStreak => 'Streak';
+
+  @override
+  String get goalTypeMonthlySavings => 'Monthly Savings';
+
+  @override
+  String get goalHabit => 'Habit';
+
+  @override
+  String get goalTargetStreakDays => 'Target streak (days)';
+
+  @override
+  String get goalTargetSavings => 'Target savings (\$)';
+
+  @override
+  String get createGoal => 'Create Goal';
+
+  @override
   String get swipeToAvoid => 'Swipe right to mark as avoided!';
 
   @override
@@ -440,6 +481,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navHome => 'Home';
 
   @override
+  String get historyTitle => 'History';
+
+  @override
+  String get archivedTab => 'Archived';
+
+  @override
+  String get slipsTab => 'Slips';
+
+  @override
+  String get winsTab => 'Wins';
+
+  @override
+  String get addButtonLabel => 'Add';
+
+  @override
+  String get tapPlusToTrackFirstHabit =>
+      'Tap + to track your first habit to avoid';
+
+  @override
+  String get viewHistory => 'View History';
+
+  @override
   String get costTypeLabel => 'Cost Type:';
 
   @override
@@ -620,14 +683,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncChecking => 'Checking…';
 
   @override
-  String get syncCheckForBackup => 'Check for backup';
+  String get syncCheckForBackup => 'Check and Restore';
 
   @override
   String get syncHowItWorksTitle => 'How it works';
 
   @override
   String syncHowItWorksBody(String cloudName) {
-    return '• Your data is backed up to your own $cloudName — Avoid never sees it.\n• Backups happen automatically (at most every 10 minutes) after major actions.\n• To restore on a new device: install Avoid, sign in, then tap \"Check for backup\".';
+    return '• Your data is backed up to your own $cloudName — Avoid never sees it.\n• Backups happen automatically (at most every 10 minutes) after major actions.\n• To restore on a new device: install Avoid, sign in, then tap \"Check and Restore\".';
   }
 
   @override

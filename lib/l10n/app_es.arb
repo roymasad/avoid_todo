@@ -140,6 +140,63 @@
   "@active": {
     "description": "Label for active habits count."
   },
+  "keepGoing": "Sigue asi!",
+  "@keepGoing": {
+    "description": "Encouragement shown in the stats preview when there are no weekly avoided items."
+  },
+  "avoidedThisWeek": "{count} evitados esta semana",
+  "@avoidedThisWeek": {
+    "description": "Stats preview label for the number of avoided items this week.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "goalsTitle": "Objetivos",
+  "@goalsTitle": {
+    "description": "Goals section title on the home screen."
+  },
+  "yourGoal": "Tu objetivo",
+  "@yourGoal": {
+    "description": "Home screen goal title for free users."
+  },
+  "addGoal": "Agregar objetivo",
+  "@addGoal": {
+    "description": "Action label to add a goal."
+  },
+  "addAGoal": "Agregar un objetivo",
+  "@addAGoal": {
+    "description": "Title for the add goal form."
+  },
+  "tapToAddGoal": "Toca para agregar un objetivo",
+  "@tapToAddGoal": {
+    "description": "Empty state prompt for goals."
+  },
+  "goalTypeStreak": "Racha",
+  "@goalTypeStreak": {
+    "description": "Goal type label for streak goals."
+  },
+  "goalTypeMonthlySavings": "Ahorro mensual",
+  "@goalTypeMonthlySavings": {
+    "description": "Goal type label for monthly savings goals."
+  },
+  "goalHabit": "Habito",
+  "@goalHabit": {
+    "description": "Field label for selecting a habit in the goal form."
+  },
+  "goalTargetStreakDays": "Racha objetivo (dias)",
+  "@goalTargetStreakDays": {
+    "description": "Field label for streak goal target in days."
+  },
+  "goalTargetSavings": "Ahorro objetivo ($)",
+  "@goalTargetSavings": {
+    "description": "Field label for savings goal target."
+  },
+  "createGoal": "Crear objetivo",
+  "@createGoal": {
+    "description": "Action label to create a goal."
+  },
   "swipeToAvoid": "Desliza a la derecha para marcar como evitado",
   "@swipeToAvoid": {
     "description": "Swipe hint shown on home screen."
@@ -544,6 +601,34 @@
   "@navHome": {
     "description": "Bottom nav Home tab label."
   },
+  "historyTitle": "Historial",
+  "@historyTitle": {
+    "description": "History screen title and bottom nav label."
+  },
+  "archivedTab": "Archivados",
+  "@archivedTab": {
+    "description": "History sub-tab for archived items."
+  },
+  "slipsTab": "Caídas",
+  "@slipsTab": {
+    "description": "History sub-tab for relapse reflections."
+  },
+  "winsTab": "Logros",
+  "@winsTab": {
+    "description": "History sub-tab for success reflections."
+  },
+  "addButtonLabel": "Agregar",
+  "@addButtonLabel": {
+    "description": "Extended floating action button label on the home screen."
+  },
+  "tapPlusToTrackFirstHabit": "Toca + para registrar tu primer hábito a evitar",
+  "@tapPlusToTrackFirstHabit": {
+    "description": "Empty state hint on the home screen."
+  },
+  "viewHistory": "Ver historial",
+  "@viewHistory": {
+    "description": "Button label to open the history screen."
+  },
   "costTypeLabel": "Tipo de costo:",
   "@costTypeLabel": {
     "description": "Label for cost type selector."
@@ -782,7 +867,7 @@
   "@syncChecking": {
     "description": "Label on check button while looking for a backup."
   },
-  "syncCheckForBackup": "Buscar copia de seguridad",
+  "syncCheckForBackup": "Verificar y restaurar",
   "@syncCheckForBackup": {
     "description": "Button to look for an existing cloud backup."
   },
@@ -790,7 +875,7 @@
   "@syncHowItWorksTitle": {
     "description": "Title of the info card in the sync screen."
   },
-  "syncHowItWorksBody": "• Tus datos se guardan en tu propia cuenta de {cloudName}; Avoid nunca los ve.\n• Las copias se hacen automáticamente, como máximo cada 10 minutos, después de acciones importantes.\n• Para restaurar en un dispositivo nuevo: instala Avoid, inicia sesión y toca \"Buscar copia de seguridad\".",
+  "syncHowItWorksBody": "• Tus datos se guardan en tu propia cuenta de {cloudName}; Avoid nunca los ve.\n• Las copias se hacen automáticamente, como máximo cada 10 minutos, después de acciones importantes.\n• Para restaurar en un dispositivo nuevo: instala Avoid, inicia sesión y toca \"Verificar y restaurar\".",
   "@syncHowItWorksBody": {
     "description": "Body of how-it-works card. {cloudName} is replaced at runtime with iCloud or Google Drive.",
     "placeholders": {

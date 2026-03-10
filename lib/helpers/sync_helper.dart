@@ -113,11 +113,7 @@ class SyncHelper {
       } else {
         final api = await _driveApi();
         if (api == null) return false;
-        final list = await api.files.list(
-          q: "name='$_driveFileName' and trashed=false",
-          spaces: 'drive',
-          $fields: 'files(id)',
-        );
+        final list = await _driveListBackups(api);
         return list.files != null && list.files!.isNotEmpty;
       }
     } catch (e) {
@@ -142,6 +138,39 @@ class SyncHelper {
       debugPrint('[SyncHelper] restore complete');
     } catch (e) {
       debugPrint('[SyncHelper] restoreFromBackup error: $e');
+    }
+  }
+
+  static Future<bool> deleteRemoteBackup() async {
+    if (!isSupported) return false;
+    try {
+      if (Platform.isIOS) {
+        final files =
+            await ICloudStorage.gather(containerId: _iCloudContainerId);
+        if (files.every((f) => f.relativePath != _dbFileName)) return true;
+        await ICloudStorage.delete(
+          containerId: _iCloudContainerId,
+          relativePath: _dbFileName,
+        );
+      } else {
+        final api = await _driveApi();
+        if (api == null) return false;
+        final list = await _driveListBackups(api);
+        final files = list.files ?? const <drive.File>[];
+        for (final file in files) {
+          final fileId = file.id;
+          if (fileId == null) continue;
+          await api.files.delete(fileId);
+        }
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_prefLastSync);
+      debugPrint('[SyncHelper] remote backup deleted');
+      return true;
+    } catch (e) {
+      debugPrint('[SyncHelper] deleteRemoteBackup error: $e');
+      return false;
     }
   }
 
@@ -193,11 +222,7 @@ class SyncHelper {
     final api = await _driveApi();
     if (api == null) return;
 
-    final existing = await api.files.list(
-      q: "name='$_driveFileName' and trashed=false",
-      spaces: 'drive',
-      $fields: 'files(id)',
-    );
+    final existing = await _driveListBackups(api);
 
     final bytes = await dbFile.readAsBytes();
     final media = drive.Media(
@@ -214,7 +239,9 @@ class SyncHelper {
       );
     } else {
       await api.files.create(
-        drive.File()..name = _driveFileName,
+        drive.File()
+          ..name = _driveFileName
+          ..parents = ['appDataFolder'],
         uploadMedia: media,
       );
     }
@@ -224,13 +251,17 @@ class SyncHelper {
     final api = await _driveApi();
     if (api == null) return null;
 
-    final list = await api.files.list(
-      q: "name='$_driveFileName' and trashed=false",
-      spaces: 'drive',
-      $fields: 'files(id)',
-    );
+    final list = await _driveListBackups(api);
     if (list.files == null || list.files!.isEmpty) return null;
     return await _driveDownloadFile(api, list.files!.first.id!);
+  }
+
+  static Future<drive.FileList> _driveListBackups(drive.DriveApi api) {
+    return api.files.list(
+      q: "name='$_driveFileName' and trashed=false",
+      spaces: 'appDataFolder',
+      $fields: 'files(id)',
+    );
   }
 
   static Future<File?> _driveDownloadFile(

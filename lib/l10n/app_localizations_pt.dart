@@ -116,6 +116,47 @@ class AppLocalizationsPt extends AppLocalizations {
   String get active => 'Ativo';
 
   @override
+  String get keepGoing => 'Continue!';
+
+  @override
+  String avoidedThisWeek(int count) {
+    return '$count evitados esta semana';
+  }
+
+  @override
+  String get goalsTitle => 'Objetivos';
+
+  @override
+  String get yourGoal => 'Seu objetivo';
+
+  @override
+  String get addGoal => 'Adicionar objetivo';
+
+  @override
+  String get addAGoal => 'Adicionar um objetivo';
+
+  @override
+  String get tapToAddGoal => 'Toque para adicionar um objetivo';
+
+  @override
+  String get goalTypeStreak => 'Sequencia';
+
+  @override
+  String get goalTypeMonthlySavings => 'Economia mensal';
+
+  @override
+  String get goalHabit => 'Habito';
+
+  @override
+  String get goalTargetStreakDays => 'Sequencia alvo (dias)';
+
+  @override
+  String get goalTargetSavings => 'Economia alvo (\$)';
+
+  @override
+  String get createGoal => 'Criar objetivo';
+
+  @override
   String get swipeToAvoid => 'Deslize para a direita para marcar como evitado';
 
   @override
@@ -442,6 +483,28 @@ class AppLocalizationsPt extends AppLocalizations {
   String get navHome => 'Inicio';
 
   @override
+  String get historyTitle => 'Historico';
+
+  @override
+  String get archivedTab => 'Arquivados';
+
+  @override
+  String get slipsTab => 'Deslizes';
+
+  @override
+  String get winsTab => 'Vitorias';
+
+  @override
+  String get addButtonLabel => 'Adicionar';
+
+  @override
+  String get tapPlusToTrackFirstHabit =>
+      'Toque em + para acompanhar seu primeiro hábito a evitar';
+
+  @override
+  String get viewHistory => 'Ver historico';
+
+  @override
   String get costTypeLabel => 'Tipo de custo:';
 
   @override
@@ -625,14 +688,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get syncChecking => 'Verificando…';
 
   @override
-  String get syncCheckForBackup => 'Verificar backup';
+  String get syncCheckForBackup => 'Verificar e restaurar';
 
   @override
   String get syncHowItWorksTitle => 'Como funciona';
 
   @override
   String syncHowItWorksBody(String cloudName) {
-    return '• Seus dados ficam salvos na sua própria conta do $cloudName; o Avoid nunca vê isso.\n• Os backups acontecem automaticamente, no máximo a cada 10 minutos, depois de ações importantes.\n• Para restaurar em um novo dispositivo: instale o Avoid, entre na conta e toque em \"Verificar backup\".';
+    return '• Seus dados ficam salvos na sua própria conta do $cloudName; o Avoid nunca vê isso.\n• Os backups acontecem automaticamente, no máximo a cada 10 minutos, depois de ações importantes.\n• Para restaurar em um novo dispositivo: instale o Avoid, entre na conta e toque em \"Verificar e restaurar\".';
   }
 
   @override

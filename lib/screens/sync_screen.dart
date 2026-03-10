@@ -19,18 +19,26 @@ class SyncScreen extends StatefulWidget {
 class _SyncScreenState extends State<SyncScreen> {
   bool _isUploading = false;
   bool _isChecking = false;
+  bool _isDeleting = false;
+  bool _hasRemoteBackup = false;
   DateTime? _lastSync;
   String? _statusMessage;
 
   @override
   void initState() {
     super.initState();
-    _loadLastSync();
+    _loadStatus();
   }
 
-  Future<void> _loadLastSync() async {
+  Future<void> _loadStatus() async {
     final t = await SyncHelper.lastSyncTime();
-    if (mounted) setState(() => _lastSync = t);
+    final hasBackup = await SyncHelper.hasRemoteBackup();
+    if (mounted) {
+      setState(() {
+        _lastSync = t;
+        _hasRemoteBackup = hasBackup;
+      });
+    }
   }
 
   Future<void> _uploadNow() async {
@@ -46,6 +54,7 @@ class _SyncScreenState extends State<SyncScreen> {
       setState(() {
         _isUploading = false;
         _lastSync = t;
+        _hasRemoteBackup = success || _hasRemoteBackup;
         _statusMessage = success
             ? (l10n?.syncUploadSuccess ?? '✓ Backup uploaded successfully.')
             : (l10n?.syncUploadFailed ??
@@ -67,11 +76,14 @@ class _SyncScreenState extends State<SyncScreen> {
     if (backup == null) {
       final l10n = AppLocalizations.of(context);
       setState(() {
+        _hasRemoteBackup = false;
         _statusMessage = l10n?.syncNoBackupFound ??
             'No backup found in the cloud yet. Tap the button below to create one.';
       });
       return;
     }
+
+    setState(() => _hasRemoteBackup = true);
 
     // Backup found — always ask user whether to restore
     final l10n = AppLocalizations.of(context);
@@ -109,6 +121,48 @@ class _SyncScreenState extends State<SyncScreen> {
         RestartWidget.restartApp(context);
       }
     }
+  }
+
+  Future<void> _deleteBackup() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete cloud backup?'),
+        content: const Text(
+          'This removes the saved backup from your cloud account. Your current local data will stay on this device.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+
+    setState(() {
+      _isDeleting = true;
+      _statusMessage = null;
+    });
+
+    final success = await SyncHelper.deleteRemoteBackup();
+    if (!mounted) return;
+    setState(() {
+      _isDeleting = false;
+      if (success) {
+        _hasRemoteBackup = false;
+        _lastSync = null;
+      }
+      _statusMessage = success
+          ? 'Cloud backup deleted.'
+          : 'Could not delete the cloud backup. Check your connection and try again.';
+    });
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -224,7 +278,23 @@ class _SyncScreenState extends State<SyncScreen> {
                 : const Icon(Icons.cloud_download_outlined),
             label: Text(_isChecking
                 ? (l10n?.syncChecking ?? 'Checking…')
-                : (l10n?.syncCheckForBackup ?? 'Check for backup')),
+                : (l10n?.syncCheckForBackup ?? 'Check and Restore')),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: (!hasPurchasedPlus || !_hasRemoteBackup || _isDeleting)
+                ? null
+                : _deleteBackup,
+            icon: _isDeleting
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.delete_outline),
+            label: Text(
+              _isDeleting ? 'Deleting…' : 'Delete cloud backup',
+            ),
           ),
           const SizedBox(height: 24),
           if (!hasPurchasedPlus)
@@ -268,7 +338,8 @@ class _SyncScreenState extends State<SyncScreen> {
                     l10n?.syncHowItWorksBody(cloudName) ??
                         '• Your data is backed up to your own $cloudName — Avoid never sees it.\n'
                             '• Backups happen automatically (at most every 10 minutes) after major actions.\n'
-                            '• To restore on a new device: install Avoid, sign in, then tap "Check for backup".',
+                            '• To restore on a new device: install Avoid, sign in, then tap "Check and Restore".\n'
+                            '• On Android, backups are stored in Avoid\'s private Google Drive app data and can be deleted from this screen.',
                     style: TextStyle(
                       fontSize: 13,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,

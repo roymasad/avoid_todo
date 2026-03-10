@@ -142,6 +142,7 @@ class ArchiveScreenState extends State<ArchiveScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final body = Column(
       children: [
         Material(
@@ -152,23 +153,23 @@ class ArchiveScreenState extends State<ArchiveScreen>
               controller: _tabController,
               dividerColor: Colors.transparent,
               labelPadding: const EdgeInsets.symmetric(horizontal: 6),
-              tabs: const [
+              tabs: [
                 Tab(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text('Archived'),
+                    child: Text(l10n?.archivedTab ?? 'Archived'),
                   ),
                 ),
                 Tab(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text('Slips'),
+                    child: Text(l10n?.slipsTab ?? 'Slips'),
                   ),
                 ),
                 Tab(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text('Wins'),
+                    child: Text(l10n?.winsTab ?? 'Wins'),
                   ),
                 ),
               ],
@@ -192,7 +193,7 @@ class ArchiveScreenState extends State<ArchiveScreen>
 
     if (widget.embedded) return body;
     return Scaffold(
-      appBar: AppBar(title: const Text('History')),
+      appBar: AppBar(title: Text(l10n?.historyTitle ?? 'History')),
       body: body,
     );
   }

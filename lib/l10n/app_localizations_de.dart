@@ -116,6 +116,47 @@ class AppLocalizationsDe extends AppLocalizations {
   String get active => 'Aktiv';
 
   @override
+  String get keepGoing => 'Weiter so!';
+
+  @override
+  String avoidedThisWeek(int count) {
+    return '$count diese Woche vermieden';
+  }
+
+  @override
+  String get goalsTitle => 'Ziele';
+
+  @override
+  String get yourGoal => 'Dein Ziel';
+
+  @override
+  String get addGoal => 'Ziel hinzufugen';
+
+  @override
+  String get addAGoal => 'Ein Ziel hinzufugen';
+
+  @override
+  String get tapToAddGoal => 'Tippe, um ein Ziel hinzuzufugen';
+
+  @override
+  String get goalTypeStreak => 'Serie';
+
+  @override
+  String get goalTypeMonthlySavings => 'Monatliche Ersparnis';
+
+  @override
+  String get goalHabit => 'Gewohnheit';
+
+  @override
+  String get goalTargetStreakDays => 'Zielserie (Tage)';
+
+  @override
+  String get goalTargetSavings => 'Zielersparnis (\$)';
+
+  @override
+  String get createGoal => 'Ziel erstellen';
+
+  @override
   String get swipeToAvoid =>
       'Wische nach rechts, um als vermieden zu markieren';
 
@@ -447,6 +488,28 @@ class AppLocalizationsDe extends AppLocalizations {
   String get navHome => 'Start';
 
   @override
+  String get historyTitle => 'Verlauf';
+
+  @override
+  String get archivedTab => 'Archiviert';
+
+  @override
+  String get slipsTab => 'Rückfälle';
+
+  @override
+  String get winsTab => 'Erfolge';
+
+  @override
+  String get addButtonLabel => 'Hinzufügen';
+
+  @override
+  String get tapPlusToTrackFirstHabit =>
+      'Tippe auf +, um deine erste Gewohnheit zum Vermeiden zu verfolgen';
+
+  @override
+  String get viewHistory => 'Verlauf ansehen';
+
+  @override
   String get costTypeLabel => 'Kostentyp:';
 
   @override
@@ -630,14 +693,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get syncChecking => 'Wird geprüft…';
 
   @override
-  String get syncCheckForBackup => 'Nach Backup suchen';
+  String get syncCheckForBackup => 'Prufen und wiederherstellen';
 
   @override
   String get syncHowItWorksTitle => 'So funktioniert es';
 
   @override
   String syncHowItWorksBody(String cloudName) {
-    return '• Deine Daten werden in deinem eigenen $cloudName-Konto gesichert; Avoid sieht sie nie.\n• Backups passieren automatisch, höchstens alle 10 Minuten, nach wichtigen Aktionen.\n• Zum Wiederherstellen auf einem neuen Gerät: Installiere Avoid, melde dich an und tippe auf \"Nach Backup suchen\".';
+    return '• Deine Daten werden in deinem eigenen $cloudName-Konto gesichert; Avoid sieht sie nie.\n• Backups passieren automatisch, höchstens alle 10 Minuten, nach wichtigen Aktionen.\n• Zum Wiederherstellen auf einem neuen Gerät: Installiere Avoid, melde dich an und tippe auf \"Prufen und wiederherstellen\".';
   }
 
   @override

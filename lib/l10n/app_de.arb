@@ -140,6 +140,63 @@
   "@active": {
     "description": "Label for active habits count."
   },
+  "keepGoing": "Weiter so!",
+  "@keepGoing": {
+    "description": "Encouragement shown in the stats preview when there are no weekly avoided items."
+  },
+  "avoidedThisWeek": "{count} diese Woche vermieden",
+  "@avoidedThisWeek": {
+    "description": "Stats preview label for the number of avoided items this week.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "goalsTitle": "Ziele",
+  "@goalsTitle": {
+    "description": "Goals section title on the home screen."
+  },
+  "yourGoal": "Dein Ziel",
+  "@yourGoal": {
+    "description": "Home screen goal title for free users."
+  },
+  "addGoal": "Ziel hinzufugen",
+  "@addGoal": {
+    "description": "Action label to add a goal."
+  },
+  "addAGoal": "Ein Ziel hinzufugen",
+  "@addAGoal": {
+    "description": "Title for the add goal form."
+  },
+  "tapToAddGoal": "Tippe, um ein Ziel hinzuzufugen",
+  "@tapToAddGoal": {
+    "description": "Empty state prompt for goals."
+  },
+  "goalTypeStreak": "Serie",
+  "@goalTypeStreak": {
+    "description": "Goal type label for streak goals."
+  },
+  "goalTypeMonthlySavings": "Monatliche Ersparnis",
+  "@goalTypeMonthlySavings": {
+    "description": "Goal type label for monthly savings goals."
+  },
+  "goalHabit": "Gewohnheit",
+  "@goalHabit": {
+    "description": "Field label for selecting a habit in the goal form."
+  },
+  "goalTargetStreakDays": "Zielserie (Tage)",
+  "@goalTargetStreakDays": {
+    "description": "Field label for streak goal target in days."
+  },
+  "goalTargetSavings": "Zielersparnis ($)",
+  "@goalTargetSavings": {
+    "description": "Field label for savings goal target."
+  },
+  "createGoal": "Ziel erstellen",
+  "@createGoal": {
+    "description": "Action label to create a goal."
+  },
   "swipeToAvoid": "Wische nach rechts, um als vermieden zu markieren",
   "@swipeToAvoid": {
     "description": "Swipe hint shown on home screen."
@@ -544,6 +601,34 @@
   "@navHome": {
     "description": "Bottom nav Home tab label."
   },
+  "historyTitle": "Verlauf",
+  "@historyTitle": {
+    "description": "History screen title and bottom nav label."
+  },
+  "archivedTab": "Archiviert",
+  "@archivedTab": {
+    "description": "History sub-tab for archived items."
+  },
+  "slipsTab": "Rückfälle",
+  "@slipsTab": {
+    "description": "History sub-tab for relapse reflections."
+  },
+  "winsTab": "Erfolge",
+  "@winsTab": {
+    "description": "History sub-tab for success reflections."
+  },
+  "addButtonLabel": "Hinzufügen",
+  "@addButtonLabel": {
+    "description": "Extended floating action button label on the home screen."
+  },
+  "tapPlusToTrackFirstHabit": "Tippe auf +, um deine erste Gewohnheit zum Vermeiden zu verfolgen",
+  "@tapPlusToTrackFirstHabit": {
+    "description": "Empty state hint on the home screen."
+  },
+  "viewHistory": "Verlauf ansehen",
+  "@viewHistory": {
+    "description": "Button label to open the history screen."
+  },
   "costTypeLabel": "Kostentyp:",
   "@costTypeLabel": {
     "description": "Label for cost type selector."
@@ -782,7 +867,7 @@
   "@syncChecking": {
     "description": "Label on check button while looking for a backup."
   },
-  "syncCheckForBackup": "Nach Backup suchen",
+  "syncCheckForBackup": "Prufen und wiederherstellen",
   "@syncCheckForBackup": {
     "description": "Button to look for an existing cloud backup."
   },
@@ -790,7 +875,7 @@
   "@syncHowItWorksTitle": {
     "description": "Title of the info card in the sync screen."
   },
-  "syncHowItWorksBody": "• Deine Daten werden in deinem eigenen {cloudName}-Konto gesichert; Avoid sieht sie nie.\n• Backups passieren automatisch, höchstens alle 10 Minuten, nach wichtigen Aktionen.\n• Zum Wiederherstellen auf einem neuen Gerät: Installiere Avoid, melde dich an und tippe auf \"Nach Backup suchen\".",
+  "syncHowItWorksBody": "• Deine Daten werden in deinem eigenen {cloudName}-Konto gesichert; Avoid sieht sie nie.\n• Backups passieren automatisch, höchstens alle 10 Minuten, nach wichtigen Aktionen.\n• Zum Wiederherstellen auf einem neuen Gerät: Installiere Avoid, melde dich an und tippe auf \"Prufen und wiederherstellen\".",
   "@syncHowItWorksBody": {
     "description": "Body of how-it-works card. {cloudName} is replaced at runtime with iCloud or Google Drive.",
     "placeholders": {

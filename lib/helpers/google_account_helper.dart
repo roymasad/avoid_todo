@@ -26,7 +26,7 @@ class GoogleAccountHelper {
   );
 
   static final GoogleSignIn _backupSignIn = GoogleSignIn(
-    scopes: [drive.DriveApi.driveFileScope],
+    scopes: [drive.DriveApi.driveAppdataScope],
   );
 
   static Future<GoogleDriveSession?> trialDriveSession({

@@ -316,6 +316,84 @@ abstract class AppLocalizations {
   /// **'Active'**
   String get active;
 
+  /// Encouragement shown in the stats preview when there are no weekly avoided items.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep going!'**
+  String get keepGoing;
+
+  /// Stats preview label for the number of avoided items this week.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} avoided this week'**
+  String avoidedThisWeek(int count);
+
+  /// Goals section title on the home screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Goals'**
+  String get goalsTitle;
+
+  /// Home screen goal title for free users.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Goal'**
+  String get yourGoal;
+
+  /// Action label to add a goal.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Goal'**
+  String get addGoal;
+
+  /// Title for the add goal form.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a Goal'**
+  String get addAGoal;
+
+  /// Empty state prompt for goals.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to add a goal'**
+  String get tapToAddGoal;
+
+  /// Goal type label for streak goals.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get goalTypeStreak;
+
+  /// Goal type label for monthly savings goals.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly Savings'**
+  String get goalTypeMonthlySavings;
+
+  /// Field label for selecting a habit in the goal form.
+  ///
+  /// In en, this message translates to:
+  /// **'Habit'**
+  String get goalHabit;
+
+  /// Field label for streak goal target in days.
+  ///
+  /// In en, this message translates to:
+  /// **'Target streak (days)'**
+  String get goalTargetStreakDays;
+
+  /// Field label for savings goal target.
+  ///
+  /// In en, this message translates to:
+  /// **'Target savings (\$)'**
+  String get goalTargetSavings;
+
+  /// Action label to create a goal.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Goal'**
+  String get createGoal;
+
   /// Swipe hint shown on home screen.
   ///
   /// In en, this message translates to:
@@ -922,6 +1000,48 @@ abstract class AppLocalizations {
   /// **'Home'**
   String get navHome;
 
+  /// History screen title and bottom nav label.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get historyTitle;
+
+  /// History sub-tab for archived items.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get archivedTab;
+
+  /// History sub-tab for relapse reflections.
+  ///
+  /// In en, this message translates to:
+  /// **'Slips'**
+  String get slipsTab;
+
+  /// History sub-tab for success reflections.
+  ///
+  /// In en, this message translates to:
+  /// **'Wins'**
+  String get winsTab;
+
+  /// Extended floating action button label on the home screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get addButtonLabel;
+
+  /// Empty state hint on the home screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to track your first habit to avoid'**
+  String get tapPlusToTrackFirstHabit;
+
+  /// Button label to open the history screen.
+  ///
+  /// In en, this message translates to:
+  /// **'View History'**
+  String get viewHistory;
+
   /// Label for cost type selector.
   ///
   /// In en, this message translates to:
@@ -1273,7 +1393,7 @@ abstract class AppLocalizations {
   /// Button to look for an existing cloud backup.
   ///
   /// In en, this message translates to:
-  /// **'Check for backup'**
+  /// **'Check and Restore'**
   String get syncCheckForBackup;
 
   /// Title of the info card in the sync screen.
@@ -1285,7 +1405,7 @@ abstract class AppLocalizations {
   /// Body of how-it-works card. {cloudName} is replaced at runtime with iCloud or Google Drive.
   ///
   /// In en, this message translates to:
-  /// **'• Your data is backed up to your own {cloudName} — Avoid never sees it.\n• Backups happen automatically (at most every 10 minutes) after major actions.\n• To restore on a new device: install Avoid, sign in, then tap \"Check for backup\".'**
+  /// **'• Your data is backed up to your own {cloudName} — Avoid never sees it.\n• Backups happen automatically (at most every 10 minutes) after major actions.\n• To restore on a new device: install Avoid, sign in, then tap \"Check and Restore\".'**
   String syncHowItWorksBody(String cloudName);
 
   /// Message shown when cloud sync is unsupported on the current platform.
