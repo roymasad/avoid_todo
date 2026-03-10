@@ -73,6 +73,9 @@ dependencies:
   icloud_storage: ^2.0.0
   google_sign_in: ^6.0.0
   googleapis: ^13.0.0
+  firebase_core: ^3.15.2
+  firebase_analytics: ^11.6.0
+  firebase_crashlytics: ^4.3.10
 
 flutter_launcher_icons:
   android: "launcher_icon"

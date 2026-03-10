@@ -134,6 +134,11 @@ Output:
 2. Confirm signing in `ios/Runner.xcworkspace`.
 3. Build:
 
+`
+cd ios
+pod install --repo-update (delete .lock if it gives you trouble)
+`
+
 ```bash
 flutter build ipa --release --build-name 1.0.5 --build-number 6
 ```

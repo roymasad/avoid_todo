@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
+import 'app_crash_reporter.dart';
+
 class PurchaseHelper {
   static const String _iosApiKey = 'appl_zqGbenJyFgbjTqbrrvRxIyTgCHW';
   static const String _androidApiKey = 'goog_hUpFgpnCzfiuHXDDozLWqHprNRh';
@@ -86,12 +88,24 @@ class PurchaseHelper {
         );
         return hasEntitlement;
       }
+      if (errorCode != PurchasesErrorCode.purchaseCancelledError) {
+        await AppCrashReporter.instance.recordError(
+          e,
+          stackTrace,
+          reason: 'purchase_plus_platform_exception',
+        );
+      }
       return false;
     } catch (e, stackTrace) {
       debugPrint('[PurchaseHelper] purchase unexpected error: $e');
       debugPrintStack(
         label: '[PurchaseHelper] unexpected purchase stack',
         stackTrace: stackTrace,
+      );
+      await AppCrashReporter.instance.recordError(
+        e,
+        stackTrace,
+        reason: 'purchase_plus_unexpected',
       );
       return false;
     }

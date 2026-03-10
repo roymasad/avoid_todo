@@ -442,6 +442,13 @@ class AppLocalizationsPt extends AppLocalizations {
       'Não. O Avoid não processa, coleta nem armazena os dados dos seus hábitos em servidores próprios. Seus dados ficam no seu dispositivo. Se você ativar o backup na nuvem, eles serão salvos na sua própria conta do iCloud ou Google Drive, não em uma nuvem do Avoid.';
 
   @override
+  String get faq11Question => 'Quais análises o Avoid coleta?';
+
+  @override
+  String get faq11Answer =>
+      'O Avoid coleta apenas análises básicas de uso do app, como telas visitadas e toques em botões principais, para ajudar a melhorar o produto. Ele não envia para analytics os nomes dos seus hábitos, notas de recaída, nomes de contatos, nomes de locais ou qualquer outro conteúdo identificável ou digitado pelo usuário.';
+
+  @override
   String get coachMarkAddTitle => 'Adicione seu primeiro hábito';
 
   @override

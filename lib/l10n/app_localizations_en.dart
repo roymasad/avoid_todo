@@ -440,6 +440,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'No. Avoid does not process, collect, or store your habit data on our own servers. Your data stays on your device. If you enable cloud backup, it is saved to your own iCloud or Google Drive account, not to Avoid\'s cloud.';
 
   @override
+  String get faq11Question => 'What analytics does Avoid collect?';
+
+  @override
+  String get faq11Answer =>
+      'Avoid only collects basic app usage analytics, such as screen visits and major button taps, to help improve the product. It does not send your habit names, relapse notes, contact names, location names, or other personally identifiable or user-entered habit content to analytics.';
+
+  @override
   String get coachMarkAddTitle => 'Add your first habit';
 
   @override

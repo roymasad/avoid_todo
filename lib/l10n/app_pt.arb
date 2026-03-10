@@ -553,6 +553,14 @@
   "@faq10Answer": {
     "description": "FAQ 10 answer."
   },
+  "faq11Question": "Quais análises o Avoid coleta?",
+  "@faq11Question": {
+    "description": "FAQ 11 question."
+  },
+  "faq11Answer": "O Avoid coleta apenas análises básicas de uso do app, como telas visitadas e toques em botões principais, para ajudar a melhorar o produto. Ele não envia para analytics os nomes dos seus hábitos, notas de recaída, nomes de contatos, nomes de locais ou qualquer outro conteúdo identificável ou digitado pelo usuário.",
+  "@faq11Answer": {
+    "description": "FAQ 11 answer."
+  },
   "coachMarkAddTitle": "Adicione seu primeiro hábito",
   "@coachMarkAddTitle": {
     "description": "Coach mark step 1 title."

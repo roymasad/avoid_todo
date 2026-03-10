@@ -262,8 +262,14 @@ class NotificationHelper {
   /// Repeats every week via [DateTimeComponents.dayOfWeekAndTime].
   Future<void> schedulePatternReminder(int riskDayOfWeek) async {
     const dayNames = [
-      '', 'Monday', 'Tuesday', 'Wednesday', 'Thursday',
-      'Friday', 'Saturday', 'Sunday',
+      '',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
     ];
     final riskDayName = dayNames[riskDayOfWeek.clamp(1, 7)];
 
@@ -271,8 +277,7 @@ class NotificationHelper {
       android: AndroidNotificationDetails(
         'pattern_reminder',
         'Pattern Reminder',
-        channelDescription:
-            'Heads-up the night before your highest-risk day',
+        channelDescription: 'Heads-up the night before your highest-risk day',
         importance: Importance.defaultImportance,
         priority: Priority.defaultPriority,
       ),
@@ -280,15 +285,14 @@ class NotificationHelper {
     );
 
     // Schedule for the night BEFORE the risk day at 10 PM
-    final schedulingWeekday =
-        riskDayOfWeek == 1 ? 7 : riskDayOfWeek - 1;
+    final schedulingWeekday = riskDayOfWeek == 1 ? 7 : riskDayOfWeek - 1;
     final now = tz.TZDateTime.now(tz.local);
 
     int daysUntil = (schedulingWeekday - now.weekday) % 7;
     // If today IS that weekday, check whether 10 PM has passed
     if (daysUntil == 0) {
-      final today10pm = tz.TZDateTime(
-          tz.local, now.year, now.month, now.day, 22);
+      final today10pm =
+          tz.TZDateTime(tz.local, now.year, now.month, now.day, 22);
       if (today10pm.isBefore(now)) daysUntil = 7;
     }
 
@@ -303,8 +307,7 @@ class NotificationHelper {
     await flutterLocalNotificationsPlugin.zonedSchedule(
       id: 2001,
       title: '⚠️ Heads up for tomorrow',
-      body:
-          'You tend to find $riskDayName tough. Stay strong tonight!',
+      body: 'You tend to find $riskDayName tough. Stay strong tonight!',
       scheduledDate: scheduledDate,
       notificationDetails: details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -334,8 +337,8 @@ class NotificationHelper {
     );
 
     final now = tz.TZDateTime.now(tz.local);
-    final tomorrow9am = tz.TZDateTime(
-        tz.local, now.year, now.month, now.day + 1, 9);
+    final tomorrow9am =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day + 1, 9);
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
       id: 2000,

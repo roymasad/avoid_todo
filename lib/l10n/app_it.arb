@@ -553,6 +553,14 @@
   "@faq10Answer": {
     "description": "FAQ 10 answer."
   },
+  "faq11Question": "Quali analisi raccoglie Avoid?",
+  "@faq11Question": {
+    "description": "FAQ 11 question."
+  },
+  "faq11Answer": "Avoid raccoglie solo analisi di base sull'uso dell'app, come le schermate visitate e i tocchi sui pulsanti principali, per migliorare il prodotto. Non invia alle analytics i nomi delle tue abitudini, le note sulle ricadute, i nomi dei contatti, i nomi dei luoghi o altri contenuti identificabili o inseriti dall'utente.",
+  "@faq11Answer": {
+    "description": "FAQ 11 answer."
+  },
   "coachMarkAddTitle": "Aggiungi la tua prima abitudine",
   "@coachMarkAddTitle": {
     "description": "Coach mark step 1 title."

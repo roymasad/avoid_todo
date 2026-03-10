@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../helpers/app_analytics.dart';
 import '../l10n/app_language.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/locale_provider.dart';
@@ -69,14 +70,24 @@ class LanguageSettingsTile extends StatelessWidget {
                             subtitle: language.subtitle == null
                                 ? null
                                 : Text(language.subtitle!(l10n)),
-                            trailing: language.matchesLocale(localeProvider.locale)
+                            trailing: language
+                                    .matchesLocale(localeProvider.locale)
                                 ? Icon(
                                     Icons.check,
-                                    color: Theme.of(context).colorScheme.primary,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
                                   )
                                 : null,
                             onTap: () async {
                               await localeProvider.setLocale(language.locale);
+                              await AppAnalytics.instance.trackEvent(
+                                'language_changed',
+                                parameters: {
+                                  'source_screen': 'home_tab',
+                                  'result': 'success',
+                                  'language': language.languageCode ?? 'system',
+                                },
+                              );
                               if (!sheetContext.mounted || !context.mounted) {
                                 return;
                               }

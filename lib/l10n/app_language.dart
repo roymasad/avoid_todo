@@ -17,8 +17,7 @@ class AppLanguage {
 
   bool get isSystemDefault => languageCode == null;
 
-  Locale? get locale =>
-      languageCode == null ? null : Locale(languageCode!);
+  Locale? get locale => languageCode == null ? null : Locale(languageCode!);
 
   bool matchesLocale(Locale? locale) {
     if (languageCode == null) {

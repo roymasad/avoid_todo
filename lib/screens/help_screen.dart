@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:avoid_todo/l10n/app_localizations.dart';
 import 'package:avoid_todo/constants/themes.dart';
+import 'package:avoid_todo/widgets/tracked_screen.dart';
 
 class HelpScreen extends StatelessWidget {
   const HelpScreen({super.key});
@@ -10,52 +11,56 @@ class HelpScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor:
-          isDark ? AppThemes.darkBackground : AppThemes.lightBackground,
-      appBar: AppBar(
-        title: Text(l10n.helpTitle),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildHelpSection(
-            context,
-            l10n.helpWhatIsAvoidTitle,
-            l10n.helpWhatIsAvoidDesc,
-            Icons.info_outline,
-            Colors.blue,
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'FAQ',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.black87,
+    return TrackedScreen(
+      screenName: 'help_screen',
+      child: Scaffold(
+        backgroundColor:
+            isDark ? AppThemes.darkBackground : AppThemes.lightBackground,
+        appBar: AppBar(
+          title: Text(l10n.helpTitle),
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _buildHelpSection(
+              context,
+              l10n.helpWhatIsAvoidTitle,
+              l10n.helpWhatIsAvoidDesc,
+              Icons.info_outline,
+              Colors.blue,
             ),
-          ),
-          const SizedBox(height: 16),
-          _buildFAQItem(context, l10n.faq1Question, l10n.faq1Answer),
-          _buildFAQItem(context, l10n.faq2Question, l10n.faq2Answer),
-          _buildFAQItem(context, l10n.faq3Question, l10n.faq3Answer),
-          _buildFAQItem(context, l10n.faq4Question, l10n.faq4Answer),
-          _buildFAQItem(context, l10n.faq5Question, l10n.faq5Answer),
-          _buildFAQItem(context, l10n.faq6Question, l10n.faq6Answer),
-          _buildFAQItem(context, l10n.faq7Question, l10n.faq7Answer),
-          _buildFAQItem(context, l10n.faq8Question, l10n.faq8Answer),
-          _buildFAQItem(context, l10n.faq9Question, l10n.faq9Answer),
-          _buildFAQItem(context, l10n.faq10Question, l10n.faq10Answer),
-          const SizedBox(height: 32),
-          _buildHelpSection(
-            context,
-            l10n.badges,
-            l10n.onboardingBadgesDesc,
-            Icons.emoji_events,
-            Colors.purple,
-          ),
-          const SizedBox(height: 40),
-        ],
+            const SizedBox(height: 24),
+            Text(
+              'FAQ',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildFAQItem(context, l10n.faq1Question, l10n.faq1Answer),
+            _buildFAQItem(context, l10n.faq2Question, l10n.faq2Answer),
+            _buildFAQItem(context, l10n.faq3Question, l10n.faq3Answer),
+            _buildFAQItem(context, l10n.faq4Question, l10n.faq4Answer),
+            _buildFAQItem(context, l10n.faq5Question, l10n.faq5Answer),
+            _buildFAQItem(context, l10n.faq6Question, l10n.faq6Answer),
+            _buildFAQItem(context, l10n.faq7Question, l10n.faq7Answer),
+            _buildFAQItem(context, l10n.faq8Question, l10n.faq8Answer),
+            _buildFAQItem(context, l10n.faq9Question, l10n.faq9Answer),
+            _buildFAQItem(context, l10n.faq10Question, l10n.faq10Answer),
+            _buildFAQItem(context, l10n.faq11Question, l10n.faq11Answer),
+            const SizedBox(height: 32),
+            _buildHelpSection(
+              context,
+              l10n.badges,
+              l10n.onboardingBadgesDesc,
+              Icons.emoji_events,
+              Colors.purple,
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }

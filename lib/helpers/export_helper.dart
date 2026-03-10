@@ -3,6 +3,7 @@ import 'package:csv/csv.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'database_helper.dart';
+import 'app_crash_reporter.dart';
 
 /// Generates a single combined CSV file from the SQLite DB and invokes the
 /// system share sheet so the user can save or send the file.
@@ -26,7 +27,12 @@ class ExportHelper {
         subject: 'Avoid — My Progress Export',
       );
       return true;
-    } catch (_) {
+    } catch (error, stackTrace) {
+      await AppCrashReporter.instance.recordError(
+        error,
+        stackTrace,
+        reason: 'export_all_data',
+      );
       return false;
     }
   }
@@ -42,9 +48,18 @@ class ExportHelper {
     // ── HABITS section ──────────────────────────────────────────
     rows.add(['--- HABITS ---']);
     rows.add([
-      'ID', 'Habit', 'Type', 'Recurring', 'Est. Cost', 'Cost Type',
-      'Priority', 'Archived', 'Created At', 'Updated At',
-      'Last Relapse At', 'Relapse Count',
+      'ID',
+      'Habit',
+      'Type',
+      'Recurring',
+      'Est. Cost',
+      'Cost Type',
+      'Priority',
+      'Archived',
+      'Created At',
+      'Updated At',
+      'Last Relapse At',
+      'Relapse Count',
     ]);
 
     final habits = await db.rawQuery('''
@@ -108,8 +123,7 @@ class ExportHelper {
     ''');
 
     final relapseMap = {
-      for (final r in monthlyRelapses)
-        r['month'] as String: r['count'] as int,
+      for (final r in monthlyRelapses) r['month'] as String: r['count'] as int,
     };
 
     for (final m in monthly) {
@@ -120,7 +134,8 @@ class ExportHelper {
     final csv = const ListToCsvConverter().convert(rows);
     final file = File('${dir.path}/avoid_export.csv');
     await file.writeAsString(csv);
-    return XFile(file.path, mimeType: 'application/octet-stream', name: 'avoid_export.csv');
+    return XFile(file.path,
+        mimeType: 'application/octet-stream', name: 'avoid_export.csv');
   }
 
   // ─────────────────────────────────────────────────────────────

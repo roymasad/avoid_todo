@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
 import '../model/todo.dart';
 
+import 'app_crash_reporter.dart';
+
 class HomeWidgetHelper {
   HomeWidgetHelper._();
 
@@ -49,6 +51,11 @@ class HomeWidgetHelper {
       );
     } catch (e) {
       debugPrint('[HomeWidgetHelper] widget not configured yet: $e');
+      await AppCrashReporter.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'home_widget_update',
+      );
     }
   }
 
@@ -57,6 +64,11 @@ class HomeWidgetHelper {
       await _clearWidget();
     } catch (e) {
       debugPrint('[HomeWidgetHelper] clear failed: $e');
+      await AppCrashReporter.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'home_widget_clear',
+      );
     }
   }
 

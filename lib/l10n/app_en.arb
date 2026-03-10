@@ -553,6 +553,14 @@
   "@faq10Answer": {
     "description": "FAQ 10 answer."
   },
+  "faq11Question": "What analytics does Avoid collect?",
+  "@faq11Question": {
+    "description": "FAQ 11 question."
+  },
+  "faq11Answer": "Avoid only collects basic app usage analytics, such as screen visits and major button taps, to help improve the product. It does not send your habit names, relapse notes, contact names, location names, or other personally identifiable or user-entered habit content to analytics.",
+  "@faq11Answer": {
+    "description": "FAQ 11 answer."
+  },
   "coachMarkAddTitle": "Add your first habit",
   "@coachMarkAddTitle": {
     "description": "Coach mark step 1 title."

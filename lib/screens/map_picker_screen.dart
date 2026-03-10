@@ -4,6 +4,9 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../helpers/app_crash_reporter.dart';
+import '../widgets/tracked_screen.dart';
+
 class MapPickerScreen extends StatefulWidget {
   final double? initialLat;
   final double? initialLng;
@@ -57,7 +60,12 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
             ? _formatPlacemark(placemark, location)
             : _formatCoordinates(location);
       });
-    } catch (_) {
+    } catch (error, stackTrace) {
+      await AppCrashReporter.instance.recordError(
+        error,
+        stackTrace,
+        reason: 'map_reverse_geocode',
+      );
       if (!mounted || requestId != _reverseGeocodeRequestId) return;
       setState(() => _address = _formatCoordinates(location));
     } finally {
@@ -137,7 +145,12 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
             timeLimit: Duration(seconds: 8),
           ),
         );
-      } catch (_) {
+      } catch (error, stackTrace) {
+        await AppCrashReporter.instance.recordError(
+          error,
+          stackTrace,
+          reason: 'map_get_current_position',
+        );
         position = await Geolocator.getLastKnownPosition();
       }
 
@@ -166,7 +179,12 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
         }
       });
       await _reverseGeocode(location);
-    } catch (_) {
+    } catch (error, stackTrace) {
+      await AppCrashReporter.instance.recordError(
+        error,
+        stackTrace,
+        reason: 'map_load_current_location',
+      );
       if (!mounted) return;
       setState(() {
         _isFetching = false;
@@ -182,155 +200,158 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final topInset = MediaQuery.of(context).padding.top;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pick Location'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: isDark ? Colors.white : Colors.black,
-      ),
-      extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _selectedLocation,
-              initialZoom: widget.initialLat != null ? 15 : 3,
-              onPositionChanged: (position, hasGesture) {
-                if (hasGesture) {
-                  setState(() {
-                    _selectedLocation = position.center;
-                    _address = 'Fetching address...';
-                  });
-                }
-              },
-              onMapEvent: (event) {
-                if (event is MapEventMoveEnd) {
-                  _reverseGeocode(_selectedLocation);
-                }
-              },
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.roymassaad.avoid_todo',
+    return TrackedScreen(
+      screenName: 'map_picker_screen',
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Pick Location'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          foregroundColor: isDark ? Colors.white : Colors.black,
+        ),
+        extendBodyBehindAppBar: true,
+        body: Stack(
+          children: [
+            FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _selectedLocation,
+                initialZoom: widget.initialLat != null ? 15 : 3,
+                onPositionChanged: (position, hasGesture) {
+                  if (hasGesture) {
+                    setState(() {
+                      _selectedLocation = position.center;
+                      _address = 'Fetching address...';
+                    });
+                  }
+                },
+                onMapEvent: (event) {
+                  if (event is MapEventMoveEnd) {
+                    _reverseGeocode(_selectedLocation);
+                  }
+                },
               ),
-            ],
-          ),
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.location_on,
-                  size: 40,
-                  color: Colors.red.shade700,
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.roymassaad.avoid_todo',
                 ),
-                const SizedBox(height: 40),
               ],
             ),
-          ),
-          Positioned(
-            top: topInset + kToolbarHeight + 12,
-            right: 16,
-            child: FloatingActionButton.small(
-              heroTag: 'map_locate_me',
-              onPressed: _isFetching
-                  ? null
-                  : () => _loadCurrentLocation(initialLoad: false),
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              foregroundColor: Colors.blue.shade700,
-              child: const Icon(Icons.my_location),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(30)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(51),
-                    blurRadius: 20,
-                    offset: const Offset(0, -5),
-                  ),
-                ],
-              ),
+            Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    children: [
-                      Icon(Icons.map_outlined, color: Colors.blue.shade700),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Selected Location',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                            Text(
-                              _isFetching ? 'Locating...' : _address,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  Icon(
+                    Icons.location_on,
+                    size: 40,
+                    color: Colors.red.shade700,
                   ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isFetching
-                          ? null
-                          : () {
-                              Navigator.pop(context, {
-                                'lat': _selectedLocation.latitude,
-                                'lng': _selectedLocation.longitude,
-                                'address': _address,
-                              });
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue.shade700,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Confirm Location',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
-          ),
-        ],
+            Positioned(
+              top: topInset + kToolbarHeight + 12,
+              right: 16,
+              child: FloatingActionButton.small(
+                heroTag: 'map_locate_me',
+                onPressed: _isFetching
+                    ? null
+                    : () => _loadCurrentLocation(initialLoad: false),
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                foregroundColor: Colors.blue.shade700,
+                child: const Icon(Icons.my_location),
+              ),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(30)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(51),
+                      blurRadius: 20,
+                      offset: const Offset(0, -5),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.map_outlined, color: Colors.blue.shade700),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Selected Location',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              Text(
+                                _isFetching ? 'Locating...' : _address,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isFetching
+                            ? null
+                            : () {
+                                Navigator.pop(context, {
+                                  'lat': _selectedLocation.latitude,
+                                  'lng': _selectedLocation.longitude,
+                                  'address': _address,
+                                });
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue.shade700,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Confirm Location',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

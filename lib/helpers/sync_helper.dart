@@ -8,6 +8,7 @@ import 'package:icloud_storage/icloud_storage.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'database_helper.dart';
 import 'google_account_helper.dart';
+import 'app_crash_reporter.dart';
 
 /// Cloud sync helper: uploads / downloads the SQLite DB to the user's own
 /// cloud storage (iCloud on iOS, Google Drive on Android).
@@ -79,6 +80,11 @@ class SyncHelper {
       return true;
     } catch (e) {
       debugPrint('[SyncHelper] upload error: $e');
+      await AppCrashReporter.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'sync_upload',
+      );
       return false;
     }
   }
@@ -97,6 +103,11 @@ class SyncHelper {
       }
     } catch (e) {
       debugPrint('[SyncHelper] downloadLatestBackup error: $e');
+      await AppCrashReporter.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'sync_download_latest_backup',
+      );
       return null;
     }
   }
@@ -118,6 +129,11 @@ class SyncHelper {
       }
     } catch (e) {
       debugPrint('[SyncHelper] hasRemoteBackup error: $e');
+      await AppCrashReporter.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'sync_has_remote_backup',
+      );
       return false;
     }
   }
@@ -138,6 +154,11 @@ class SyncHelper {
       debugPrint('[SyncHelper] restore complete');
     } catch (e) {
       debugPrint('[SyncHelper] restoreFromBackup error: $e');
+      await AppCrashReporter.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'sync_restore_from_backup',
+      );
     }
   }
 
@@ -170,6 +191,11 @@ class SyncHelper {
       return true;
     } catch (e) {
       debugPrint('[SyncHelper] deleteRemoteBackup error: $e');
+      await AppCrashReporter.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'sync_delete_remote_backup',
+      );
       return false;
     }
   }

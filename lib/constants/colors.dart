@@ -10,5 +10,3 @@ const Color tdBGColor = Color(0xFFEEEFF5);
 
 const Color tdAvoidRed = Color(0xFFDA4040);
 const Color tdWhite = Color(0xFFFFFFFF);
-
-

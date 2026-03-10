@@ -28,8 +28,7 @@ class GoalHelper {
   ///
   /// [todos] should be the active (non-archived) todo list.
   /// [monthlySavings] is the total money saved this month.
-  static double progress(
-      Goal goal, List<ToDo> todos, double monthlySavings) {
+  static double progress(Goal goal, List<ToDo> todos, double monthlySavings) {
     switch (goal.type) {
       case GoalType.streak:
         final match = todos.where((t) => t.id == goal.todoId).firstOrNull;
@@ -42,8 +41,7 @@ class GoalHelper {
   }
 
   /// Whether the goal's target has been met.
-  static bool isComplete(
-          Goal goal, List<ToDo> todos, double monthlySavings) =>
+  static bool isComplete(Goal goal, List<ToDo> todos, double monthlySavings) =>
       progress(goal, todos, monthlySavings) >= 1.0;
 
   // ─────────────────────────────────────────────────────────────
@@ -106,8 +104,8 @@ class GoalHelper {
         type: GoalType.streak,
         todoId: completedGoal.todoId,
         todoText: completedGoal.todoText,
-        targetValue: nextStreakTarget(completedGoal.targetValue.toInt())
-            .toDouble(),
+        targetValue:
+            nextStreakTarget(completedGoal.targetValue.toInt()).toDouble(),
         isPreset: true,
         createdAt: DateTime.now(),
       );

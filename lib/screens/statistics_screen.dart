@@ -7,6 +7,8 @@ import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../helpers/database_helper.dart';
+import '../helpers/app_analytics.dart';
+import '../helpers/app_crash_reporter.dart';
 import '../model/todo.dart';
 import '../model/tag.dart';
 import '../constants/themes.dart';
@@ -18,6 +20,7 @@ import '../helpers/xp_helper.dart';
 import '../helpers/badge_helper.dart';
 import '../helpers/export_helper.dart';
 import '../widgets/plus_upgrade_dialog.dart';
+import '../widgets/tracked_screen.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key, this.embedded = false});
@@ -76,6 +79,14 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     if (_loadedForIsPlus != null && _loadedForIsPlus != isPlus && !isLoading) {
       _loadStatistics();
     }
+  }
+
+  Future<void> _refreshStatistics() async {
+    await AppAnalytics.instance.trackEvent(
+      'statistics_refreshed',
+      parameters: const {'source_screen': 'statistics_tab'},
+    );
+    await _loadStatistics();
   }
 
   Future<void> _loadStatistics() async {
@@ -297,6 +308,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       }
     } catch (e, st) {
       debugPrint('[StatisticsScreen] _loadStatistics error: $e\n$st');
+      await AppCrashReporter.instance.recordError(
+        e,
+        st,
+        reason: 'statistics_load',
+      );
       if (mounted) {
         setState(() => isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -340,7 +356,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final body = isLoading
         ? const Center(child: CircularProgressIndicator())
         : RefreshIndicator(
-            onRefresh: _loadStatistics,
+            onRefresh: _refreshStatistics,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
@@ -362,7 +378,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               icon: const Icon(Icons.refresh, size: 20),
                               tooltip: 'Refresh',
                               visualDensity: VisualDensity.compact,
-                              onPressed: _loadStatistics,
+                              onPressed: _refreshStatistics,
                             ),
                           ],
                         ),
@@ -441,42 +457,45 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           );
 
     if (widget.embedded) return body;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n?.statistics ?? 'Statistics'),
-        actions: [
-          // Export CSV (Plus-gated, always visible)
-          IconButton(
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(Icons.ios_share_outlined),
-                if (!isPlus)
-                  Positioned(
-                    right: -4,
-                    top: -4,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.shade700,
-                        shape: BoxShape.circle,
+    return TrackedScreen(
+      screenName: 'statistics_tab',
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n?.statistics ?? 'Statistics'),
+          actions: [
+            // Export CSV (Plus-gated, always visible)
+            IconButton(
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.ios_share_outlined),
+                  if (!isPlus)
+                    Positioned(
+                      right: -4,
+                      top: -4,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade700,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.lock,
+                            size: 8, color: Colors.white),
                       ),
-                      child:
-                          const Icon(Icons.lock, size: 8, color: Colors.white),
                     ),
-                  ),
-              ],
+                ],
+              ),
+              tooltip: isPlus ? 'Export' : 'Export (Plus)',
+              onPressed: isPlus ? _showExportChoice : _showUpgradeDialog,
             ),
-            tooltip: isPlus ? 'Export' : 'Export (Plus)',
-            onPressed: isPlus ? _showExportChoice : _showUpgradeDialog,
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadStatistics,
-          ),
-        ],
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _refreshStatistics,
+            ),
+          ],
+        ),
+        body: body,
       ),
-      body: body,
     );
   }
 
@@ -606,8 +625,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       await file.writeAsBytes(bytes);
       messenger.clearSnackBars();
       return file;
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('[StatisticsScreen] _captureStatsImage error: $e');
+      await AppCrashReporter.instance.recordError(
+        e,
+        stackTrace,
+        reason: 'statistics_capture_image',
+      );
       messenger.clearSnackBars();
       if (mounted) {
         messenger.showSnackBar(
@@ -621,6 +645,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   /// Opens the system share sheet with the stats image PNG.
   Future<void> _shareAsImage() async {
+    await AppAnalytics.instance.trackEvent(
+      'statistics_share_image',
+      parameters: const {'source_screen': 'statistics_tab'},
+    );
+    if (!mounted) return;
     final file = await _captureStatsImage();
     if (file == null) return;
 
@@ -628,8 +657,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       await Share.shareXFiles(
         [XFile(file.path, mimeType: 'image/png', name: 'avoid_stats.png')],
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('[StatisticsScreen] _shareAsImage error: $e');
+      await AppCrashReporter.instance.recordError(
+        e,
+        stackTrace,
+        reason: 'statistics_share_image',
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -640,6 +674,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Future<void> _exportData() async {
+    await AppAnalytics.instance.trackEvent(
+      'statistics_export_csv',
+      parameters: const {'source_screen': 'statistics_tab'},
+    );
+    if (!mounted) return;
     // Show a brief loading indicator while generating files
     final messenger = ScaffoldMessenger.of(context);
     messenger.showSnackBar(
@@ -671,7 +710,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   void _showUpgradeDialog() {
-    showPlusUpgradeDialog(context);
+    showPlusUpgradeDialog(context, entryPoint: 'statistics_tab');
   }
 
   // ── Section header with info tooltip ─────────────────────────────────────
@@ -778,7 +817,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           const SizedBox(width: 10),
           FilledButton.tonal(
             onPressed: () {
-              showPlusUpgradeDialog(context);
+              showPlusUpgradeDialog(
+                context,
+                entryPoint: 'statistics_locked_section',
+              );
             },
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

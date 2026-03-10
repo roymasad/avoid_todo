@@ -442,6 +442,13 @@ class AppLocalizationsIt extends AppLocalizations {
       'No. Avoid non elabora, raccoglie né salva i dati delle tue abitudini sui propri server. I tuoi dati restano sul tuo dispositivo. Se attivi il backup cloud, vengono salvati nel tuo account iCloud o Google Drive, non nel cloud di Avoid.';
 
   @override
+  String get faq11Question => 'Quali analisi raccoglie Avoid?';
+
+  @override
+  String get faq11Answer =>
+      'Avoid raccoglie solo analisi di base sull\'uso dell\'app, come le schermate visitate e i tocchi sui pulsanti principali, per migliorare il prodotto. Non invia alle analytics i nomi delle tue abitudini, le note sulle ricadute, i nomi dei contatti, i nomi dei luoghi o altri contenuti identificabili o inseriti dall\'utente.';
+
+  @override
   String get coachMarkAddTitle => 'Aggiungi la tua prima abitudine';
 
   @override

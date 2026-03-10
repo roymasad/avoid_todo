@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
+import 'dart:ui';
 import './screens/home.dart';
 import './providers/theme_provider.dart';
 import './providers/locale_provider.dart';
@@ -15,46 +17,86 @@ import './screens/onboarding_screen.dart';
 import 'package:avoid_todo/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:home_widget/home_widget.dart';
+import './helpers/app_crash_reporter.dart';
+import './helpers/app_firebase.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  await runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
 
-  // Required for iOS widget to share data via App Group
-  HomeWidget.setAppGroupId('group.com.roymassaad.avoid_todo');
+      await AppFirebase.initialize();
 
-  await PurchaseHelper.init();
-  final purchaseProvider = PurchaseProvider();
-  await purchaseProvider.refresh();
+      FlutterError.onError = AppCrashReporter.instance.recordFlutterFatalError;
+      PlatformDispatcher.instance.onError = (error, stackTrace) {
+        AppCrashReporter.instance.recordError(
+          error,
+          stackTrace,
+          reason: 'platform_dispatcher',
+          fatal: true,
+        );
+        return true;
+      };
 
-  final notificationHelper = NotificationHelper();
-  try {
-    await notificationHelper.init();
-  } catch (_) {}
+      // Required for iOS widget to share data via App Group
+      HomeWidget.setAppGroupId('group.com.roymassaad.avoid_todo');
 
-  final prefs = await SharedPreferences.getInstance();
-  final bool hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
-  final bool notificationsEnabled =
-      prefs.getBool('notifications_enabled') ?? true;
-  if (notificationsEnabled) {
-    try {
-      await notificationHelper.scheduleDailyCheckInNotification();
-      await notificationHelper.scheduleWeeklyDigest();
-    } catch (_) {}
-  }
+      await PurchaseHelper.init();
+      final purchaseProvider = PurchaseProvider();
+      await purchaseProvider.refresh();
 
-  runApp(
-    RestartWidget(
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (_) => ThemeProvider()),
-          ChangeNotifierProvider(create: (_) => LocaleProvider()),
-          ChangeNotifierProvider.value(value: purchaseProvider),
-          ChangeNotifierProvider(create: (_) => XpProvider()),
-          ChangeNotifierProvider(create: (_) => GoalProvider()),
-        ],
-        child: MyApp(hasSeenOnboarding: hasSeenOnboarding),
-      ),
-    ),
+      final notificationHelper = NotificationHelper();
+      try {
+        await notificationHelper.init();
+      } catch (error, stackTrace) {
+        await AppCrashReporter.instance.recordError(
+          error,
+          stackTrace,
+          reason: 'notification_init',
+        );
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      final bool hasSeenOnboarding =
+          prefs.getBool('hasSeenOnboarding') ?? false;
+      final bool notificationsEnabled =
+          prefs.getBool('notifications_enabled') ?? true;
+      if (notificationsEnabled) {
+        try {
+          await notificationHelper.scheduleDailyCheckInNotification();
+          await notificationHelper.scheduleWeeklyDigest();
+        } catch (error, stackTrace) {
+          await AppCrashReporter.instance.recordError(
+            error,
+            stackTrace,
+            reason: 'startup_notification_schedule',
+          );
+        }
+      }
+
+      runApp(
+        RestartWidget(
+          child: MultiProvider(
+            providers: [
+              ChangeNotifierProvider(create: (_) => ThemeProvider()),
+              ChangeNotifierProvider(create: (_) => LocaleProvider()),
+              ChangeNotifierProvider.value(value: purchaseProvider),
+              ChangeNotifierProvider(create: (_) => XpProvider()),
+              ChangeNotifierProvider(create: (_) => GoalProvider()),
+            ],
+            child: MyApp(hasSeenOnboarding: hasSeenOnboarding),
+          ),
+        ),
+      );
+    },
+    (error, stackTrace) async {
+      await AppCrashReporter.instance.recordError(
+        error,
+        stackTrace,
+        reason: 'run_zoned_guarded',
+        fatal: true,
+      );
+    },
   );
 }
 

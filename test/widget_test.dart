@@ -55,15 +55,18 @@ void main() {
 
     expect(
       tester.getTopLeft(find.byKey(const Key('language_option_system'))).dy,
-      lessThan(tester.getTopLeft(find.byKey(const Key('language_option_en'))).dy),
+      lessThan(
+          tester.getTopLeft(find.byKey(const Key('language_option_en'))).dy),
     );
     expect(
       tester.getTopLeft(find.byKey(const Key('language_option_en'))).dy,
-      lessThan(tester.getTopLeft(find.byKey(const Key('language_option_fr'))).dy),
+      lessThan(
+          tester.getTopLeft(find.byKey(const Key('language_option_fr'))).dy),
     );
     expect(
       tester.getTopLeft(find.byKey(const Key('language_option_fr'))).dy,
-      lessThan(tester.getTopLeft(find.byKey(const Key('language_option_es'))).dy),
+      lessThan(
+          tester.getTopLeft(find.byKey(const Key('language_option_es'))).dy),
     );
   });
 

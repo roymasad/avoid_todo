@@ -27,12 +27,10 @@ class XpProvider extends ChangeNotifier {
       XpHelper.getProgressToNextLevel(_totalXp, capAtFree: !isPlus);
 
   /// XP required for the current level.
-  int xpFloor(bool isPlus) =>
-      XpHelper.getXpForLevel(levelCapped(isPlus));
+  int xpFloor(bool isPlus) => XpHelper.getXpForLevel(levelCapped(isPlus));
 
   /// XP required for the next level.
-  int xpCeiling(bool isPlus) =>
-      XpHelper.getXpForLevel(levelCapped(isPlus) + 1);
+  int xpCeiling(bool isPlus) => XpHelper.getXpForLevel(levelCapped(isPlus) + 1);
 
   void clearPendingLevelUp() {
     _pendingLevelUp = null;

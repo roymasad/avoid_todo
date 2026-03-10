@@ -30,6 +30,8 @@ import 'widget_setup_screen.dart';
 import 'sync_screen.dart';
 import '../helpers/home_widget_helper.dart';
 import '../helpers/sync_helper.dart';
+import '../helpers/app_analytics.dart';
+import '../helpers/app_crash_reporter.dart';
 import 'help_screen.dart';
 import 'map_picker_screen.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
@@ -141,6 +143,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
   // Bottom nav
   int _selectedIndex = 0;
+  int? _lastTrackedTabIndex;
 
   // App version (loaded dynamically from package info)
   String _appVersion = '';
@@ -212,6 +215,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       // _checkCoachMarks() moved to didChangeDependencies so it waits for
       // the route's slide-in animation to complete before reading widget positions.
       // Handle case where app was launched via notification action
+      _trackSelectedTab(force: true);
       if (NotificationHelper().pendingRelapseAction) {
         NotificationHelper().clearPendingRelapseAction();
         if (_foundToDo.isNotEmpty) {
@@ -321,11 +325,40 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       'commitment_prompt_frequency',
       _commitmentPromptFrequencyValue(value),
     );
+    await AppAnalytics.instance.trackEvent(
+      'commitment_frequency_changed',
+      parameters: {
+        'source_screen': 'home_tab',
+        'value': _commitmentPromptFrequencyValue(value),
+      },
+    );
     if (!mounted) return;
     setState(() => _commitmentPromptFrequency = value);
   }
 
+  String _screenNameForTab(int index) {
+    switch (index) {
+      case 1:
+        return 'statistics_tab';
+      case 2:
+        return 'history_tab';
+      default:
+        return 'home_tab';
+    }
+  }
+
+  void _trackSelectedTab({bool force = false}) {
+    if (!force && _lastTrackedTabIndex == _selectedIndex) return;
+    _lastTrackedTabIndex = _selectedIndex;
+    AppAnalytics.instance.trackScreen(_screenNameForTab(_selectedIndex));
+  }
+
   Future<void> _showCommitmentPromptSettings() async {
+    await AppAnalytics.instance.trackEvent(
+      'commitment_settings_opened',
+      parameters: const {'source_screen': 'home_tab'},
+    );
+    if (!mounted) return;
     final selected = await showModalBottomSheet<CommitmentPromptFrequency>(
       context: context,
       showDragHandle: true,
@@ -754,7 +787,16 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     final maxEntry =
         pattern.entries.reduce((a, b) => a.value > b.value ? a : b);
 
-    await NotificationHelper().schedulePatternReminder(maxEntry.key);
+    try {
+      await NotificationHelper().schedulePatternReminder(maxEntry.key);
+    } catch (error, stackTrace) {
+      await AppCrashReporter.instance.recordError(
+        error,
+        stackTrace,
+        reason: 'schedule_pattern_reminder',
+      );
+      return;
+    }
     await prefs.setString('last_pattern_schedule_week', weekKey);
   }
 
@@ -780,8 +822,11 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       // not before (otherwise the call-site's pop would dismiss the dialog).
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _showPlusDialog(context,
-              subtitle: 'Unlock Plus for unlimited habits.');
+          _showPlusDialog(
+            context,
+            subtitle: 'Unlock Plus for unlimited habits.',
+            entryPoint: 'todo_limit_reached',
+          );
         }
       });
       return;
@@ -815,12 +860,20 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
     final newId = await DatabaseHelper.instance.create(newTodo);
     if (_reminderDateTime != null && _notificationsEnabled) {
-      if (_selectedType == AvoidType.event) {
-        await NotificationHelper()
-            .scheduleReminder(newId, todo, _reminderDateTime!);
-      } else {
-        await NotificationHelper()
-            .scheduleDailyItemReminder(newId, todo, _reminderDateTime!);
+      try {
+        if (_selectedType == AvoidType.event) {
+          await NotificationHelper()
+              .scheduleReminder(newId, todo, _reminderDateTime!);
+        } else {
+          await NotificationHelper()
+              .scheduleDailyItemReminder(newId, todo, _reminderDateTime!);
+        }
+      } catch (error, stackTrace) {
+        await AppCrashReporter.instance.recordError(
+          error,
+          stackTrace,
+          reason: 'todo_add_schedule_reminder',
+        );
       }
     }
     _todoController.clear();
@@ -840,6 +893,15 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     });
     _fetchTodos();
     _showTagTipIfRelevant(_selectedTagIds);
+    await AppAnalytics.instance.trackEvent(
+      'todo_add_submitted',
+      parameters: {
+        'source_screen': 'home_tab',
+        'avoid_type': newTodo.avoidType.name,
+        'is_recurring': newTodo.isRecurring,
+        'has_reminder': newTodo.reminderDateTime != null,
+      },
+    );
   }
 
   void _showTagTipIfRelevant(List<String> tagIds) {
@@ -870,6 +932,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     _confettiController.play();
     xpProvider.award(XpHelper.sourceArchive, XpHelper.xpArchive);
     _fetchTodos();
+    await AppAnalytics.instance.trackEvent(
+      'todo_archived',
+      parameters: const {'source_screen': 'home_tab'},
+    );
   }
 
   void _showItemAvoidedSnackBar(ToDo todo) {
@@ -1671,7 +1737,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     return PopScope(
       canPop: _selectedIndex == 0,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) setState(() => _selectedIndex = 0);
+        if (!didPop) {
+          setState(() => _selectedIndex = 0);
+          _trackSelectedTab(force: true);
+        }
       },
       child: Scaffold(
         backgroundColor:
@@ -1680,7 +1749,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         endDrawer: _selectedIndex == 0 ? _buildDrawer(themeProvider) : null,
         bottomNavigationBar: NavigationBar(
           selectedIndex: _selectedIndex,
-          onDestinationSelected: (i) {
+          onDestinationSelected: (i) async {
+            final previousIndex = _selectedIndex;
             setState(() {
               if (i == 1 && _selectedIndex != 1) {
                 _statsRefreshVersion++;
@@ -1689,6 +1759,16 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             });
             if (i == 0) _fetchTodos();
             if (i == 2) _archiveKey.currentState?.refresh();
+            if (previousIndex != i) {
+              await AppAnalytics.instance.trackEvent(
+                'tab_selected',
+                parameters: {
+                  'source_screen': _screenNameForTab(previousIndex),
+                  'selected_tab': _screenNameForTab(i),
+                },
+              );
+              _trackSelectedTab(force: true);
+            }
           },
           destinations: [
             NavigationDestination(
@@ -1843,11 +1923,13 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                               const SizedBox(width: 6),
                                               Text(
                                                 _weeklyAvoided > 0
-                                                    ? AppLocalizations.of(context)!
+                                                    ? AppLocalizations.of(
+                                                            context)!
                                                         .avoidedThisWeek(
-                                                          _weeklyAvoided,
-                                                        )
-                                                    : AppLocalizations.of(context)!
+                                                        _weeklyAvoided,
+                                                      )
+                                                    : AppLocalizations.of(
+                                                            context)!
                                                         .keepGoing,
                                                 style: TextStyle(
                                                   fontSize: 13,
@@ -2837,22 +2919,42 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                           await DatabaseHelper.instance.update(updatedTodo);
                           if (editReminderDateTime != null &&
                               _notificationsEnabled) {
-                            if (editType == AvoidType.event) {
-                              await NotificationHelper().scheduleReminder(
+                            try {
+                              if (editType == AvoidType.event) {
+                                await NotificationHelper().scheduleReminder(
                                   todo.id!,
                                   updatedTodo.todoText!,
-                                  editReminderDateTime!);
-                            } else {
-                              await NotificationHelper()
-                                  .scheduleDailyItemReminder(
-                                      todo.id!,
-                                      updatedTodo.todoText!,
-                                      editReminderDateTime!);
+                                  editReminderDateTime!,
+                                );
+                              } else {
+                                await NotificationHelper()
+                                    .scheduleDailyItemReminder(
+                                  todo.id!,
+                                  updatedTodo.todoText!,
+                                  editReminderDateTime!,
+                                );
+                              }
+                            } catch (error, stackTrace) {
+                              await AppCrashReporter.instance.recordError(
+                                error,
+                                stackTrace,
+                                reason: 'todo_edit_schedule_reminder',
+                              );
                             }
                           } else if (todo.reminderDateTime != null) {
                             await NotificationHelper().cancelReminder(todo.id!);
                           }
                           _fetchTodos();
+                          await AppAnalytics.instance.trackEvent(
+                            'todo_edit_submitted',
+                            parameters: {
+                              'source_screen': 'home_tab',
+                              'avoid_type': updatedTodo.avoidType.name,
+                              'is_recurring': updatedTodo.isRecurring,
+                              'has_reminder':
+                                  updatedTodo.reminderDateTime != null,
+                            },
+                          );
                           if (context.mounted) Navigator.pop(context);
                         },
                         style: ElevatedButton.styleFrom(
@@ -2887,6 +2989,14 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     final relapseLogId = await DatabaseHelper.instance.addRelapseLog(
       RelapseLog(todoId: todo.id!),
     );
+    await AppAnalytics.instance.trackEvent(
+      'todo_relapse_logged',
+      parameters: {
+        'source_screen': 'home_tab',
+        'avoid_type': todo.avoidType.name,
+        'has_plus': isPlus,
+      },
+    );
 
     await xpProvider.award(
       XpHelper.sourceRelapse,
@@ -2894,7 +3004,15 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     );
 
     if (isPlus) {
-      await NotificationHelper().scheduleRelapseFollowUp();
+      try {
+        await NotificationHelper().scheduleRelapseFollowUp();
+      } catch (error, stackTrace) {
+        await AppCrashReporter.instance.recordError(
+          error,
+          stackTrace,
+          reason: 'schedule_relapse_follow_up',
+        );
+      }
     }
 
     _fetchTodos();
@@ -3689,7 +3807,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             children: [
               Text(
                 l10n.addAGoal,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               // Goal type selector
@@ -3943,6 +4062,11 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   }
 
   Future<void> _showTrustedSupportSettings() async {
+    await AppAnalytics.instance.trackEvent(
+      'trusted_support_settings_opened',
+      parameters: const {'source_screen': 'home_tab'},
+    );
+    if (!mounted) return;
     TrustedSupportContact? draft = _trustedSupportContact;
     var enabled = draft?.isEnabled ?? true;
 
@@ -4073,6 +4197,14 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                 );
                                 await DatabaseHelper.instance
                                     .upsertTrustedSupportContact(saved);
+                                await AppAnalytics.instance.trackEvent(
+                                  'trusted_support_saved',
+                                  parameters: {
+                                    'source_screen': 'home_tab',
+                                    'result': 'success',
+                                    'enabled': enabled,
+                                  },
+                                );
                                 if (!mounted) return;
                                 setState(() => _trustedSupportContact = saved);
                                 if (ctx.mounted) Navigator.pop(ctx);
@@ -4232,8 +4364,16 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     );
   }
 
-  void _showPlusDialog(BuildContext context, {String? subtitle}) {
-    showPlusUpgradeDialog(context, subtitle: subtitle);
+  void _showPlusDialog(
+    BuildContext context, {
+    String? subtitle,
+    String entryPoint = 'unknown',
+  }) {
+    showPlusUpgradeDialog(
+      context,
+      subtitle: subtitle,
+      entryPoint: entryPoint,
+    );
   }
 
   Future<void> _showTrialDebugDialog() async {
@@ -4324,7 +4464,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       return AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => setState(() => _selectedIndex = 0),
+          onPressed: () {
+            setState(() => _selectedIndex = 0);
+            _trackSelectedTab(force: true);
+          },
         ),
         title: Text(AppLocalizations.of(context)?.statistics ?? 'Statistics'),
       );
@@ -4336,6 +4479,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           onPressed: () {
             _fetchTodos();
             setState(() => _selectedIndex = 0);
+            _trackSelectedTab(force: true);
           },
         ),
         title: Text(AppLocalizations.of(context)?.historyTitle ?? 'History'),
@@ -4363,6 +4507,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   context,
                   subtitle:
                       'Your free trial is active until $expiresAt. Purchase Plus to keep access after it ends.',
+                  entryPoint: 'home_trial_icon',
                 ),
               );
             }
@@ -4370,7 +4515,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             return IconButton(
               icon: const Icon(Icons.star_outline, color: Colors.amber),
               tooltip: 'Unlock Plus',
-              onPressed: () => _showPlusDialog(context),
+              onPressed: () =>
+                  _showPlusDialog(context, entryPoint: 'home_plus_icon'),
             );
           },
         ),
@@ -4378,7 +4524,14 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           builder: (context) => IconButton(
             key: _menuKey,
             icon: Icon(Icons.settings, color: _fabBaseColor),
-            onPressed: () => Scaffold.of(context).openEndDrawer(),
+            onPressed: () async {
+              await AppAnalytics.instance.trackEvent(
+                'settings_opened',
+                parameters: const {'source_screen': 'home_tab'},
+              );
+              if (!context.mounted) return;
+              Scaffold.of(context).openEndDrawer();
+            },
           ),
         ),
       ],
@@ -4445,7 +4598,16 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           RadioGroup<ThemeModeOption>(
             groupValue: themeProvider.themeModeOption,
             onChanged: (value) {
-              if (value != null) themeProvider.setTheme(value);
+              if (value != null) {
+                AppAnalytics.instance.trackEvent(
+                  'theme_changed',
+                  parameters: {
+                    'source_screen': 'home_tab',
+                    'value': value.name,
+                  },
+                );
+                themeProvider.setTheme(value);
+              }
             },
             child: Column(
               children: [
@@ -4482,10 +4644,25 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             onChanged: (val) async {
               final prefs = await SharedPreferences.getInstance();
               await prefs.setBool('notifications_enabled', val);
+              await AppAnalytics.instance.trackEvent(
+                'notifications_toggled',
+                parameters: {
+                  'source_screen': 'home_tab',
+                  'enabled': val,
+                },
+              );
               setState(() => _notificationsEnabled = val);
               if (val) {
-                await NotificationHelper().scheduleDailyCheckInNotification();
-                await NotificationHelper().scheduleWeeklyDigest();
+                try {
+                  await NotificationHelper().scheduleDailyCheckInNotification();
+                  await NotificationHelper().scheduleWeeklyDigest();
+                } catch (error, stackTrace) {
+                  await AppCrashReporter.instance.recordError(
+                    error,
+                    stackTrace,
+                    reason: 'notification_toggle_enable',
+                  );
+                }
               } else {
                 await NotificationHelper().cancelAllNotifications();
               }
@@ -4540,6 +4717,14 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                       ? (val) async {
                           final prefs = await SharedPreferences.getInstance();
                           await prefs.setBool('widget_enabled', val);
+                          await AppAnalytics.instance.trackEvent(
+                            'widget_toggled',
+                            parameters: {
+                              'source_screen': 'home_tab',
+                              'enabled': val,
+                              'has_plus': isPlus,
+                            },
+                          );
                           setState(() => _widgetEnabled = val);
                           if (val) {
                             final active = todosList
@@ -4548,9 +4733,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                             await HomeWidgetHelper.update(active);
                           }
                         }
-                      : (_) => _showPlusDialog(context,
-                          subtitle:
-                              'Unlock Plus to use the home screen widget.'),
+                      : (_) => _showPlusDialog(
+                            context,
+                            subtitle:
+                                'Unlock Plus to use the home screen widget.',
+                            entryPoint: 'widget_toggle_locked',
+                          ),
                 ),
                 if (isPlus && _widgetEnabled)
                   ListTile(
@@ -4560,7 +4748,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     subtitle: Text(l10n?.addWidgetInstructions ??
                         'Instructions & quick-add button'),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
+                    onTap: () async {
+                      await AppAnalytics.instance.trackEvent(
+                        'widget_setup_opened',
+                        parameters: const {'source_screen': 'home_tab'},
+                      );
+                      if (!context.mounted) return;
                       Navigator.pop(context);
                       Navigator.push(
                         context,
@@ -4606,6 +4799,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   _showPlusDialog(
                     context,
                     subtitle: 'Unlock Plus to control the commitment check-in.',
+                    entryPoint: 'commitment_settings_locked',
                   );
                   return;
                 }
@@ -4675,6 +4869,14 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                       ? (val) async {
                           final prefs = await SharedPreferences.getInstance();
                           await prefs.setBool('sync_enabled', val);
+                          await AppAnalytics.instance.trackEvent(
+                            'sync_toggled',
+                            parameters: {
+                              'source_screen': 'home_tab',
+                              'enabled': val,
+                              'has_plus': hasPurchasedPlus,
+                            },
+                          );
                           setState(() => _syncEnabled = val);
                           if (val) {
                             await SyncHelper.uploadIfNeeded();
@@ -4685,13 +4887,19 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                             subtitle: hasTrial
                                 ? 'Cloud backup and restore unlock after purchasing Plus.'
                                 : 'Unlock Plus to use cloud backup.',
+                            entryPoint: 'sync_toggle_locked',
                           ),
                 ),
                 if (hasPurchasedPlus && _syncEnabled)
                   ListTile(
                     leading: const Icon(Icons.manage_history_outlined),
                     title: Text(l10n?.manageSync ?? 'Manage sync'),
-                    onTap: () {
+                    onTap: () async {
+                      await AppAnalytics.instance.trackEvent(
+                        'sync_screen_opened',
+                        parameters: const {'source_screen': 'home_tab'},
+                      );
+                      if (!context.mounted) return;
                       Navigator.pop(context);
                       Navigator.push(
                         context,
@@ -4736,6 +4944,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     context,
                     subtitle:
                         'Unlock Plus to set up Trusted Support after a relapse.',
+                    entryPoint: 'trusted_support_locked',
                   );
                   return;
                 }
@@ -4750,10 +4959,16 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           ListTile(
             leading: const Icon(Icons.help_outline),
             title: Text(l10n?.help ?? 'Help & Guide'),
-            onTap: () {
-              Navigator.pop(context);
+            onTap: () async {
+              await AppAnalytics.instance.trackEvent(
+                'help_opened',
+                parameters: const {'source_screen': 'home_tab'},
+              );
+              if (!context.mounted) return;
+              final currentContext = context;
+              Navigator.pop(currentContext);
               Navigator.push(
-                context,
+                currentContext,
                 MaterialPageRoute(builder: (context) => const HelpScreen()),
               );
             },
@@ -4781,10 +4996,16 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           ListTile(
             leading: const Icon(Icons.info),
             title: Text(l10n?.about ?? 'About'),
-            onTap: () {
-              Navigator.pop(context);
+            onTap: () async {
+              await AppAnalytics.instance.trackEvent(
+                'about_opened',
+                parameters: const {'source_screen': 'home_tab'},
+              );
+              if (!context.mounted) return;
+              final currentContext = context;
+              Navigator.pop(currentContext);
               showDialog(
-                context: context,
+                context: currentContext,
                 builder: (BuildContext context) {
                   return AlertDialog(
                     title: Text(l10n?.appTitle ?? 'Avoid Todo App'),

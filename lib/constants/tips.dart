@@ -20,8 +20,8 @@ const List<AvoidanceTip> avoidanceTips = [
       TipContext.relapse),
   AvoidanceTip("Tomorrow is a fresh start. Right now, choose differently.",
       TipContext.relapse),
-  AvoidanceTip("Every great streak started the day after a slip.",
-      TipContext.relapse),
+  AvoidanceTip(
+      "Every great streak started the day after a slip.", TipContext.relapse),
 
   // Streak / milestone tips
   AvoidanceTip(
@@ -38,8 +38,8 @@ const List<AvoidanceTip> avoidanceTips = [
       TipContext.streak),
   AvoidanceTip("Celebrate the small wins. 1 day avoided is 1 day won.",
       TipContext.streak),
-  AvoidanceTip("Streaks don't build habits — habits build streaks.",
-      TipContext.streak),
+  AvoidanceTip(
+      "Streaks don't build habits — habits build streaks.", TipContext.streak),
 
   // Health tips
   AvoidanceTip(
@@ -48,8 +48,7 @@ const List<AvoidanceTip> avoidanceTips = [
   AvoidanceTip(
       "Take 10 deep breaths. Your urge will peak and pass within 5–10 minutes.",
       TipContext.health),
-  AvoidanceTip(
-      "Step outside for 2 minutes — fresh air breaks the mental loop.",
+  AvoidanceTip("Step outside for 2 minutes — fresh air breaks the mental loop.",
       TipContext.health),
   AvoidanceTip("Do 20 jumping jacks — movement shifts your brain chemistry.",
       TipContext.health),
@@ -63,8 +62,7 @@ const List<AvoidanceTip> avoidanceTips = [
   AvoidanceTip(
       "Set a 15-minute timer before responding to anything that stirs you up.",
       TipContext.social),
-  AvoidanceTip("Ask yourself: Will this matter in 5 years?",
-      TipContext.social),
+  AvoidanceTip("Ask yourself: Will this matter in 5 years?", TipContext.social),
   AvoidanceTip("Write it in a journal instead of saying it out loud.",
       TipContext.social),
   AvoidanceTip(
@@ -82,14 +80,14 @@ const List<AvoidanceTip> avoidanceTips = [
       TipContext.productivity),
   AvoidanceTip("Replace the habit with something that gives a similar reward.",
       TipContext.productivity),
-  AvoidanceTip("Use the 2-minute rule to reclaim momentum.",
-      TipContext.productivity),
+  AvoidanceTip(
+      "Use the 2-minute rule to reclaim momentum.", TipContext.productivity),
 
   // General tips
-  AvoidanceTip(
-      "Visualize what you'd spend your savings on — make it concrete.",
+  AvoidanceTip("Visualize what you'd spend your savings on — make it concrete.",
       TipContext.general),
-  AvoidanceTip("How will you feel about this in 3 hours? Lead with that feeling.",
+  AvoidanceTip(
+      "How will you feel about this in 3 hours? Lead with that feeling.",
       TipContext.general),
   AvoidanceTip(
       "Every hour avoided is an hour gifted back to something you love.",

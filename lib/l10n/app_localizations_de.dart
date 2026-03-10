@@ -447,6 +447,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Nein. Avoid verarbeitet, sammelt oder speichert deine Habit-Daten nicht auf eigenen Servern. Deine Daten bleiben auf deinem Gerät. Wenn du Cloud-Backup aktivierst, werden sie in deinem eigenen iCloud- oder Google-Drive-Konto gespeichert, nicht in einer Avoid-Cloud.';
 
   @override
+  String get faq11Question => 'Welche Analysedaten sammelt Avoid?';
+
+  @override
+  String get faq11Answer =>
+      'Avoid sammelt nur grundlegende Nutzungsanalysen der App, zum Beispiel besuchte Bildschirme und wichtige Button-Klicks, um das Produkt zu verbessern. Es sendet keine Habit-Namen, Rückfallnotizen, Kontaktnamen, Ortsnamen oder andere identifizierbare bzw. vom Nutzer eingegebene Inhalte an Analytics.';
+
+  @override
   String get coachMarkAddTitle => 'Füge deine erste Gewohnheit hinzu';
 
   @override

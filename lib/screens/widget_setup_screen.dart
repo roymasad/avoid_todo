@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../l10n/app_localizations.dart';
+import '../helpers/app_analytics.dart';
+import '../helpers/app_crash_reporter.dart';
+import '../widgets/tracked_screen.dart';
 
 class WidgetSetupScreen extends StatefulWidget {
   const WidgetSetupScreen({super.key});
@@ -31,11 +34,16 @@ class _WidgetSetupScreenState extends State<WidgetSetupScreen> {
 
   String _colorLabel(int index, AppLocalizations? l10n) {
     switch (index) {
-      case 0: return l10n?.colorForest ?? 'Forest';
-      case 1: return l10n?.colorMidnight ?? 'Midnight';
-      case 2: return l10n?.colorOcean ?? 'Ocean';
-      case 3: return l10n?.colorPurple ?? 'Purple';
-      default: return '';
+      case 0:
+        return l10n?.colorForest ?? 'Forest';
+      case 1:
+        return l10n?.colorMidnight ?? 'Midnight';
+      case 2:
+        return l10n?.colorOcean ?? 'Ocean';
+      case 3:
+        return l10n?.colorPurple ?? 'Purple';
+      default:
+        return '';
     }
   }
 
@@ -50,9 +58,15 @@ class _WidgetSetupScreenState extends State<WidgetSetupScreen> {
     final colorIdx = prefs.getInt('widget_color_index') ?? 0;
 
     // Load actual widget data so the preview shows real content
-    final habitName   = await HomeWidget.getWidgetData<String>('habit_name',   defaultValue: '') ?? '';
-    final streakLabel = await HomeWidget.getWidgetData<String>('streak_label', defaultValue: '') ?? '';
-    final habitCount  = await HomeWidget.getWidgetData<int>('habit_count',     defaultValue: 0)  ?? 0;
+    final habitName = await HomeWidget.getWidgetData<String>('habit_name',
+            defaultValue: '') ??
+        '';
+    final streakLabel = await HomeWidget.getWidgetData<String>('streak_label',
+            defaultValue: '') ??
+        '';
+    final habitCount =
+        await HomeWidget.getWidgetData<int>('habit_count', defaultValue: 0) ??
+            0;
 
     bool pinSupported = false;
     if (Platform.isAndroid) {
@@ -62,27 +76,43 @@ class _WidgetSetupScreenState extends State<WidgetSetupScreen> {
     if (mounted) {
       setState(() {
         _selectedColor = colorIdx;
-        _habitName     = habitName;
-        _streakLabel   = streakLabel;
-        _habitCount    = habitCount;
-        _pinSupported  = pinSupported;
+        _habitName = habitName;
+        _streakLabel = streakLabel;
+        _habitCount = habitCount;
+        _pinSupported = pinSupported;
       });
     }
   }
 
   Future<void> _requestPin() async {
+    await AppAnalytics.instance.trackEvent(
+      'widget_pin_requested',
+      parameters: const {'source_screen': 'widget_setup_screen'},
+    );
     try {
       await HomeWidget.requestPinWidget(
         name: 'AvoidWidgetProvider',
         androidName: 'AvoidWidgetProvider',
       );
       if (mounted) setState(() => _pinRequested = true);
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('[WidgetSetup] requestPinWidget error: $e');
+      await AppCrashReporter.instance.recordError(
+        e,
+        stackTrace,
+        reason: 'widget_pin_request',
+      );
     }
   }
 
   Future<void> _setColor(int index) async {
+    await AppAnalytics.instance.trackEvent(
+      'widget_color_changed',
+      parameters: {
+        'source_screen': 'widget_setup_screen',
+        'color_index': index,
+      },
+    );
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('widget_color_index', index);
     await HomeWidget.saveWidgetData<int>('widget_color_index', index);
@@ -96,14 +126,16 @@ class _WidgetSetupScreenState extends State<WidgetSetupScreen> {
   // ── Preview ──────────────────────────────────────────────────────────────
   // The preview intentionally mirrors the native widget which renders in English.
   Widget _buildPreview() {
-    final c        = _colorGradients[_selectedColor];
-    final hasData  = _habitName.isNotEmpty;
-    final label    = hasData
-        ? (_habitCount == 1 ? 'AVOIDING 1 HABIT' : 'AVOIDING $_habitCount HABITS')
+    final c = _colorGradients[_selectedColor];
+    final hasData = _habitName.isNotEmpty;
+    final label = hasData
+        ? (_habitCount == 1
+            ? 'AVOIDING 1 HABIT'
+            : 'AVOIDING $_habitCount HABITS')
         : 'AVOIDING';
-    final name     = hasData ? _habitName  : 'Your top habit';
-    final streak   = hasData ? _streakLabel : '— days';
-    final suffix   = hasData ? '🔥 streak‑free' : 'Open app to start';
+    final name = hasData ? _habitName : 'Your top habit';
+    final streak = hasData ? _streakLabel : '— days';
+    final suffix = hasData ? '🔥 streak‑free' : 'Open app to start';
 
     return Center(
       child: Container(
@@ -186,227 +218,244 @@ class _WidgetSetupScreenState extends State<WidgetSetupScreen> {
 
   // ── Step builders ─────────────────────────────────────────────────────────
   List<_Step> _buildIosSteps(AppLocalizations? l10n) => [
-    _Step(l10n?.widgetIosStep1Title ?? 'Go to your Home Screen',
-          l10n?.widgetIosStep1Desc  ?? 'Press Home or swipe up from any app.'),
-    _Step(l10n?.widgetIosStep2Title ?? 'Long-press an empty area',
-          l10n?.widgetIosStep2Desc  ?? 'Hold until the icons start to jiggle.'),
-    _Step(l10n?.widgetIosStep3Title ?? 'Tap the + button',
-          l10n?.widgetIosStep3Desc  ?? 'Top-left corner.'),
-    _Step(l10n?.widgetIosStep4Title ?? 'Search for "Avoid"',
-          l10n?.widgetIosStep4Desc  ?? 'Type in the search bar.'),
-    _Step(l10n?.widgetIosStep5Title ?? 'Select the Avoid widget',
-          l10n?.widgetIosStep5Desc  ?? 'Tap it, pick a size, then tap "Add Widget".'),
-    _Step(l10n?.widgetIosStep6Title ?? 'Press Done',
-          l10n?.widgetIosStep6Desc  ?? 'Top-right corner to finish.'),
-  ];
+        _Step(l10n?.widgetIosStep1Title ?? 'Go to your Home Screen',
+            l10n?.widgetIosStep1Desc ?? 'Press Home or swipe up from any app.'),
+        _Step(
+            l10n?.widgetIosStep2Title ?? 'Long-press an empty area',
+            l10n?.widgetIosStep2Desc ??
+                'Hold until the icons start to jiggle.'),
+        _Step(l10n?.widgetIosStep3Title ?? 'Tap the + button',
+            l10n?.widgetIosStep3Desc ?? 'Top-left corner.'),
+        _Step(l10n?.widgetIosStep4Title ?? 'Search for "Avoid"',
+            l10n?.widgetIosStep4Desc ?? 'Type in the search bar.'),
+        _Step(
+            l10n?.widgetIosStep5Title ?? 'Select the Avoid widget',
+            l10n?.widgetIosStep5Desc ??
+                'Tap it, pick a size, then tap "Add Widget".'),
+        _Step(l10n?.widgetIosStep6Title ?? 'Press Done',
+            l10n?.widgetIosStep6Desc ?? 'Top-right corner to finish.'),
+      ];
 
   List<_Step> _buildAndroidSteps(AppLocalizations? l10n) => [
-    _Step(l10n?.widgetAndroidStep1Title ?? 'Go to your Home Screen',
-          l10n?.widgetAndroidStep1Desc  ?? 'Press the Home button.'),
-    _Step(l10n?.widgetAndroidStep2Title ?? 'Long-press an empty area',
-          l10n?.widgetAndroidStep2Desc  ?? 'Hold on a blank spot until edit mode appears.'),
-    _Step(l10n?.widgetAndroidStep3Title ?? 'Tap "Widgets"',
-          l10n?.widgetAndroidStep3Desc  ?? 'Look at the bottom of the screen.'),
-    _Step(l10n?.widgetAndroidStep4Title ?? 'Find "Avoid Todo"',
-          l10n?.widgetAndroidStep4Desc  ?? 'Scroll to the A section.'),
-    _Step(l10n?.widgetAndroidStep5Title ?? 'Long-press & drag',
-          l10n?.widgetAndroidStep5Desc  ?? 'Drag the widget to any empty spot on your home screen.'),
-  ];
+        _Step(l10n?.widgetAndroidStep1Title ?? 'Go to your Home Screen',
+            l10n?.widgetAndroidStep1Desc ?? 'Press the Home button.'),
+        _Step(
+            l10n?.widgetAndroidStep2Title ?? 'Long-press an empty area',
+            l10n?.widgetAndroidStep2Desc ??
+                'Hold on a blank spot until edit mode appears.'),
+        _Step(
+            l10n?.widgetAndroidStep3Title ?? 'Tap "Widgets"',
+            l10n?.widgetAndroidStep3Desc ??
+                'Look at the bottom of the screen.'),
+        _Step(l10n?.widgetAndroidStep4Title ?? 'Find "Avoid Todo"',
+            l10n?.widgetAndroidStep4Desc ?? 'Scroll to the A section.'),
+        _Step(
+            l10n?.widgetAndroidStep5Title ?? 'Long-press & drag',
+            l10n?.widgetAndroidStep5Desc ??
+                'Drag the widget to any empty spot on your home screen.'),
+      ];
 
   // ── Build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final l10n  = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context);
     final isIos = Platform.isIOS;
     final steps = isIos ? _buildIosSteps(l10n) : _buildAndroidSteps(l10n);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isIos
-            ? (l10n?.widgetSetupTitleIos ?? '🍎 iOS — Add Widget')
-            : (l10n?.widgetSetupTitleAndroid ?? '🤖 Android — Add Widget')),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Live widget preview
-            if (!isIos) ...[
-              _buildPreview(),
-              const SizedBox(height: 20),
-            ],
+    return TrackedScreen(
+      screenName: 'widget_setup_screen',
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(isIos
+              ? (l10n?.widgetSetupTitleIos ?? '🍎 iOS — Add Widget')
+              : (l10n?.widgetSetupTitleAndroid ?? '🤖 Android — Add Widget')),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Live widget preview
+              if (!isIos) ...[
+                _buildPreview(),
+                const SizedBox(height: 20),
+              ],
 
-            // Android: pin button
-            if (!isIos && _pinSupported) ...[
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  icon: const Icon(Icons.add_to_home_screen),
-                  label: Text(_pinRequested
-                      ? (l10n?.widgetDialogOpened ?? 'Widget dialog opened!')
-                      : (l10n?.widgetAddButton ?? 'Add Widget to Home Screen')),
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+              // Android: pin button
+              if (!isIos && _pinSupported) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    icon: const Icon(Icons.add_to_home_screen),
+                    label: Text(_pinRequested
+                        ? (l10n?.widgetDialogOpened ?? 'Widget dialog opened!')
+                        : (l10n?.widgetAddButton ??
+                            'Add Widget to Home Screen')),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    onPressed: _pinRequested ? null : _requestPin,
                   ),
-                  onPressed: _pinRequested ? null : _requestPin,
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                l10n?.widgetLauncherHint ?? 'Your launcher will ask where to place it.',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant),
-              ),
-              const SizedBox(height: 16),
-            ],
+                const SizedBox(height: 6),
+                Text(
+                  l10n?.widgetLauncherHint ??
+                      'Your launcher will ask where to place it.',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ),
+                const SizedBox(height: 16),
+              ],
 
-            // Color picker (Android only)
-            if (!isIos) ...[
-              Text(l10n?.widgetColorLabel ?? 'Widget colour',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 10),
-              Row(
-                children: List.generate(_colorGradients.length, (i) {
-                  final c        = _colorGradients[i];
-                  final selected = _selectedColor == i;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: GestureDetector(
-                      onTap: () => _setColor(i),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [c.start, c.end],
+              // Color picker (Android only)
+              if (!isIos) ...[
+                Text(l10n?.widgetColorLabel ?? 'Widget colour',
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 10),
+                Row(
+                  children: List.generate(_colorGradients.length, (i) {
+                    final c = _colorGradients[i];
+                    final selected = _selectedColor == i;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: GestureDetector(
+                        onTap: () => _setColor(i),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [c.start, c.end],
+                                ),
+                                border: Border.all(
+                                  color: selected
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Colors.transparent,
+                                  width: 3,
+                                ),
                               ),
-                              border: Border.all(
+                              child: selected
+                                  ? const Icon(Icons.check,
+                                      color: Colors.white, size: 20)
+                                  : null,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _colorLabel(i, l10n),
+                              style: TextStyle(
+                                fontSize: 11,
                                 color: selected
                                     ? Theme.of(context).colorScheme.primary
-                                    : Colors.transparent,
-                                width: 3,
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                fontWeight: selected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
                               ),
                             ),
-                            child: selected
-                                ? const Icon(Icons.check,
-                                    color: Colors.white, size: 20)
-                                : null,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _colorLabel(i, l10n),
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: selected
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                              fontWeight: selected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 12),
+              ],
+
+              // Step list header
+              Text(
+                isIos
+                    ? (l10n?.widgetFollowSteps ?? 'Follow these steps:')
+                    : (_pinSupported
+                        ? (l10n?.widgetManualSteps ??
+                            'Launcher doesn\'t support the button? Try manually:')
+                        : (l10n?.widgetFollowSteps ?? 'Follow these steps:')),
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
-              const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 12),
-            ],
+              const SizedBox(height: 10),
 
-            // Step list header
-            Text(
-              isIos
-                  ? (l10n?.widgetFollowSteps ?? 'Follow these steps:')
-                  : (_pinSupported
-                      ? (l10n?.widgetManualSteps ?? 'Launcher doesn\'t support the button? Try manually:')
-                      : (l10n?.widgetFollowSteps ?? 'Follow these steps:')),
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 10),
-
-            Expanded(
-              child: ListView.separated(
-                itemCount: steps.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (context, index) {
-                  final step = steps[index];
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${index + 1}',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
+              Expanded(
+                child: ListView.separated(
+                  itemCount: steps.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final step = steps[index];
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${index + 1}',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 3),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(step.title,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13)),
-                              if (step.description.isNotEmpty) ...[
-                                const SizedBox(height: 2),
-                                Text(step.description,
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 3),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(step.title,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13)),
+                                if (step.description.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(step.description,
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant)),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  );
-                },
+                      ],
+                    );
+                  },
+                ),
               ),
-            ),
 
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () async {
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.setBool('widget_setup_shown', true);
-                  if (context.mounted) Navigator.pop(context);
-                },
-                child: Text(l10n?.widgetDone ?? 'Done'),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('widget_setup_shown', true);
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                  child: Text(l10n?.widgetDone ?? 'Done'),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

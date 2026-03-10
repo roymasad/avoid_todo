@@ -27,8 +27,9 @@ class _RatingDialogState extends State<RatingDialog> {
 
   void _onContinue() {
     setState(() {
-      _phase =
-          _selectedStars >= 4 ? _RatingPhase.highRating : _RatingPhase.lowRating;
+      _phase = _selectedStars >= 4
+          ? _RatingPhase.highRating
+          : _RatingPhase.lowRating;
     });
   }
 
@@ -67,7 +68,9 @@ class _RatingDialogState extends State<RatingDialog> {
           padding: const EdgeInsets.symmetric(horizontal: 4),
           constraints: const BoxConstraints(),
           icon: Icon(
-            starNum <= _selectedStars ? Icons.star_rounded : Icons.star_outline_rounded,
+            starNum <= _selectedStars
+                ? Icons.star_rounded
+                : Icons.star_outline_rounded,
             color: starNum <= _selectedStars ? primary : Colors.grey.shade400,
           ),
           onPressed: () => setState(() => _selectedStars = starNum),
