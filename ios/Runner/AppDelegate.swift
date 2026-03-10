@@ -14,6 +14,7 @@ import UIKit
   ) -> Bool {
     let didFinish = super.application(application, didFinishLaunchingWithOptions: launchOptions)
     registerTrustedSupportChannel()
+    registerICloudKvStoreChannel()
 
     return didFinish
   }
@@ -36,6 +37,57 @@ import UIKit
       switch call.method {
       case "composeSms":
         self.composeSms(call: call, result: result)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+  }
+
+  private func registerICloudKvStoreChannel() {
+    guard let registrar = registrar(forPlugin: "ICloudKvStorePlugin") else {
+      return
+    }
+
+    let channel = FlutterMethodChannel(
+      name: "avoid_todo/icloud_kv_store",
+      binaryMessenger: registrar.messenger()
+    )
+    channel.setMethodCallHandler { call, result in
+      switch call.method {
+      case "isAvailable":
+        result(FileManager.default.ubiquityIdentityToken != nil)
+      case "getString":
+        guard
+          let arguments = call.arguments as? [String: Any],
+          let key = arguments["key"] as? String
+        else {
+          result(nil)
+          return
+        }
+        result(NSUbiquitousKeyValueStore.default.string(forKey: key))
+      case "setString":
+        guard
+          let arguments = call.arguments as? [String: Any],
+          let key = arguments["key"] as? String,
+          let value = arguments["value"] as? String
+        else {
+          result(false)
+          return
+        }
+        let store = NSUbiquitousKeyValueStore.default
+        store.set(value, forKey: key)
+        result(store.synchronize())
+      case "remove":
+        guard
+          let arguments = call.arguments as? [String: Any],
+          let key = arguments["key"] as? String
+        else {
+          result(false)
+          return
+        }
+        let store = NSUbiquitousKeyValueStore.default
+        store.removeObject(forKey: key)
+        result(store.synchronize())
       default:
         result(FlutterMethodNotImplemented)
       }

@@ -30,7 +30,8 @@ class HomeWidgetHelper {
 
       for (int i = 0; i < habits.length; i++) {
         final days = _liveStreak(habits[i]).inDays;
-        await HomeWidget.saveWidgetData<String>('habit_${i}_name', habits[i].todoText);
+        await HomeWidget.saveWidgetData<String>(
+            'habit_${i}_name', habits[i].todoText);
         await HomeWidget.saveWidgetData<String>(
             'habit_${i}_streak', days == 1 ? '1 day' : '$days days');
       }
@@ -48,6 +49,14 @@ class HomeWidgetHelper {
       );
     } catch (e) {
       debugPrint('[HomeWidgetHelper] widget not configured yet: $e');
+    }
+  }
+
+  static Future<void> clear() async {
+    try {
+      await _clearWidget();
+    } catch (e) {
+      debugPrint('[HomeWidgetHelper] clear failed: $e');
     }
   }
 

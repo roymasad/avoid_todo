@@ -5,10 +5,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:icloud_storage/icloud_storage.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
-import 'package:http/http.dart' as http;
 import 'database_helper.dart';
+import 'google_account_helper.dart';
 
 /// Cloud sync helper: uploads / downloads the SQLite DB to the user's own
 /// cloud storage (iCloud on iOS, Google Drive on Android).
@@ -75,8 +74,7 @@ class SyncHelper {
         await _driveUpload(dbFile);
       }
 
-      await prefs.setInt(
-          _prefLastSync, DateTime.now().millisecondsSinceEpoch);
+      await prefs.setInt(_prefLastSync, DateTime.now().millisecondsSinceEpoch);
       debugPrint('[SyncHelper] upload complete');
       return true;
     } catch (e) {
@@ -109,8 +107,8 @@ class SyncHelper {
     if (!isSupported) return false;
     try {
       if (Platform.isIOS) {
-        final files = await ICloudStorage.gather(
-            containerId: _iCloudContainerId);
+        final files =
+            await ICloudStorage.gather(containerId: _iCloudContainerId);
         return files.any((f) => f.relativePath == _dbFileName);
       } else {
         final api = await _driveApi();
@@ -169,8 +167,7 @@ class SyncHelper {
   }
 
   static Future<File?> _iCloudDownloadLatest() async {
-    final files = await ICloudStorage.gather(
-        containerId: _iCloudContainerId);
+    final files = await ICloudStorage.gather(containerId: _iCloudContainerId);
     if (files.every((f) => f.relativePath != _dbFileName)) return null;
     final tmpDir = await getTemporaryDirectory();
     final dest = File(p.join(tmpDir.path, 'avoid_cloud_backup.db'));
@@ -186,19 +183,10 @@ class SyncHelper {
   // Android — Google Drive
   // ─────────────────────────────────────────────────────────────
 
-  static final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: [drive.DriveApi.driveFileScope],
-  );
-
-  static Future<drive.DriveApi?> _driveApi() async {
-    // currentUser is synchronous — avoids a full sign-in round-trip if the
-    // session is still alive (which it usually is within the same app session).
-    GoogleSignInAccount? account = _googleSignIn.currentUser;
-    account ??= await _googleSignIn.signInSilently();
-    account ??= await _googleSignIn.signIn();
-    if (account == null) return null;
-    final headers = await account.authHeaders;
-    return drive.DriveApi(_GoogleAuthClient(headers));
+  static Future<drive.DriveApi?> _driveApi({bool interactive = true}) async {
+    final session =
+        await GoogleAccountHelper.backupDriveSession(interactive: interactive);
+    return session?.api;
   }
 
   static Future<void> _driveUpload(File dbFile) async {
@@ -258,19 +246,5 @@ class SyncHelper {
     await response.stream.pipe(sink);
     await sink.close();
     return dest;
-  }
-}
-
-/// HTTP client that injects Google OAuth authorization headers into every request.
-class _GoogleAuthClient extends http.BaseClient {
-  final Map<String, String> _headers;
-  final http.Client _inner = http.Client();
-
-  _GoogleAuthClient(this._headers);
-
-  @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) {
-    request.headers.addAll(_headers);
-    return _inner.send(request);
   }
 }

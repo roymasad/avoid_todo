@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
+import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:provider/provider.dart';
 import '../model/todo.dart';
@@ -78,6 +80,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   late List<ToDo> _foundToDo = [];
   bool _isLoading = true;
   final _todoController = TextEditingController();
+  int _statsRefreshVersion = 0;
   final _searchController = TextEditingController();
   final _costController = TextEditingController();
   late ConfettiController _confettiController;
@@ -193,7 +196,6 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     _loadTrustedSupportContact();
     _loadAppVersion();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PurchaseProvider>().refresh();
       context.read<XpProvider>().load().then((_) {
         if (mounted) context.read<XpProvider>().awardDailyLoginIfNeeded();
       });
@@ -606,7 +608,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     if (!mounted) return;
 
     // Check streak milestones and award XP if any thresholds just crossed
-    final isPlus = context.read<PurchaseProvider>().isPlus;
+    final purchase = context.read<PurchaseProvider>();
+    final isPlus = purchase.isPlus;
+    final hasPurchasedPlus = purchase.hasPurchasedPlus;
     final rawTodos = todos.map((t) => t.toMap()).toList();
     await context.read<XpProvider>().awardStreakMilestonesIfNeeded(rawTodos);
 
@@ -658,20 +662,30 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     _maybeShowDailyCommitment(todos, isPlus);
 
     // Phase 2A: Pattern-based reminder (Plus only, once per ISO week)
-    if (isPlus) _schedulePatternReminderIfNeeded();
+    if (isPlus) {
+      _schedulePatternReminderIfNeeded();
+    } else {
+      await NotificationHelper().cancelPatternReminder();
+    }
 
     // Phase 2B: Cancel any pending relapse follow-up on natural app open
-    if (isPlus) NotificationHelper().cancelRelapseFollowUp();
+    if (isPlus) {
+      NotificationHelper().cancelRelapseFollowUp();
+    } else {
+      await NotificationHelper().cancelRelapseFollowUp();
+    }
 
     // Phase 4: Push data to home screen widget (Plus + widget enabled)
     if (isPlus && _widgetEnabled) {
       final active =
           todos.where((t) => !t.isArchived && t.isRecurring).toList();
       HomeWidgetHelper.update(active);
+    } else if (!isPlus && _widgetEnabled) {
+      await HomeWidgetHelper.clear();
     }
 
     // Phase 6: Cloud sync — check for newer backup on first load
-    if (isPlus && _syncEnabled) {
+    if (hasPurchasedPlus && _syncEnabled) {
       SyncHelper.uploadIfNeeded();
     }
   }
@@ -1667,7 +1681,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         bottomNavigationBar: NavigationBar(
           selectedIndex: _selectedIndex,
           onDestinationSelected: (i) {
-            setState(() => _selectedIndex = i);
+            setState(() {
+              if (i == 1 && _selectedIndex != 1) {
+                _statsRefreshVersion++;
+              }
+              _selectedIndex = i;
+            });
             if (i == 0) _fetchTodos();
             if (i == 2) _archiveKey.currentState?.refresh();
           },
@@ -2193,7 +2212,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                 ),
               ],
             ),
-            const StatisticsScreen(embedded: true),
+            StatisticsScreen(
+              key: ValueKey('stats_$_statsRefreshVersion'),
+              embedded: true,
+            ),
             ArchiveScreen(key: _archiveKey, embedded: true),
           ],
         ),
@@ -2872,7 +2894,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     );
 
     final trustedSupport = _trustedSupportContact;
-    if (trustedSupport?.isEnabled ?? false) {
+    if (isPlus && (trustedSupport?.isEnabled ?? false)) {
       await _showTrustedSupportPrompt(trustedSupport!);
     }
 
@@ -4198,6 +4220,89 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     showPlusUpgradeDialog(context, subtitle: subtitle);
   }
 
+  Future<void> _showTrialDebugDialog() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final purchase = context.read<PurchaseProvider>();
+    final debugState = await purchase.trialDebugState();
+    if (!mounted) return;
+    if (debugState == null) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Trial debugging is unavailable here.')),
+      );
+      return;
+    }
+
+    final status = debugState.status;
+    final diagnostics = <String>[
+      'Storage: ${debugState.storageLabel}',
+      'Storage available: ${debugState.isStorageAvailable}',
+      'Local cache present: ${debugState.hasCachedStatus}',
+      'Active trial: ${purchase.hasActiveTrial}',
+      'Paid Plus: ${purchase.hasPurchasedPlus}',
+      if (status != null) ...[
+        'Source: ${status.source.name}',
+        'Account key: ${status.accountKey}',
+        'Started UTC: ${status.startedAtUtc.toIso8601String()}',
+        'Expires UTC: ${status.expiresAtUtc.toIso8601String()}',
+        'Last seen UTC: ${status.lastSeenAtUtc.toIso8601String()}',
+      ] else
+        'Remote status: none found',
+    ].join('\n');
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Trial Diagnostics'),
+        content: SingleChildScrollView(
+          child: SelectableText(
+            diagnostics,
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final expired = await purchase.expireTrialDebugState();
+              if (!mounted) return;
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    expired
+                        ? 'Trial marked as expired in local cache and cloud storage.'
+                        : 'Could not expire the trial. Make sure the same iCloud/Google account is available and that a trial exists.',
+                  ),
+                ),
+              );
+            },
+            child: const Text('Expire Trial'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final cleared = await purchase.resetTrialDebugState();
+              if (!mounted) return;
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    cleared
+                        ? 'Trial state cleared from local cache and cloud storage.'
+                        : 'Could not clear trial state. Make sure the same iCloud/Google account is available.',
+                  ),
+                ),
+              );
+            },
+            child: const Text('Reset Trial'),
+          ),
+        ],
+      ),
+    );
+  }
+
   AppBar _buildAppBar() {
     if (_selectedIndex == 1) {
       return AppBar(
@@ -4230,7 +4335,22 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       actions: [
         Consumer<PurchaseProvider>(
           builder: (context, purchase, _) {
-            if (purchase.isPlus) return const SizedBox.shrink();
+            if (purchase.hasPurchasedPlus) return const SizedBox.shrink();
+
+            if (purchase.hasActiveTrial && purchase.trialStatus != null) {
+              final expiresAt = DateFormat.yMMMd()
+                  .format(purchase.trialStatus!.expiresAtUtc.toLocal());
+              return IconButton(
+                icon: const Icon(Icons.timer_outlined, color: Colors.orange),
+                tooltip: 'Trial active until $expiresAt',
+                onPressed: () => _showPlusDialog(
+                  context,
+                  subtitle:
+                      'Your free trial is active until $expiresAt. Purchase Plus to keep access after it ends.',
+                ),
+              );
+            }
+
             return IconButton(
               icon: const Icon(Icons.star_outline, color: Colors.amber),
               tooltip: 'Unlock Plus',
@@ -4489,43 +4609,53 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             ),
           ),
           Builder(builder: (context) {
-            final isPlus = context.read<PurchaseProvider>().isPlus;
+            final purchase = context.watch<PurchaseProvider>();
+            final hasPurchasedPlus = purchase.hasPurchasedPlus;
+            final hasTrial = purchase.hasActiveTrial;
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 SwitchListTile(
                   secondary: Icon(
                     Icons.cloud_sync_outlined,
-                    color: isPlus ? null : Colors.grey,
+                    color: hasPurchasedPlus ? null : Colors.grey,
                   ),
                   title: Row(
                     children: [
                       Text(l10n?.cloudSync ?? 'Cloud Sync'),
-                      if (!isPlus) ...[
+                      if (!hasPurchasedPlus) ...[
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.amber.shade700,
+                            color: hasTrial
+                                ? Colors.blueGrey.shade600
+                                : Colors.amber.shade700,
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text('Plus',
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
+                          child: Text(
+                            hasTrial ? 'Buy Plus' : 'Plus',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ],
                     ],
                   ),
                   subtitle: Text(
-                    l10n?.cloudSyncDesc ??
-                        'Auto-backup to iCloud / Google Drive',
-                    style: TextStyle(color: isPlus ? null : Colors.grey),
+                    hasTrial
+                        ? 'Cloud backup unlocks after purchasing Plus.'
+                        : (l10n?.cloudSyncDesc ??
+                            'Auto-backup to iCloud / Google Drive'),
+                    style:
+                        TextStyle(color: hasPurchasedPlus ? null : Colors.grey),
                   ),
-                  value: isPlus && _syncEnabled,
-                  onChanged: isPlus
+                  value: hasPurchasedPlus && _syncEnabled,
+                  onChanged: hasPurchasedPlus
                       ? (val) async {
                           final prefs = await SharedPreferences.getInstance();
                           await prefs.setBool('sync_enabled', val);
@@ -4534,10 +4664,14 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                             await SyncHelper.uploadIfNeeded();
                           }
                         }
-                      : (_) => _showPlusDialog(context,
-                          subtitle: 'Unlock Plus to use cloud backup.'),
+                      : (_) => _showPlusDialog(
+                            context,
+                            subtitle: hasTrial
+                                ? 'Cloud backup and restore unlock after purchasing Plus.'
+                                : 'Unlock Plus to use cloud backup.',
+                          ),
                 ),
-                if (isPlus && _syncEnabled)
+                if (hasPurchasedPlus && _syncEnabled)
                   ListTile(
                     leading: const Icon(Icons.manage_history_outlined),
                     title: Text(l10n?.manageSync ?? 'Manage sync'),
@@ -4608,6 +4742,25 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               );
             },
           ),
+          if (kDebugMode) ...[
+            const Divider(),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Text(
+                'Debug',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.bug_report_outlined),
+              title: const Text('Trial diagnostics'),
+              subtitle: const Text('Inspect and reset trial storage'),
+              onTap: () async {
+                Navigator.pop(context);
+                await _showTrialDebugDialog();
+              },
+            ),
+          ],
           const Divider(),
           ListTile(
             leading: const Icon(Icons.info),

@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../helpers/sync_helper.dart';
 import '../l10n/app_localizations.dart';
 import '../main.dart';
+import '../providers/purchase_provider.dart';
 
 /// Shows cloud sync status and lets the user trigger a manual sync or restore.
 ///
@@ -46,7 +48,8 @@ class _SyncScreenState extends State<SyncScreen> {
         _lastSync = t;
         _statusMessage = success
             ? (l10n?.syncUploadSuccess ?? '✓ Backup uploaded successfully.')
-            : (l10n?.syncUploadFailed ?? 'Upload failed. Check your connection and try again.');
+            : (l10n?.syncUploadFailed ??
+                'Upload failed. Check your connection and try again.');
       });
     }
   }
@@ -79,8 +82,8 @@ class _SyncScreenState extends State<SyncScreen> {
         content: Text(
           l10n?.syncRestoreWarning ??
               '⚠️ This will overwrite your current data with the cloud backup.\n\n'
-              'Any changes made since your last backup will be lost. '
-              'Are you sure you want to restore?',
+                  'Any changes made since your last backup will be lost. '
+                  'Are you sure you want to restore?',
         ),
         actions: [
           TextButton(
@@ -115,9 +118,13 @@ class _SyncScreenState extends State<SyncScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final purchase = context.watch<PurchaseProvider>();
+    final hasPurchasedPlus = purchase.hasPurchasedPlus;
+    final hasTrial = purchase.hasActiveTrial;
     final isIos = Platform.isIOS;
     final cloudName = isIos ? 'iCloud' : 'Google Drive';
-    final cloudIcon = isIos ? Icons.cloud_outlined : Icons.add_to_drive_outlined;
+    final cloudIcon =
+        isIos ? Icons.cloud_outlined : Icons.add_to_drive_outlined;
 
     return Scaffold(
       appBar: AppBar(
@@ -135,11 +142,13 @@ class _SyncScreenState extends State<SyncScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(cloudIcon, size: 28,
+                      Icon(cloudIcon,
+                          size: 28,
                           color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 10),
                       Text(
-                        l10n?.syncCloudBackupTitle(cloudName) ?? '$cloudName Backup',
+                        l10n?.syncCloudBackupTitle(cloudName) ??
+                            '$cloudName Backup',
                         style: const TextStyle(
                             fontSize: 17, fontWeight: FontWeight.bold),
                       ),
@@ -150,14 +159,16 @@ class _SyncScreenState extends State<SyncScreen> {
                       ? Text(
                           l10n?.syncNeverSynced ?? 'Never synced yet.',
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         )
                       : Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(l10n?.syncLastSynced ?? 'Last synced:',
-                                style: const TextStyle(fontWeight: FontWeight.w500)),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w500)),
                             const SizedBox(height: 2),
                             Text(
                               _formatDateTime(_lastSync!),
@@ -187,7 +198,7 @@ class _SyncScreenState extends State<SyncScreen> {
 
           // ── Actions ──────────────────────────────────────────────
           FilledButton.icon(
-            onPressed: _isUploading ? null : _uploadNow,
+            onPressed: (!hasPurchasedPlus || _isUploading) ? null : _uploadNow,
             icon: _isUploading
                 ? const SizedBox(
                     width: 18,
@@ -202,7 +213,8 @@ class _SyncScreenState extends State<SyncScreen> {
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
-            onPressed: _isChecking ? null : _checkForBackup,
+            onPressed:
+                (!hasPurchasedPlus || _isChecking) ? null : _checkForBackup,
             icon: _isChecking
                 ? const SizedBox(
                     width: 18,
@@ -215,6 +227,26 @@ class _SyncScreenState extends State<SyncScreen> {
                 : (l10n?.syncCheckForBackup ?? 'Check for backup')),
           ),
           const SizedBox(height: 24),
+          if (!hasPurchasedPlus)
+            Card(
+              color: Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest
+                  .withValues(alpha: 0.55),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Text(
+                  hasTrial
+                      ? 'Cloud backup and restore unlock after you purchase Plus. Trials include the rest of Plus, but sync stays disabled.'
+                      : 'Cloud backup and restore are available after purchasing Plus.',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ),
+          if (!hasPurchasedPlus) const SizedBox(height: 24),
 
           // ── Info ─────────────────────────────────────────────────
           Card(
@@ -235,8 +267,8 @@ class _SyncScreenState extends State<SyncScreen> {
                   Text(
                     l10n?.syncHowItWorksBody(cloudName) ??
                         '• Your data is backed up to your own $cloudName — Avoid never sees it.\n'
-                        '• Backups happen automatically (at most every 10 minutes) after major actions.\n'
-                        '• To restore on a new device: install Avoid, sign in, then tap "Check for backup".',
+                            '• Backups happen automatically (at most every 10 minutes) after major actions.\n'
+                            '• To restore on a new device: install Avoid, sign in, then tap "Check for backup".',
                     style: TextStyle(
                       fontSize: 13,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,

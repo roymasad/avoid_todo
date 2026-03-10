@@ -23,6 +23,8 @@ void main() async {
   HomeWidget.setAppGroupId('group.com.roymassaad.avoid_todo');
 
   await PurchaseHelper.init();
+  final purchaseProvider = PurchaseProvider();
+  await purchaseProvider.refresh();
 
   final notificationHelper = NotificationHelper();
   try {
@@ -46,7 +48,7 @@ void main() async {
         providers: [
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           ChangeNotifierProvider(create: (_) => LocaleProvider()),
-          ChangeNotifierProvider(create: (_) => PurchaseProvider()),
+          ChangeNotifierProvider.value(value: purchaseProvider),
           ChangeNotifierProvider(create: (_) => XpProvider()),
           ChangeNotifierProvider(create: (_) => GoalProvider()),
         ],
