@@ -1,22 +1,88 @@
-# Avoid ToDo App
+# Avoid Todo
 
-A cool to-do app with a twist built with Flutter. 
-List the things you need to avoid doing!
-Based on this tutorial
-- [Flutter ToDo App Tutorial for Beginners](https://youtu.be/K4P5DZ9TRns)
+![Avoid Todo logo](assets/images/avoid_logo.png)
 
-Modified Theming
-Added SQL lite storage for persistence.
-Added side menu
-Added app icon and splash screen
+Avoid Todo is a Flutter app for tracking things you are trying not to do.
+Instead of a classic to-do list, it focuses on avoidance habits: streaks,
+relapses, triggers, money/time cost, reminders, and reflection.
 
-## Google Play Update Steps
+## What ships today
 
-### One-time setup (already done in this project)
+- Track multiple "things to avoid" with streaks, relapse counts, priorities,
+  tags, notes, and cost tracking.
+- Log relapses with trigger notes and follow-up reflections.
+- Attach a habit to a person or place to make the reminder more contextual.
+- Daily check-in notifications, weekly digest notifications, and relapse
+  follow-up prompts.
+- Statistics dashboard with streaks, relapse trends, savings, and export.
+- Archive flow for completed habits and past relapse reflections.
+- XP, levels, badges, goals, and a daily commitment flow.
+- Plus upgrade flow via RevenueCat.
+- Home screen widget support.
+- Cloud backup/sync using iCloud on iOS and Google Drive on Android.
+- Trusted support flow for preparing outreach after a relapse.
+- Localization in English, French, Spanish, Italian, Portuguese, and German.
 
-1. Keep your upload keystore at project root:
-   `upload-keystore.jks`
-2. Create `android/key.properties`:
+## Stack
+
+- Flutter / Dart
+- `provider` for state management
+- `sqflite` for local persistence
+- `flutter_local_notifications` for reminders
+- `purchases_flutter` / `purchases_ui_flutter` for monetization
+- `home_widget` for widgets
+- `google_sign_in` + Google Drive API for Android backup
+- `icloud_storage` for iOS backup
+
+## Project layout
+
+- `lib/main.dart`: app bootstrap, providers, onboarding gate, startup services
+- `lib/screens/`: main UI flows such as home, statistics, sync, onboarding
+- `lib/helpers/`: storage, notifications, purchases, sync, export, widgets
+- `lib/providers/`: app state for theme, locale, purchases, XP, goals
+- `lib/model/`: core data models
+- `lib/l10n/`: generated and source localization files
+- `test/`: widget and unit tests
+- `packages/flutter_contacts/`: vendored local package used by the app
+
+## Getting started
+
+### Prerequisites
+
+- Flutter SDK compatible with Dart `^3.5.3`
+- Xcode for iOS development
+- Android Studio / Android SDK for Android development
+
+### Install dependencies
+
+```bash
+flutter pub get
+```
+
+### Run the app
+
+```bash
+flutter run
+```
+
+Useful variants:
+
+```bash
+flutter devices
+flutter emulators
+flutter run -d <device_id>
+flutter run --release -d <device_id>
+```
+
+## Configuration notes
+
+### Android
+
+- Firebase Android config is already present in
+  `android/app/google-services.json`.
+- Release builds expect `android/key.properties` plus an upload keystore.
+
+Example `android/key.properties`:
 
 ```properties
 storePassword=YOUR_STORE_PASSWORD
@@ -25,61 +91,59 @@ keyAlias=upload
 storeFile=../upload-keystore.jks
 ```
 
-3. Ensure release signing is enabled in `android/app/build.gradle`:
-   `signingConfig = signingConfigs.release`
+### iOS
 
-### For every new Play Store update
+- The app includes iCloud entitlements and a widget extension.
+- Release signing still needs to be valid in Xcode for your Apple team.
+- If you change bundle identifiers, update the App Group / iCloud identifiers
+  as well.
 
-1. Bump app version in `pubspec.yaml`:
-   `version: 1.0.1+2`
-2. Run release build:
-   `flutter build appbundle --release 2>&1`
-   `flutter build appbundle --release`
-3. Upload generated bundle to Play Console:
-   `build/app/outputs/bundle/release/app-release.aab`
-4. In Play Console:
-   `App > Production (or your track) > Create new release > Upload .aab > Save > Review > Roll out`
+### Service integrations
 
-### Versioning rule
-
-- `build number` (the number after `+`) must always be higher than the last uploaded one.
-- Example sequence: `1.0.0+1`, `1.0.1+2`, `1.0.2+3`.
-
-## App Store Update Steps (iOS)
-
-### For every new App Store update
-
-1. Bump app version in `pubspec.yaml`:
-   `version: 1.0.1+2`
-2. Ensure Apple signing is valid in Xcode:
-   `ios/Runner.xcworkspace -> Runner target -> Signing & Capabilities -> Team + Automatically manage signing`
-3. Build/export IPA:
-   `flutter build ipa --release 2>&1`
-   `flutter build ipa --release --build-name 1.0.1 --build-number 2`
-4. Upload in App Store Connect: (archive first)
-   `My Apps -> Your App -> TestFlight/App Store -> Add build -> Submit for review`
-
-### If CLI build fails with signing/profile errors
-
-1. Open `ios/Runner.xcworkspace` in Xcode.
-2. Log in to your Apple account in:
-   `Xcode -> Settings -> Accounts`.
-3. In Runner signing settings, select your team and keep automatic signing enabled.
-4. Build once from Xcode (`Product -> Build`) to let Xcode fetch/create provisioning profiles.
-5. Archive and upload from Xcode:
-   `Product -> Archive -> Distribute App -> App Store Connect -> Upload`.
-
-
-## Updates and localization
-`flutter pub get`
-`flutter gen-l10n` (redudant now, it is integrated with the build)
+- RevenueCat is initialized in `lib/helpers/purchase_helper.dart`.
+- Android cloud backup uses Google Sign-In + Drive API.
+- iOS cloud backup uses iCloud documents storage.
+- Some features depend on native permissions such as contacts, notifications,
+  and location.
 
 ## Testing
-`flutter devices`
-`flutter run -d `
-`flutter run --release -d `
 
-`flutter emulators`
-`flutter emulators --launch `
+```bash
+flutter test
+```
 
-`flutter build apk --release`
+## Build and release
+
+### Android App Bundle
+
+1. Bump the version in `pubspec.yaml`.
+2. Ensure `android/key.properties` and the upload keystore are present.
+3. Build:
+
+```bash
+flutter build appbundle --release
+```
+
+Output:
+
+`build/app/outputs/bundle/release/app-release.aab`
+
+### iOS IPA
+
+1. Bump the version in `pubspec.yaml`.
+2. Confirm signing in `ios/Runner.xcworkspace`.
+3. Build:
+
+```bash
+flutter build ipa --release --build-name 1.0.5 --build-number 6
+```
+
+If CLI signing fails, archive and upload from Xcode instead.
+
+## Notes
+
+- `MONETIZATION.md` contains pricing and roadmap thinking. It is not the source
+  of truth for what is already shipped; the list above is based on the current
+  codebase.
+- This repository is a private app project and is not intended for `pub.dev`
+  publication.
