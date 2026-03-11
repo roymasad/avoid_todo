@@ -84,4 +84,28 @@ void main() {
       expect(pool, contains(picked));
     }
   });
+
+  test('free daily break limit only applies to non-plus access', () {
+    expect(
+      BreakHelper.hasReachedDailyFreeBreakLimit(
+        hasPlusAccess: false,
+        breakStartsToday: BreakHelper.maxFreeBreaksPerDay,
+      ),
+      isTrue,
+    );
+    expect(
+      BreakHelper.hasReachedDailyFreeBreakLimit(
+        hasPlusAccess: false,
+        breakStartsToday: BreakHelper.maxFreeBreaksPerDay - 1,
+      ),
+      isFalse,
+    );
+    expect(
+      BreakHelper.hasReachedDailyFreeBreakLimit(
+        hasPlusAccess: true,
+        breakStartsToday: BreakHelper.maxFreeBreaksPerDay + 20,
+      ),
+      isFalse,
+    );
+  });
 }

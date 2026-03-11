@@ -40,6 +40,7 @@ class BreakHelper {
   BreakHelper._();
 
   static const int xpHelpfulBreak = 5;
+  static const int maxFreeBreaksPerDay = 10;
   static const String sourceHelpfulBreak = 'helpful_break';
   static const String _recordSeparator = '\n%%\n';
   static final Map<String, List<BreakTriviaPrompt>> _triviaCache =
@@ -102,6 +103,13 @@ class BreakHelper {
       case BreakActivityType.zenRoom:
         return l10n.breakPersonalBestTime(score.toString());
     }
+  }
+
+  static bool hasReachedDailyFreeBreakLimit({
+    required bool hasPlusAccess,
+    required int breakStartsToday,
+  }) {
+    return !hasPlusAccess && breakStartsToday >= maxFreeBreaksPerDay;
   }
 
   static BreakActivityDefinition definitionFor(

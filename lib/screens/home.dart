@@ -2780,6 +2780,35 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     BreakActivityType? forcedActivity,
   }) async {
     if (todo.id == null) return;
+    final purchase = context.read<PurchaseProvider>();
+    final hasPlusAccess = purchase.hasPlusAccess;
+    if (!hasPlusAccess) {
+      final breakStartsToday = await DatabaseHelper.instance
+          .getBreakSessionCountForDay(DateTime.now());
+      if (!mounted) return;
+      if (BreakHelper.hasReachedDailyFreeBreakLimit(
+        hasPlusAccess: hasPlusAccess,
+        breakStartsToday: breakStartsToday,
+      )) {
+        await AppAnalytics.instance.trackEvent(
+          'break_daily_limit_reached',
+          parameters: {
+            'source_screen': 'home_tab',
+            'todo_id': todo.id,
+            'daily_break_starts': breakStartsToday,
+            'free_daily_limit': BreakHelper.maxFreeBreaksPerDay,
+          },
+        );
+        if (!mounted) return;
+        _showPlusDialog(
+          context,
+          subtitle:
+              'Free tier includes 10 break games per day. Start a free trial or unlock Plus for unlimited breaks.',
+          entryPoint: 'break_daily_limit_reached',
+        );
+        return;
+      }
+    }
 
     final previous =
         todo.id == null ? null : _lastBreakActivityByTodo[todo.id!];

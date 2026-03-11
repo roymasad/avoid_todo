@@ -669,6 +669,22 @@ class DatabaseHelper {
     return value?.toInt();
   }
 
+  Future<int> getBreakSessionCountForDay(DateTime day) async {
+    final db = await instance.database;
+    final startOfDay = DateTime(day.year, day.month, day.day);
+    final startOfNextDay = startOfDay.add(const Duration(days: 1));
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) AS count
+      FROM break_sessions
+      WHERE startedAt >= ?
+        AND startedAt < ?
+    ''', [
+      startOfDay.toIso8601String(),
+      startOfNextDay.toIso8601String(),
+    ]);
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
   Future<BreakSessionSummary> getBreakSummaryForTodo(String todoId) async {
     final db = await instance.database;
     final result = await db.rawQuery('''
