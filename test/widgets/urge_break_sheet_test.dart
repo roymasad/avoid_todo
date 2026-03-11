@@ -9,12 +9,14 @@ class _BreakHost extends StatefulWidget {
   final bool showTrustedSupport;
   final BreakActivityType activityType;
   final void Function(BreakSessionResult?) onResult;
+  final GlobalKey? sheetKey;
 
   const _BreakHost({
     required this.duration,
     required this.showTrustedSupport,
     required this.onResult,
     this.activityType = BreakActivityType.defuse,
+    this.sheetKey,
   });
 
   @override
@@ -30,6 +32,7 @@ class _BreakHostState extends State<_BreakHost> {
       enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (_) => UrgeBreakSheet(
+        key: widget.sheetKey,
         todo: ToDo(id: '1', todoText: 'Avoid midnight snack', tagIds: const []),
         activityType: widget.activityType,
         duration: widget.duration,
@@ -50,6 +53,14 @@ class _BreakHostState extends State<_BreakHost> {
       ),
     );
   }
+}
+
+Future<void> _completeCurrentActivity(
+    WidgetTester tester, GlobalKey sheetKey) async {
+  (sheetKey.currentState as dynamic).debugCompleteCurrentActivity();
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 200));
+  await tester.pump(const Duration(seconds: 1));
 }
 
 void main() {
@@ -109,12 +120,15 @@ void main() {
 
   testWidgets('finishing a completable activity opens feelings with replay',
       (WidgetTester tester) async {
+    final sheetKey = GlobalKey();
+
     await tester.pumpWidget(
       MaterialApp(
         home: _BreakHost(
-          duration: const Duration(seconds: 12),
+          duration: const Duration(seconds: 60),
           showTrustedSupport: false,
           onResult: (_) {},
+          sheetKey: sheetKey,
         ),
       ),
     );
@@ -123,29 +137,25 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    for (var i = 0; i < 180; i++) {
-      await tester.tap(find.byKey(const Key('defuse_safe_crack')));
-      await tester.pump(const Duration(milliseconds: 90));
-      if (find.byKey(const Key('break_outcome_view')).evaluate().isNotEmpty) {
-        break;
-      }
-    }
-    await tester.pump(const Duration(milliseconds: 200));
-    await tester.pump(const Duration(seconds: 1));
+    await _completeCurrentActivity(tester, sheetKey);
 
     expect(find.byKey(const Key('break_outcome_view')), findsOneWidget);
     expect(find.byKey(const Key('break_replay_activity')), findsOneWidget);
   });
 
-  testWidgets('replaying after a completed scored activity shows a personal best',
+  testWidgets(
+      'replaying after a completed scored activity shows a personal best',
       (WidgetTester tester) async {
+    final sheetKey = GlobalKey();
+
     await tester.pumpWidget(
       MaterialApp(
         home: _BreakHost(
-          duration: const Duration(seconds: 12),
+          duration: const Duration(seconds: 60),
           showTrustedSupport: false,
           activityType: BreakActivityType.defuse,
           onResult: (_) {},
+          sheetKey: sheetKey,
         ),
       ),
     );
@@ -154,15 +164,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    for (var i = 0; i < 180; i++) {
-      await tester.tap(find.byKey(const Key('defuse_safe_crack')));
-      await tester.pump(const Duration(milliseconds: 90));
-      if (find.byKey(const Key('break_outcome_view')).evaluate().isNotEmpty) {
-        break;
-      }
-    }
-    await tester.pump(const Duration(milliseconds: 200));
-    await tester.pump(const Duration(seconds: 1));
+    await _completeCurrentActivity(tester, sheetKey);
 
     await tester.tap(find.byKey(const Key('break_replay_activity')));
     await tester.pump();
@@ -176,14 +178,16 @@ void main() {
   testWidgets('best scored attempt survives replay and abort',
       (WidgetTester tester) async {
     BreakSessionResult? result;
+    final sheetKey = GlobalKey();
 
     await tester.pumpWidget(
       MaterialApp(
         home: _BreakHost(
-          duration: const Duration(seconds: 12),
+          duration: const Duration(seconds: 60),
           showTrustedSupport: false,
           activityType: BreakActivityType.defuse,
           onResult: (value) => result = value,
+          sheetKey: sheetKey,
         ),
       ),
     );
@@ -192,15 +196,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    for (var i = 0; i < 180; i++) {
-      await tester.tap(find.byKey(const Key('defuse_safe_crack')));
-      await tester.pump(const Duration(milliseconds: 90));
-      if (find.byKey(const Key('break_outcome_view')).evaluate().isNotEmpty) {
-        break;
-      }
-    }
-    await tester.pump(const Duration(milliseconds: 200));
-    await tester.pump(const Duration(seconds: 1));
+    await _completeCurrentActivity(tester, sheetKey);
 
     await tester.tap(find.byKey(const Key('break_replay_activity')));
     await tester.pump();

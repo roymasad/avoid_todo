@@ -844,4 +844,244 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get plusUnlockUnlimitedAvoidsHints =>
       'Unlimited avoids, break game hints';
+
+  @override
+  String get breakGamesSectionTitle => 'Break Games';
+
+  @override
+  String get breakRandomGamePoolTitle => 'Zufälliger Spielepool';
+
+  @override
+  String get breakGamePoolLockedSubtitle =>
+      'Starte einen kostenlosen Test oder schalte Plus frei, um auszuwählen, welche Break Games zufällig erscheinen.';
+
+  @override
+  String get breakKeepAtLeastOneActivityEnabled =>
+      'Lass mindestens eine Break-Aktivität aktiviert.';
+
+  @override
+  String breakActivityEnabledCount(int enabledCount, int totalCount) {
+    return '$enabledCount von $totalCount aktiviert';
+  }
+
+  @override
+  String get breakRandomGamePoolDescription =>
+      'Wähle aus, welche Break-Aktivitäten zufällig ausgewählt werden dürfen.';
+
+  @override
+  String get breakActivityDefuseTitle => 'Entschärfen';
+
+  @override
+  String get breakActivityDefuseSubtitle =>
+      'Nimm der Situation die Schärfe, indem du den Moment entschärfst.';
+
+  @override
+  String get breakActivityPairMatchTitle => 'Paare finden';
+
+  @override
+  String get breakActivityPairMatchSubtitle =>
+      'Lenke deinen Kopf auf eine kleine Gedächtnisaufgabe.';
+
+  @override
+  String get breakActivityCubeResetTitle => 'Würfel-Reset';
+
+  @override
+  String get breakActivityCubeResetSubtitle =>
+      'Drehe einen kleinen Würfel wieder in Ordnung.';
+
+  @override
+  String get breakActivityStackSweepTitle => 'Stapelräumung';
+
+  @override
+  String get breakActivityStackSweepSubtitle =>
+      'Nimm die freiliegenden Kacheln weg, bis der Stapel verschwunden ist.';
+
+  @override
+  String get breakActivityTriviaPivotTitle => 'Quiz-Pivot';
+
+  @override
+  String get breakActivityTriviaPivotSubtitle =>
+      'Gib deinem Kopf etwas anderes zum Beschäftigen.';
+
+  @override
+  String get breakActivityZenRoomTitle => 'Zen-Raum';
+
+  @override
+  String get breakActivityZenRoomSubtitle =>
+      'Fahr die Szene herunter und setze den Ton neu.';
+
+  @override
+  String breakPersonalBestTime(String value) {
+    return 'Bestwert: $value';
+  }
+
+  @override
+  String breakPersonalBestCorrect(int count) {
+    return 'Bestwert: $count richtig';
+  }
+
+  @override
+  String get breakExitTitle => 'Diese Pause verlassen?';
+
+  @override
+  String get breakExitBody =>
+      'Diese Sitzung wird als unvollständig markiert. Du kannst jederzeit sofort eine neue Pause starten.';
+
+  @override
+  String get breakStay => 'Bleiben';
+
+  @override
+  String get breakExit => 'Verlassen';
+
+  @override
+  String get breakCustomizationLockedSubtitle =>
+      'Starte einen kostenlosen Test oder schalte Plus frei, um Hinweise und Anpassungen für Break Games zu nutzen.';
+
+  @override
+  String get breakHintStrengthTitle => 'Hinweisstärke wählen';
+
+  @override
+  String get breakHintStrengthBody =>
+      'Willst du nur eine sanfte Hervorhebung oder den vollen Hinweis mit Pfeilen?';
+
+  @override
+  String get breakHintStrengthSubtle => 'Ein bisschen Hilfe';
+
+  @override
+  String get breakHintStrengthStrong => 'Viel Hilfe';
+
+  @override
+  String breakSheetTitle(String item) {
+    return 'Pause für \"$item\"';
+  }
+
+  @override
+  String get breakThisItem => 'dieses Element';
+
+  @override
+  String get breakResume => 'Fortsetzen';
+
+  @override
+  String get breakPause => 'Pause';
+
+  @override
+  String get breakDefuseInstruction =>
+      'Beruhige die Skala. Tippe auf Sperren, wenn der Zeiger in das ruhige Fenster gleitet.';
+
+  @override
+  String get breakDefuseTap => 'Tippen';
+
+  @override
+  String get breakDefuseCompleteStatus =>
+      'Gut. Der Mechanismus ist jetzt ruhig. Atme weiter, bis die Minute vorbei ist.';
+
+  @override
+  String breakDefuseRingsLeft(int count) {
+    return '$count Ringe übrig. Bleib im Rhythmus.';
+  }
+
+  @override
+  String get breakDefuseWaitStatus =>
+      'Warte, bis der Zeiger das leuchtende Fenster kreuzt, und tippe dann.';
+
+  @override
+  String get breakHintsLocked => 'Hinweise gesperrt';
+
+  @override
+  String get breakHintsOn => 'Hinweise an';
+
+  @override
+  String get breakHintsOff => 'Hinweise aus';
+
+  @override
+  String get breakHintsSubtle => 'Hinweise: etwas';
+
+  @override
+  String get breakHintsStrong => 'Hinweise: viel';
+
+  @override
+  String get breakPairMatchInstruction =>
+      'Finde die passenden Emoji-Paare. Kleine Mustersuchen eignen sich gut, um den Autopiloten zu unterbrechen.';
+
+  @override
+  String breakPairMatchProgress(int matchedCount, int totalCount) {
+    return '$matchedCount von $totalCount Paaren gefunden';
+  }
+
+  @override
+  String get breakCubeResetInstruction =>
+      'Ziehe, um den Würfel zu drehen. Wische über sichtbare Sticker, um Ebenen zu bewegen.';
+
+  @override
+  String breakCubeResetProgress(
+      int solvedCount, int totalCount, int twistCount) {
+    return '$solvedCount von $totalCount Seiten in $twistCount Zügen gelöst';
+  }
+
+  @override
+  String breakStackSweepTilesLeft(int count) {
+    return '$count Kacheln übrig';
+  }
+
+  @override
+  String breakTriviaCorrectInsight(String insight) {
+    return 'Richtig. $insight';
+  }
+
+  @override
+  String breakTriviaIncorrectInsight(String insight) {
+    return 'Guter Versuch. $insight';
+  }
+
+  @override
+  String get breakNext => 'Weiter';
+
+  @override
+  String get breakZenTapDrop => 'Tippe auf einen Tropfen';
+
+  @override
+  String get breakZenFooter =>
+      'Fang einen Tropfen, wenn du eine neue Zeile willst. Verfehlte Taps machen absichtlich nichts.';
+
+  @override
+  String get breakCheckInTitle => 'Einchecken';
+
+  @override
+  String get breakOutcomeQuestion =>
+      'Was hat sich nach dieser einminütigen Pause verändert?';
+
+  @override
+  String get breakReplayActivity => 'Aktivität wiederholen';
+
+  @override
+  String get breakContinueActivity => 'Weiterspielen / meditieren';
+
+  @override
+  String get breakOutcomePassed => 'Drang vorbei';
+
+  @override
+  String get breakOutcomeWeaker => 'Drang schwächer';
+
+  @override
+  String get breakOutcomeStillStrong => 'Immer noch stark';
+
+  @override
+  String get breakNeedAnotherLayer => 'Noch eine Ebene nötig?';
+
+  @override
+  String get breakTryAnotherBreak => 'Noch eine Pause versuchen';
+
+  @override
+  String get breakGoToZenRoom => 'Zum Zen-Raum';
+
+  @override
+  String get breakMessageSupport => 'Support schreiben';
+
+  @override
+  String get breakTriviaData =>
+      'Welcher Planet hat den kürzesten Tag?\nErde\nJupiter\nMars\nJupiter dreht sich so schnell, dass ein Tag dort nur etwa 10 Stunden dauert.\n%%\nWie viele Herzen hat ein Oktopus?\nEins\nDrei\nZwei\nDrei. Zwei für die Kiemen und eins für den restlichen Körper.\n%%\nWelches ist das einzige Säugetier, das wirklich fliegen kann?\nFlughörnchen\nFledermaus\nZuckergleiter\nFledermäuse sind die einzigen Säugetiere, die dauerhaft fliegen können.\n%%\nWelcher Ozean ist der tiefste?\nAtlantik\nPazifik\nIndischer Ozean\nDer Marianengraben liegt im Pazifischen Ozean.\n%%\nWie viele Knochen hat ein erwachsener Mensch normalerweise?\n186\n206\n226\n206 ist die übliche Anzahl, nachdem einige Knochen im Erwachsenenalter zusammengewachsen sind.\n%%\nWelches Tier ist dafür bekannt, kopfüber zu schlafen?\nKoala\nFledermaus\nOtter\nFledermäuse hängen kopfüber, damit sie schnell losfliegen können.\n%%\nWelches Gas nehmen Pflanzen hauptsächlich aus der Luft auf?\nSauerstoff\nKohlendioxid\nHelium\nPflanzen nutzen Kohlendioxid bei der Photosynthese.\n%%\nWelches Instrument hat normalerweise 88 Tasten?\nVioline\nKlavier\nFlöte\nEin Standardklavier hat 88 Tasten.\n%%\nWie viele Seiten hat ein Hexagon?\n5\n6\n8\nHexa bedeutet sechs.\n%%\nWelcher Vogel wird oft mit dem Überbringen von Nachrichten verbunden?\nPapagei\nBrieftaube\nEule\nBrieftauben wurden genutzt, um Nachrichten über große Entfernungen zu senden.\n%%\nWas ist das größte Organ im menschlichen Körper?\nLeber\nHaut\nLunge\nDie Haut ist das größte Organ des Körpers.\n%%\nWelche Schachfigur bewegt sich in einer L-Form?\nLäufer\nSpringer\nTurm\nDer Springer ist die einzige Schachfigur, die sich in einem L-Muster bewegt.\n%%\nWie viele Kontinente gibt es?\n5\n7\n6\nIm Standardmodell gibt es sieben Kontinente.\n%%\nWas sammeln Bienen aus Blumen?\nKiesel\nNektar\nSalz\nBienen sammeln Nektar und Pollen aus Blumen.\n%%\nWelcher Monat hat die wenigsten Tage?\nApril\nFebruar\nNovember\nDer Februar ist am kürzesten und hat in den meisten Jahren 28 Tage.\n%%\nIn welcher Sportart verwendet man einen Federball?\nTennis\nBadminton\nSquash\nBeim Badminton spielt man mit einem Federball statt mit einem Ball.\n%%\nWelche Farbe erhält man, wenn man Blau und Gelb mischt?\nLila\nGrün\nOrange\nBlau und Gelb ergeben zusammen Grün.\n%%\nWelcher Planet ist berühmt für seine Ringe?\nVenus\nSaturn\nMerkur\nDie Ringe des Saturn sind sein bekanntestes Merkmal.\n%%\nWie viele Minuten sind zwei Stunden?\n90\n120\n180\nZwei Stunden sind 120 Minuten.\n%%\nWelches Meerestier hat acht Arme?\nKalmar\nOktopus\nSeestern\nOktopusse haben acht Arme; Kalmare haben zehn Anhänge.\n%%\nWie nennt man gefrorenes Wasser?\nDampf\nEis\nNebel\nEis ist Wasser in fester Form.\n%%\nAus welcher Richtung geht die Sonne auf?\nNord\nOsten\nWesten\nDie Sonne scheint im Osten aufzugehen.\n%%\nWelches Säugetier verbringt den größten Teil seines Lebens im Ozean?\nKamel\nWal\nFuchs\nWale sind Meeressäugetiere.\n%%\nWelche Form hat drei Seiten?\nKreis\nDreieck\nRechteck\nEin Dreieck hat genau drei Seiten.\n%%\nWelche Frucht wird getrocknet zu einer Rosine?\nPflaume\nTraube\nKirsche\nRosinen sind getrocknete Trauben.\n%%\nWie heißt der Hauptstern im Zentrum unseres Sonnensystems?\nPolarstern\nDie Sonne\nSirius\nDie Sonne ist der Stern, um den unsere Planeten kreisen.\n%%\nWie viele Tage hat ein Schaltjahr?\n365\n366\n364\nIn einem Schaltjahr kommt ein zusätzlicher Tag im Februar dazu, also insgesamt 366 Tage.\n%%\nWelches Tier ist dafür bekannt, seine Farbe zur Tarnung zu ändern?\nKaninchen\nChamäleon\nPinguin\nChamäleons sind berühmt dafür, ihre Farbe zu verändern.\n%%\nWie nennt man geschmolzenes Gestein, nachdem es die Oberfläche erreicht hat?\nMagma\nLava\nQuarz\nUnter der Erde heißt es Magma; an der Oberfläche Lava.\n%%\nWelcher Zeiger einer Uhr bewegt sich am schnellsten?\nStundenzeiger\nSekundenzeiger\nMinutenzeiger\nDer Sekundenzeiger macht jede Minute einen vollen Kreis.\n%%\nWelche Jahreszeit kommt auf der Nordhalbkugel nach dem Frühling?\nWinter\nSommer\nHerbst\nAuf den Frühling folgt der Sommer.\n%%\nWie viele Beine hat eine Spinne?\n6\n8\n10\nSpinnen sind Spinnentiere mit acht Beinen.\n%%\nWelcher Ozean liegt zwischen Afrika und Australien?\nPazifischer Ozean\nIndischer Ozean\nArktischer Ozean\nDer Indische Ozean liegt zwischen Afrika, Asien und Australien.\n%%\nWas werden Raupen?\nLibellen\nSchmetterlinge\nKäfer\nViele Raupen verwandeln sich in Schmetterlinge oder Motten.\n%%\nWelcher Haushaltsgegenstand zeigt die Temperatur an?\nKompass\nThermometer\nWaage\nEin Thermometer misst die Temperatur.\n%%\nWie viele Saiten hat eine Standardgeige?\n5\n4\n6\nGeigen haben normalerweise vier Saiten.\n%%\nWelcher Planet ist der Sonne am nächsten?\nMars\nMerkur\nNeptun\nMerkur ist der Sonne am nächsten.\n%%\nWie hoch ist der Siedepunkt von Wasser auf Meereshöhe in Grad Celsius?\n90\n100\n110\nAuf Meereshöhe kocht Wasser bei 100 °C.\n%%\nWelches Tier ist berühmt für den Bau von Dämmen?\nOtter\nBiber\nMaulwurf\nBiber bauen Dämme aus Ästen und Schlamm.\n%%\nWas ist das Gegenteil von Norden auf einem Kompass?\nOsten\nSüden\nWesten\nSüden ist das Gegenteil von Norden.\n%%\nWelche Form hat keine Ecken?\nQuadrat\nKreis\nDreieck\nKreise haben keine Ecken oder Kanten.\n%%\nWelcher Planet ist als der Rote Planet bekannt?\nVenus\nMars\nUranus\nMars erscheint wegen Eisenoxid auf seiner Oberfläche rot.\n%%\nWie viele Stunden hat ein voller Tag?\n12\n24\n36\nEin voller Tag hat 24 Stunden.\n%%\nWomit schreibt man auf eine Tafel?\nTinte\nKreide\nWachsmalstift\nKreide ist das klassische Schreibwerkzeug für Tafeln.\n%%\nWelches Tier ist an Land das größte?\nElefant\nGiraffe\nKamel\nGiraffen sind die größten Landtiere.\n%%\nWelcher Sinn ist am stärksten mit deiner Nase verbunden?\nGeschmack\nGeruch\nTastsinn\nDie Nase ist für den Geruchssinn zuständig.\n%%\nWelches Küchenwerkzeug benutzt man, um Pfannkuchen zu wenden?\nSchneebesen\nPfannenwender\nKelle\nEin Pfannenwender wird oft benutzt, um Pfannkuchen zu wenden.\n%%\nWelche Zahl kommt nach 999?\n1001\n1000\n990\nAuf 999 folgt 1000.\n%%\nWelcher Planet ist am weitesten von der Sonne entfernt?\nSaturn\nNeptun\nErde\nNeptun ist derzeit der am weitesten entfernte anerkannte Planet der Sonne.\n%%\nWie nennt man ein Wort, das das Gegenteil eines anderen Wortes bedeutet?\nSynonym\nAntonym\nAkronym\nEin Antonym ist ein Wort mit entgegengesetzter Bedeutung.\n%%\nWelches Metall ist bei Raumtemperatur flüssig?\nEisen\nQuecksilber\nSilber\nQuecksilber ist eines der wenigen Metalle, das bei Raumtemperatur flüssig ist.\n%%\nWas ist die härteste natürliche Substanz auf der Erde?\nGold\nDiamant\nQuarz\nDiamant ist das härteste natürlich vorkommende Material.\n%%\nWelche Blutgruppe gilt als Universalspender?\nAB positiv\nO negativ\nA positiv\nO-negatives Blut kann in Notfällen meist den meisten Menschen gegeben werden.\n%%\nWie nennt man Tiere, die nachts aktiv sind?\nAquatisch\nNachtaktiv\nWandernd\nNachtaktive Tiere sind vor allem nachts aktiv.\n%%\nWelche Sprache hat weltweit die meisten Muttersprachler?\nEnglisch\nMandarin-Chinesisch\nSpanisch\nMandarin-Chinesisch hat die höchste Zahl an Muttersprachlern weltweit.\n%%\nWelches Land ist berühmt für das Ahornblatt-Symbol?\nSchweden\nKanada\nNeuseeland\nDas Ahornblatt ist eines der bekanntesten Nationalsymbole Kanadas.\n%%\nWas ist die Hauptzutat von Guacamole?\nGurke\nAvocado\nErbse\nGuacamole wird hauptsächlich aus zerdrückter Avocado gemacht.\n%%\nWelcher Planet rotiert stärker auf der Seite als die anderen?\nErde\nUranus\nJupiter\nUranus hat eine extreme Achsneigung und scheint auf der Seite zu rotieren.\n%%\nWie viele Zähne hat ein erwachsener Mensch normalerweise einschließlich der Weisheitszähne?\n28\n32\n30\nEin vollständiges Erwachsenengebiss hat normalerweise 32 Zähne.\n%%\nWelche Wüste ist die größte heiße Wüste der Erde?\nGobi\nSahara\nMojave\nDie Sahara ist die größte heiße Wüste der Welt.\n%%\nWie nennt man einen Wissenschaftler, der Gesteine untersucht?\nBiologe\nGeologe\nAstronom\nGeologen untersuchen Gesteine, Mineralien und den Aufbau der Erde.\n%%\nWelches Organ pumpt Blut durch den Körper?\nLeber\nHerz\nNiere\nDas Herz pumpt Blut durch den Kreislauf.\n%%\nWelche Frucht hat ihre Samen außen?\nHeidelbeere\nErdbeere\nApfel\nErdbeeren sind ungewöhnlich, weil ihre Samen außen sitzen.\n%%\nWie nennt man den Prozess, wenn Wasserdampf zu Flüssigkeit wird?\nVerdunstung\nKondensation\nGefrieren\nKondensation entsteht, wenn Wasserdampf abkühlt und zu Flüssigkeit wird.\n%%\nWelche berühmte Mauer wurde gebaut, um Nordchina zu schützen?\nBerliner Mauer\nChinesische Mauer\nHadrianswall\nDie Chinesische Mauer wurde über Jahrhunderte gebaut und erweitert.\n%%\nWie viele Spieler hat eine Fußballmannschaft gleichzeitig auf dem Feld?\n9\n11\n10\nEine Fußballmannschaft hat 11 Spieler auf dem Feld, einschließlich des Torwarts.\n%%\nWelcher Vogel kann nicht fliegen, ist aber berühmt dafür, in der Antarktis zu leben?\nMöwe\nPinguin\nFalke\nPinguine sind flugunfähige Vögel, die stark mit der Antarktis verbunden sind.\n%%\nWas ist 12 mal 12?\n124\n144\n154\n12 mal 12 ergibt 144.\n%%\nWelches Gas brauchen Menschen zum Atmen?\nStickstoff\nSauerstoff\nWasserstoff\nMenschen brauchen Sauerstoff für die Atmung.\n%%\nWas ist der größte Planet in unserem Sonnensystem?\nSaturn\nJupiter\nNeptun\nJupiter ist der größte Planet in unserem Sonnensystem.\n%%\nIn welchem Körperteil befindet sich der Oberschenkelknochen?\nArm\nBein\nSchädel\nDer Oberschenkelknochen ist der Knochen im Oberschenkel des Beins.\n%%\nWelcher berühmte Turm neigt sich in Italien?\nEiffelturm\nSchiefer Turm von Pisa\nCN Tower\nDer Schiefe Turm von Pisa ist eines der bekanntesten Wahrzeichen Italiens.\n%%\nWie viele Nullen hat eine Million?\n5\n6\n7\nEine Million wird als 1.000.000 geschrieben.\n%%\nWelches Meerestier ist dafür bekannt, einen Panzer zu haben und sich an Land langsam zu bewegen?\nSeehund\nSchildkröte\nDelfin\nMeeresschildkröten haben Panzer und bewegen sich an Land langsam.\n%%\nWie nennt man den farbigen Teil des Auges?\nNetzhaut\nIris\nPupille\nDie Iris ist der farbige Ring um die Pupille.\n%%\nWelches Instrument benutzt man, um Sterne und Planeten zu betrachten?\nMikroskop\nTeleskop\nPeriskop\nEin Teleskop ist dafür gemacht, weit entfernte Objekte im Weltraum zu beobachten.\n%%\nWelcher Feiertag ist bekannt für Kürbisse und Kostüme?\nOstern\nHalloween\nValentinstag\nHalloween ist mit Kostümen, Süßigkeiten und Kürbissen verbunden.\n%%\nWas ist 100 geteilt durch 4?\n20\n25\n40\n100 geteilt durch 4 ergibt 25.\n%%\nWelches Tier ist als König des Dschungels bekannt?\nTiger\nLöwe\nWolf\nDer Löwe wird oft als König des Dschungels bezeichnet.\n%%\nWas ziehen Magnete an?\nHolz\nEisen\nPlastik\nMagnete ziehen Eisen und einige andere Metalle stark an.\n%%\nWelcher Tag kommt nach Freitag?\nDonnerstag\nSamstag\nSonntag\nAuf Freitag folgt Samstag.\n%%\nWelcher Berg ist über dem Meeresspiegel der höchste?\nK2\nMount Everest\nKilimandscharo\nMount Everest ist der höchste Berg über dem Meeresspiegel.\n%%\nWelches Insekt leuchtet im Dunkeln?\nAmeise\nGlühwürmchen\nHeuschrecke\nGlühwürmchen erzeugen Licht durch Biolumineszenz.\n%%\nWie viele Monate hat ein Jahr?\n10\n12\n14\nEin normales Jahr hat 12 Monate.\n%%\nWelches Werkzeug benutzt man beim Basteln, um Papier zu schneiden?\nLöffel\nSchere\nPinsel\nScheren werden oft benutzt, um Papier zu schneiden.\n%%\nWelcher Planet ist bekannt für einen riesigen roten Sturm?\nMars\nJupiter\nVenus\nJupiters Großer Roter Fleck ist ein gewaltiger, lang anhaltender Sturm.\n%%\nWas ist die Hauptaufgabe der Wurzeln einer Pflanze?\nBlumen zum Singen bringen\nWasser aufnehmen\nSonnenlicht einfangen\nWurzeln helfen, die Pflanze zu verankern und Wasser sowie Nährstoffe aufzunehmen.\n%%\nWelche Form hat vier gleich lange Seiten und vier rechte Winkel?\nDreieck\nQuadrat\nOval\nEin Quadrat hat vier gleich lange Seiten und vier rechte Winkel.\n%%\nWelches Land ist berühmt für die Pyramiden von Gizeh?\nMexiko\nÄgypten\nIndien\nDie Pyramiden von Gizeh stehen in Ägypten.\n%%\nWie nennt man gefrorenen Regen, der als kleine Körner fällt?\nNebel\nSchneeregen\nDampf\nSchneeregen ist gefrorener Niederschlag, der als kleine Körner fällt.\n%%\nWelches Gewässer trennt Europa und Afrika in der Nähe Spaniens?\nÄrmelkanal\nStraße von Gibraltar\nBeringstraße\nDie Straße von Gibraltar liegt zwischen Südspanien und Nordafrika.\n%%\nWie viele Räder hat ein normales Fahrrad?\n1\n2\n3\nEin normales Fahrrad hat zwei Räder.\n%%\nWelches Tier ist dafür bekannt, sein Haus auf dem Rücken zu tragen?\nEidechse\nSchnecke\nIgel\nEine Schnecke trägt ihr Haus auf dem Rücken.\n%%\nWelche Hauptfarbe hat Chlorophyll?\nRot\nGrün\nBlau\nChlorophyll ist das grüne Pigment, mit dem Pflanzen Licht aufnehmen.\n%%\nWelcher bewohnte Kontinent ist der trockenste?\nAfrika\nAustralien\nEuropa\nAustralien ist der trockenste bewohnte Kontinent.\n%%\nWie nennt man eine Gruppe von Löwen?\nRudel\nStolz\nHerde\nEine Gruppe von Löwen nennt man Stolz.\n%%\nWelches Instrument hat Pedale und findet man oft in Kirchen?\nTrompete\nOrgel\nTrommel\nPfeifenorgeln haben oft sowohl Klaviaturen als auch Pedale.\n%%\nWelche häufige Küchenzutat lässt Brot aufgehen?\nSalz\nHefe\nPfeffer\nHefe erzeugt Gas, das den Brotteig aufgehen lässt.\n%%\nWas ist 7 mal 8?\n54\n56\n58\n7 mal 8 ergibt 56.\n%%\nWelcher Teil der Erde besteht größtenteils aus geschmolzenem Metall?\nKruste\nKern\nOzean\nDer Erdkern besteht größtenteils aus Metall, und sein äußerer Kern ist geschmolzen.';
+
+  @override
+  String get breakZenFortunesData =>
+      'Mach erst eine Pause. Schwung ist kein Schicksal.\n%%\nDer Drang ist laut. Er hat nicht das Sagen.\n%%\nGib diesem Moment noch 10 Atemzüge, bevor du irgendetwas entscheidest.\n%%\nKleine Umwege zählen. Du hast die Spirale schon unterbrochen.\n%%\nWenn dein Kopf stürmt, verkleinere den Horizont auf die nächste Minute.\n%%\nNichts Dauerhaftes muss mitten in einer vorübergehenden Welle entschieden werden.\n%%\nDu musst nicht dem ersten Impuls folgen, der auftaucht.\n%%\nVersuche, diese Minute kleiner, weicher und langsamer zu machen.\n%%\nDu darfst den Drang aufschieben, ohne ihn für immer besiegen zu müssen.\n%%\nDer Sieg ist nicht Perfektion. Der Sieg ist Raum.\n%%\nEin ruhigerer nächster Schritt ist besser als ein dramatischer.\n%%\nBemerke den Drang. Benenne ihn. Gib ihm keine Geschichte.\n%%\nDein Nervensystem braucht Fürsorge, nicht Strafe.\n%%\nEine sanfte Unterbrechung kann den ganzen Moment umlenken.\n%%\nAtme so, als würdest du einem Freund helfen, nicht dich selbst schimpfen.\n%%\nWenn es scharf wirkt, antworte mit Sanftheit und Struktur.\n%%\nDu kannst dich unwohl fühlen, ohne in Gefahr zu sein.\n%%\nDer Moment ist intensiv. Er ist trotzdem veränderbar.\n%%\nGib dem Verlangen weniger Bühne und mehr Abstand.\n%%\nEin verschobenes Ja wird oft zu einem friedlichen Nein.\n%%\nDer Körper beruhigt sich schneller, wenn du aufhörst, mit ihm zu streiten.\n%%\nWähle die nächste Minute, nicht die ganze Zukunft.\n%%\nHol erst Luft, bevor du deinen Gedanken folgst.\n%%\nDein Fortschritt besteht aus kleinen Unterbrechungen wie dieser.\n%%\nEine Pause ist keine Schwäche. Sie ist Steuerung.\n%%\nLass die Welle durchziehen; du musst ihr kein Zuhause bauen.\n%%\nDer Drang darf anklopfen. Einziehen darf er nicht.\n%%\nSenke die Bedeutung dieser Minute, dann wird sie leichter zu tragen.\n%%\nDu bist nicht zu spät. Du übst die Pause in Echtzeit.\n%%\nEin weicheres Nervensystem trifft klügere Entscheidungen.\n%%\nDu kannst verschieben, ohne deine Menschlichkeit zu verleugnen.\n%%\nDas Verlangen will Tempo. Antworte mit Ruhe.\n%%\nDas ist ein Kontrollpunkt, kein Urteil über deinen Charakter.\n%%\nBleib für einen Atemzug beim Körper, bevor du der Geschichte folgst.\n%%\nEin wenig Raum jetzt ist echter Fortschritt.\n%%\nDu hast starke Dränge schon überstanden, ohne ihnen zu folgen.\n%%\nDie nächste freundliche Handlung kann sehr klein sein und trotzdem zählen.\n%%\nRuhe entsteht oft durch Wiederholung, nicht durch Offenbarung.\n%%\nUnterbrechungen wie diese zeigen deinem Gehirn einen neuen Weg.\n%%\nEine Minute Abstand kann eine Stunde Reue sparen.\n%%\nDu darfst Erleichterung wollen und trotzdem klug wählen.\n%%\nMach weniger. Werde langsamer. Lass erst die Hitze sinken.\n%%\nDer Kopf wird leiser, wenn sich der Körper sicherer fühlt.\n%%\nDu kannst das Gefühl würdigen, ohne es auszuleben.\n%%\nDieser Moment braucht kein Drama; er braucht Raum.\n%%\nVersuch, Kiefer, Schultern und den Zeitdruck zu lockern.\n%%\nDu steuerst jetzt, auch wenn die Kurve sanft ist.\n%%\nAtme tief und langsam; lass die Dringlichkeit ihren Einsatz verpassen.\n%%\nVerlangen steigt oft schnell an und fällt ab, wenn es nicht gefüttert wird.\n%%\nDiese Pause verändert das Ende schon.\n%%\nDu brauchst keinen perfekten Plan für einen besseren nächsten Schritt.\n%%\nGib dem Impuls etwas Langeweile, dann wird er oft schwächer.\n%%\nEs ist Stärke, für den Drang weniger verfügbar zu sein.\n%%\nEin ruhiger Körper kann einen lauten Kopf sicherer halten.\n%%\nLass das ein Neustart sein, keine Debatte.\n%%\nDie Zukunft, die du schützt, entsteht in genau solchen Momenten.\n%%\nAuch wenn du nur die Spirale verschiebst, zählt das.\n%%\nBeruhige zuerst das Nervensystem; Bedeutung kann warten.\n%%\nEine kluge Pause fühlt sich oft gewöhnlich an, während sie passiert.\n%%\nDu zeigst dir selbst, dass Dringlichkeit keine Autorität ist.\n%%\nKleine saubere Entscheidungen bauen stille Zuversicht auf.\n%%\nDie schnellste Erleichterung ist nicht immer die wahrste.\n%%\nMach den nächsten Atemzug zu deiner ganzen Aufgabe.\n%%\nReduziere das Rauschen, dann entscheide.\n%%\nDu kannst diesem Moment mit weniger Härte begegnen.\n%%\nDer Drang will Aufmerksamkeit; gib ihm lieber Beobachtung.\n%%\nEs gibt keine Regel, die sagt, dass du das alte Muster fortsetzen musst.\n%%\nSchon ein teilweises Langsamerwerden ist ein echter Gewinn.\n%%\nDu bist nicht im ersten Gefühl gefangen.\n%%\nEine bessere Entscheidung beginnt oft mit einem langsameren Körper.\n%%\nSanftheit ist hier erlaubt.\n%%\nDu kannst noch eine Minute neugierig statt reaktiv bleiben.\n%%\nLass deinen Atem das Tempo setzen.\n%%\nDer Sturm in deinem Kopf muss nicht zum Wetter deines Lebens werden.\n%%\nStabilität sind oft nur ein paar ruhigere Sekunden, immer wieder.';
 }

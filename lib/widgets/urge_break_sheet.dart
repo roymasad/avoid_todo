@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../helpers/break_helper.dart';
 import '../helpers/database_helper.dart';
+import '../l10n/app_localizations.dart';
 import '../model/break_session.dart';
 import '../model/todo.dart';
 import '../providers/purchase_provider.dart';
@@ -145,13 +146,16 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   bool _pairLocked = false;
   bool _pairHintsEnabled = false;
   bool _defuseHintsEnabled = false;
+  String? _localizedLocaleName;
   List<int> _triviaOrder = const [];
   List<List<int>> _triviaOptionOrders = const [];
+  List<BreakTriviaPrompt> _triviaPrompts = const [];
   int _triviaIndex = 0;
   int? _triviaSelectedAnswer;
   bool _triviaHintsEnabled = false;
   int _triviaCorrectCount = 0;
   String? _zenFortune;
+  List<String> _zenFortunes = const [];
   List<double> _zenDropXSeeds = const [];
   List<double> _zenDropOffsets = const [];
   List<double> _zenDropSpeeds = const [];
@@ -188,7 +192,6 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     _startedAt = DateTime.now();
     _attemptStartedAt = _startedAt;
     _secondsRemaining = widget.duration.inSeconds;
-    _randomizeActivityState();
     _loadPersonalBestScore();
     if (widget.activityType == BreakActivityType.zenRoom) {
       _ambientController.repeat();
@@ -200,6 +203,20 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
       _startDefuseDial();
     }
     _startTicker();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final l10n = AppLocalizations.of(context) ??
+        lookupAppLocalizations(const Locale('en'));
+    if (_localizedLocaleName == l10n.localeName) {
+      return;
+    }
+    _localizedLocaleName = l10n.localeName;
+    _triviaPrompts = BreakHelper.triviaPrompts(l10n);
+    _zenFortunes = BreakHelper.zenFortunes(l10n);
+    _randomizeActivityState();
   }
 
   Future<void> _loadPersonalBestScore() async {
@@ -235,22 +252,24 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
 
   Future<bool> _handleExitRequest() async {
     if (_finished) return true;
+    final l10n = AppLocalizations.of(context) ??
+        lookupAppLocalizations(const Locale('en'));
 
     final shouldExit = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Leave this break?'),
-            content: const Text(
-              'This session will be marked as incomplete. You can always start another break right away.',
+            title: Text(l10n.breakExitTitle),
+            content: Text(
+              l10n.breakExitBody,
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Stay'),
+                child: Text(l10n.breakStay),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('Exit'),
+                child: Text(l10n.breakExit),
               ),
             ],
           ),
@@ -287,6 +306,10 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
         endedAt: DateTime.now(),
       ),
     );
+  }
+
+  void debugCompleteCurrentActivity() {
+    _handleActivityCompleted();
   }
 
   void _togglePause() {
@@ -345,7 +368,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     return max(best, current);
   }
 
-  String? _personalBestText() {
+  String? _personalBestText(AppLocalizations l10n) {
     final currentScore = _scoreToPersist();
     if (!BreakHelper.supportsPersonalBest(widget.activityType)) {
       return null;
@@ -365,17 +388,18 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     if (best == null || best <= 0) {
       return null;
     }
-    return BreakHelper.personalBestLabel(widget.activityType, best);
+    return BreakHelper.personalBestLabel(widget.activityType, best, l10n);
   }
 
   bool get _hasBreakCustomizationAccess =>
       Provider.of<PurchaseProvider?>(context, listen: false)?.isPlus ?? true;
 
   void _showBreakCustomizationLockedDialog(String entryPoint) {
+    final l10n = AppLocalizations.of(context) ??
+        lookupAppLocalizations(const Locale('en'));
     showPlusUpgradeDialog(
       context,
-      subtitle:
-          'Start a free trial or unlock Plus to use break game hints and customization.',
+      subtitle: l10n.breakCustomizationLockedSubtitle,
       entryPoint: entryPoint,
     );
   }
@@ -498,20 +522,20 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     _defuseDialController
       ..duration = Duration(milliseconds: _defuseBaseDialPeriodMs)
       ..value = _random.nextDouble();
-    _triviaOrder =
-        List<int>.generate(BreakHelper.triviaPrompts.length, (i) => i)
-          ..shuffle(_random);
+    _triviaOrder = List<int>.generate(_triviaPrompts.length, (i) => i)
+      ..shuffle(_random);
     _triviaOptionOrders = List<List<int>>.generate(
-      BreakHelper.triviaPrompts.length,
+      _triviaPrompts.length,
       (promptIndex) => List<int>.generate(
-        BreakHelper.triviaPrompts[promptIndex].options.length,
+        _triviaPrompts[promptIndex].options.length,
         (optionIndex) => optionIndex,
       )..shuffle(_random),
     );
     _triviaIndex = 0;
     _triviaHintsEnabled = false;
-    _zenFortune = BreakHelper
-        .zenFortunes[_random.nextInt(BreakHelper.zenFortunes.length)];
+    _zenFortune = _zenFortunes.isEmpty
+        ? null
+        : _zenFortunes[_random.nextInt(_zenFortunes.length)];
     _zenDropXSeeds = List<double>.generate(14, (_) => _random.nextDouble());
     _zenDropOffsets = List<double>.generate(14, (_) => _random.nextDouble());
     _zenDropSpeeds =
@@ -582,7 +606,8 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     final score = completedAt.difference(_attemptStartedAt).inMilliseconds;
     setState(() {
       _activityCompletedAt = completedAt;
-      _bestScoreEarnedThisSheet = _mergeScores(_bestScoreEarnedThisSheet, score);
+      _bestScoreEarnedThisSheet =
+          _mergeScores(_bestScoreEarnedThisSheet, score);
       _updatePersonalBestWithScore(score);
       _activityCompleted = true;
       _showOutcome = true;
@@ -814,7 +839,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
 
   void _onTriviaAnswer(int index) {
     HapticFeedback.selectionClick();
-    final prompt = BreakHelper.triviaPrompts[_triviaOrder[_triviaIndex]];
+    final prompt = _triviaPrompts[_triviaOrder[_triviaIndex]];
     final withinScoringWindow =
         DateTime.now().difference(_attemptStartedAt) <= widget.duration;
     setState(() {
@@ -1094,6 +1119,8 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
       _showBreakCustomizationLockedDialog('break_cube_hints_locked');
       return;
     }
+    final l10n = AppLocalizations.of(context) ??
+        lookupAppLocalizations(const Locale('en'));
     HapticFeedback.selectionClick();
     if (_cubeHintMode != _CubeHintMode.off) {
       setState(() {
@@ -1105,18 +1132,16 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     final nextMode = await showDialog<_CubeHintMode>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Choose hint strength'),
-        content: const Text(
-          'Do you want just a gentle highlight, or the full cue with arrows too?',
-        ),
+        title: Text(l10n.breakHintStrengthTitle),
+        content: Text(l10n.breakHintStrengthBody),
         actions: [
           FilledButton(
             onPressed: () => Navigator.pop(context, _CubeHintMode.subtle),
-            child: const Text('A bit of help'),
+            child: Text(l10n.breakHintStrengthSubtle),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, _CubeHintMode.strong),
-            child: const Text('A lot of help'),
+            child: Text(l10n.breakHintStrengthStrong),
           ),
         ],
       ),
@@ -1346,11 +1371,13 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     HapticFeedback.lightImpact();
     setState(() {
       final current = _zenFortune;
-      final pool = List<String>.from(BreakHelper.zenFortunes);
+      final pool = List<String>.from(_zenFortunes);
       if (current != null && pool.length > 1) {
         pool.remove(current);
       }
-      _zenFortune = pool[_random.nextInt(pool.length)];
+      if (pool.isNotEmpty) {
+        _zenFortune = pool[_random.nextInt(pool.length)];
+      }
     });
   }
 
@@ -1599,7 +1626,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
 
   @override
   Widget build(BuildContext context) {
-    final definition = BreakHelper.definitionFor(widget.activityType);
+    final l10n = AppLocalizations.of(context) ??
+        lookupAppLocalizations(const Locale('en'));
+    final definition = BreakHelper.definitionFor(widget.activityType, l10n);
     final colorScheme = Theme.of(context).colorScheme;
     return PopScope<BreakSessionResult>(
       canPop: _finished,
@@ -1642,7 +1671,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Break for "${widget.todo.todoText ?? 'this item'}"',
+                              l10n.breakSheetTitle(
+                                widget.todo.todoText ?? l10n.breakThisItem,
+                              ),
                               key: const Key('break_sheet_title'),
                               style: const TextStyle(
                                 fontSize: 19,
@@ -1719,7 +1750,8 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                                   : Icons.pause_rounded,
                               color: definition.color,
                             ),
-                            tooltip: _isPaused ? 'Resume' : 'Pause',
+                            tooltip:
+                                _isPaused ? l10n.breakResume : l10n.breakPause,
                           ),
                         ],
                       ],
@@ -1735,8 +1767,8 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 250),
                             child: _showOutcome
-                                ? _buildOutcomeView(definition)
-                                : _buildActivityView(definition),
+                                ? _buildOutcomeView(definition, l10n)
+                                : _buildActivityView(definition, l10n),
                           ),
                         ),
                         IgnorePointer(
@@ -1771,7 +1803,10 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     );
   }
 
-  Widget _buildActivityView(BreakActivityDefinition definition) {
+  Widget _buildActivityView(
+    BreakActivityDefinition definition,
+    AppLocalizations l10n,
+  ) {
     final canUseHintHelpers = _hasBreakCustomizationAccess;
     switch (widget.activityType) {
       case BreakActivityType.defuse:
@@ -1784,14 +1819,14 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
               progress,
             ) ??
             definition.color;
-        final personalBestText = _personalBestText();
+        final personalBestText = _personalBestText(l10n);
         return Column(
           key: const Key('break_activity_defuse'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Steady the dial. Tap lock when the moving needle slips into the calm window.',
-              style: TextStyle(height: 1.35),
+            Text(
+              l10n.breakDefuseInstruction,
+              style: const TextStyle(height: 1.35),
             ),
             const SizedBox(height: 16),
             Row(
@@ -1879,7 +1914,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                                   ),
                                   child: Center(
                                     child: Text(
-                                      'Tap',
+                                      l10n.breakDefuseTap,
                                       style: TextStyle(
                                         fontSize: labelFontSize,
                                         fontWeight: FontWeight.bold,
@@ -1903,10 +1938,12 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                 alignment: Alignment.topLeft,
                 child: Text(
                   _defuseCount >= _defuseTargetTapCount
-                      ? 'Nice. The mechanism is calm now. Keep breathing while the minute finishes.'
+                      ? l10n.breakDefuseCompleteStatus
                       : _defuseLastAttemptAccurate
-                          ? '${_defuseTargetTapCount - _defuseCount} rings left. Stay with the rhythm.'
-                          : 'Wait for the needle to cross the glowing window, then tap it.',
+                          ? l10n.breakDefuseRingsLeft(
+                              _defuseTargetTapCount - _defuseCount,
+                            )
+                          : l10n.breakDefuseWaitStatus,
                   style: TextStyle(color: crackColor),
                 ),
               ),
@@ -1964,27 +2001,29 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                     !canUseHintHelpers
                         ? Icons.lock_outline_rounded
                         : _defuseHintsEnabled
-                        ? Icons.lightbulb_rounded
-                        : Icons.lightbulb_outline_rounded,
+                            ? Icons.lightbulb_rounded
+                            : Icons.lightbulb_outline_rounded,
                     size: 18,
                   ),
                   label: Text(!canUseHintHelpers
-                      ? 'Hints locked'
-                      : (_defuseHintsEnabled ? 'Hints on' : 'Hints off')),
+                      ? l10n.breakHintsLocked
+                      : (_defuseHintsEnabled
+                          ? l10n.breakHintsOn
+                          : l10n.breakHintsOff)),
                 ),
               ],
             ),
           ],
         );
       case BreakActivityType.pairMatch:
-        final personalBestText = _personalBestText();
+        final personalBestText = _personalBestText(l10n);
         return Column(
           key: const Key('break_activity_pairs'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Find the matching emoji pairs. Tiny pattern searches are great at breaking autopilot.',
-              style: TextStyle(height: 1.35),
+            Text(
+              l10n.breakPairMatchInstruction,
+              style: const TextStyle(height: 1.35),
             ),
             const SizedBox(height: 18),
             Expanded(
@@ -2007,7 +2046,12 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Matched ${_matchedCards.length ~/ 2} of 10 pairs'),
+                      Text(
+                        l10n.breakPairMatchProgress(
+                          _matchedCards.length ~/ 2,
+                          _pairMatchEmojis.length,
+                        ),
+                      ),
                       if (personalBestText != null)
                         Text(
                           personalBestText,
@@ -2051,13 +2095,15 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                     !canUseHintHelpers
                         ? Icons.lock_outline_rounded
                         : _pairHintsEnabled
-                        ? Icons.lightbulb_rounded
-                        : Icons.lightbulb_outline_rounded,
+                            ? Icons.lightbulb_rounded
+                            : Icons.lightbulb_outline_rounded,
                     size: 18,
                   ),
                   label: Text(!canUseHintHelpers
-                      ? 'Hints locked'
-                      : (_pairHintsEnabled ? 'Hints on' : 'Hints off')),
+                      ? l10n.breakHintsLocked
+                      : (_pairHintsEnabled
+                          ? l10n.breakHintsOn
+                          : l10n.breakHintsOff)),
                 ),
               ],
             ),
@@ -2066,13 +2112,13 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
       case BreakActivityType.cubeReset:
         final hintMove = _cubeHintMove();
         final showArrowHints = _cubeHintMode == _CubeHintMode.strong;
-        final personalBestText = _personalBestText();
+        final personalBestText = _personalBestText(l10n);
         return Column(
           key: const Key('break_activity_cube'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Drag to rotate the cube. Swipe visible stickers to turn layers.',
+              l10n.breakCubeResetInstruction,
               style: TextStyle(
                 height: 1.35,
                 color: definition.color.withValues(alpha: 0.88),
@@ -2113,7 +2159,11 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Solved ${_cubeSolvedFaceCount()} of 6 faces in $_cubeMoveCount twists',
+                        l10n.breakCubeResetProgress(
+                          _cubeSolvedFaceCount(),
+                          6,
+                          _cubeMoveCount,
+                        ),
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: definition.color,
@@ -2164,16 +2214,16 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                     !canUseHintHelpers
                         ? Icons.lock_outline_rounded
                         : _cubeHintMode == _CubeHintMode.off
-                        ? Icons.lightbulb_outline_rounded
-                        : Icons.lightbulb_rounded,
+                            ? Icons.lightbulb_outline_rounded
+                            : Icons.lightbulb_rounded,
                     size: 18,
                   ),
                   label: Text(!canUseHintHelpers
-                      ? 'Hints locked'
+                      ? l10n.breakHintsLocked
                       : switch (_cubeHintMode) {
-                          _CubeHintMode.off => 'Hints off',
-                          _CubeHintMode.subtle => 'Hints: a bit',
-                          _CubeHintMode.strong => 'Hints: a lot',
+                          _CubeHintMode.off => l10n.breakHintsOff,
+                          _CubeHintMode.subtle => l10n.breakHintsSubtle,
+                          _CubeHintMode.strong => l10n.breakHintsStrong,
                         }),
                 ),
               ],
@@ -2181,7 +2231,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
           ],
         );
       case BreakActivityType.stackSweep:
-        final personalBestText = _personalBestText();
+        final personalBestText = _personalBestText(l10n);
         return Column(
           key: const Key('break_activity_stack'),
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2390,7 +2440,10 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Text(
-                                '${_stackTiles.length - _removedStackTileIds.length} tiles left',
+                                l10n.breakStackSweepTilesLeft(
+                                  _stackTiles.length -
+                                      _removedStackTileIds.length,
+                                ),
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   color: definition.color,
@@ -2451,13 +2504,15 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                     !canUseHintHelpers
                         ? Icons.lock_outline_rounded
                         : _stackHintsEnabled
-                        ? Icons.lightbulb_rounded
-                        : Icons.lightbulb_outline_rounded,
+                            ? Icons.lightbulb_rounded
+                            : Icons.lightbulb_outline_rounded,
                     size: 18,
                   ),
                   label: Text(!canUseHintHelpers
-                      ? 'Hints locked'
-                      : (_stackHintsEnabled ? 'Hints on' : 'Hints off')),
+                      ? l10n.breakHintsLocked
+                      : (_stackHintsEnabled
+                          ? l10n.breakHintsOn
+                          : l10n.breakHintsOff)),
                 ),
               ],
             ),
@@ -2465,12 +2520,12 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
         );
       case BreakActivityType.triviaPivot:
         final promptIndex = _triviaOrder[_triviaIndex];
-        final prompt = BreakHelper.triviaPrompts[promptIndex];
+        final prompt = _triviaPrompts[promptIndex];
         final visibleOptionIndices = _visibleTriviaOptionIndices(
           prompt,
           promptIndex,
         );
-        final personalBestText = _personalBestText();
+        final personalBestText = _personalBestText(l10n);
         return Column(
           key: const Key('break_activity_trivia'),
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2534,8 +2589,8 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                       const SizedBox(height: 10),
                       Text(
                         _triviaSelectedAnswer == prompt.answerIndex
-                            ? 'Correct. ${prompt.insight}'
-                            : 'Nice try. ${prompt.insight}',
+                            ? l10n.breakTriviaCorrectInsight(prompt.insight)
+                            : l10n.breakTriviaIncorrectInsight(prompt.insight),
                         style: const TextStyle(height: 1.35),
                       ),
                     ],
@@ -2544,67 +2599,74 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
               ),
             ),
             const SizedBox(height: 10),
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: personalBestText == null
-                      ? const SizedBox.shrink()
-                      : Text(
-                          personalBestText,
-                          key: const Key('break_personal_best'),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: definition.color.withValues(alpha: 0.8),
-                          ),
-                        ),
-                ),
-                const SizedBox(width: 12),
-                if (_triviaSelectedAnswer != null) ...[
-                  FilledButton.icon(
-                    key: const Key('trivia_next'),
-                    onPressed: _nextTrivia,
-                    icon: const Icon(Icons.arrow_forward_rounded),
-                    label: const Text('Next'),
-                  ),
-                  const SizedBox(width: 12),
-                ],
-                TextButton.icon(
-                  key: const Key('trivia_hint_toggle'),
-                  onPressed: () => _toggleTriviaHints(prompt, promptIndex),
-                  style: TextButton.styleFrom(
-                    foregroundColor: definition.color,
-                    backgroundColor: definition.color.withValues(
-                      alpha: !canUseHintHelpers
-                          ? 0.05
-                          : (_triviaHintsEnabled ? 0.14 : 0.07),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(999),
-                      side: BorderSide(
-                        color: definition.color.withValues(
-                          alpha: !canUseHintHelpers
-                              ? 0.12
-                              : (_triviaHintsEnabled ? 0.26 : 0.16),
-                        ),
+                if (personalBestText != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Text(
+                      personalBestText,
+                      key: const Key('break_personal_best'),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: definition.color.withValues(alpha: 0.8),
                       ),
                     ),
                   ),
-                  icon: Icon(
-                    !canUseHintHelpers
-                        ? Icons.lock_outline_rounded
-                        : _triviaHintsEnabled
-                        ? Icons.lightbulb_rounded
-                        : Icons.lightbulb_outline_rounded,
-                    size: 18,
-                  ),
-                  label: Text(!canUseHintHelpers
-                      ? 'Hints locked'
-                      : (_triviaHintsEnabled ? 'Hints on' : 'Hints off')),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (_triviaSelectedAnswer != null)
+                      FilledButton.icon(
+                        key: const Key('trivia_next'),
+                        onPressed: _nextTrivia,
+                        icon: const Icon(Icons.arrow_forward_rounded),
+                        label: Text(l10n.breakNext),
+                      ),
+                    TextButton.icon(
+                      key: const Key('trivia_hint_toggle'),
+                      onPressed: () => _toggleTriviaHints(prompt, promptIndex),
+                      style: TextButton.styleFrom(
+                        foregroundColor: definition.color,
+                        backgroundColor: definition.color.withValues(
+                          alpha: !canUseHintHelpers
+                              ? 0.05
+                              : (_triviaHintsEnabled ? 0.14 : 0.07),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                          side: BorderSide(
+                            color: definition.color.withValues(
+                              alpha: !canUseHintHelpers
+                                  ? 0.12
+                                  : (_triviaHintsEnabled ? 0.26 : 0.16),
+                            ),
+                          ),
+                        ),
+                      ),
+                      icon: Icon(
+                        !canUseHintHelpers
+                            ? Icons.lock_outline_rounded
+                            : _triviaHintsEnabled
+                                ? Icons.lightbulb_rounded
+                                : Icons.lightbulb_outline_rounded,
+                        size: 18,
+                      ),
+                      label: Text(!canUseHintHelpers
+                          ? l10n.breakHintsLocked
+                          : (_triviaHintsEnabled
+                              ? l10n.breakHintsOn
+                              : l10n.breakHintsOff)),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -2667,18 +2729,18 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                                     color: Colors.white.withValues(alpha: 0.3),
                                     borderRadius: BorderRadius.circular(999),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(
+                                      const Icon(
                                         Icons.water_drop_outlined,
                                         size: 16,
                                         color: Color(0xFF205072),
                                       ),
-                                      SizedBox(width: 6),
+                                      const SizedBox(width: 6),
                                       Text(
-                                        'Tap a drop',
-                                        style: TextStyle(
+                                        l10n.breakZenTapDrop,
+                                        style: const TextStyle(
                                           fontWeight: FontWeight.w600,
                                           color: Color(0xFF205072),
                                         ),
@@ -2743,7 +2805,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
             ),
             const SizedBox(height: 10),
             Text(
-              'Catch a drop when you want a new line. Missed taps do nothing on purpose.',
+              l10n.breakZenFooter,
               style: TextStyle(
                 color: Theme.of(
                   context,
@@ -2755,20 +2817,23 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     }
   }
 
-  Widget _buildOutcomeView(BreakActivityDefinition definition) {
+  Widget _buildOutcomeView(
+    BreakActivityDefinition definition,
+    AppLocalizations l10n,
+  ) {
     return SingleChildScrollView(
       key: const Key('break_outcome_view'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Check in',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          Text(
+            l10n.breakCheckInTitle,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'What changed after this one-minute break?',
-            style: TextStyle(height: 1.35),
+          Text(
+            l10n.breakOutcomeQuestion,
+            style: const TextStyle(height: 1.35),
           ),
           const SizedBox(height: 14),
           SizedBox(
@@ -2785,8 +2850,8 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
               icon: const Icon(Icons.autorenew_rounded),
               label: Text(
                 _activityCompleted
-                    ? 'Replay activity'
-                    : 'Continue playing / meditating',
+                    ? l10n.breakReplayActivity
+                    : l10n.breakContinueActivity,
               ),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -2796,21 +2861,21 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
           const SizedBox(height: 18),
           _buildOutcomeButton(
             key: const Key('break_outcome_passed'),
-            label: 'Urge passed',
+            label: l10n.breakOutcomePassed,
             color: const Color(0xFF2A9D8F),
             onTap: () => _complete(BreakOutcome.passed),
           ),
           const SizedBox(height: 10),
           _buildOutcomeButton(
             key: const Key('break_outcome_weaker'),
-            label: 'Urge weaker',
+            label: l10n.breakOutcomeWeaker,
             color: definition.color,
             onTap: () => _complete(BreakOutcome.weaker),
           ),
           const SizedBox(height: 10),
           _buildOutcomeButton(
             key: const Key('break_outcome_strong'),
-            label: 'Still strong',
+            label: l10n.breakOutcomeStillStrong,
             color: const Color(0xFFD62828),
             onTap: () {
               HapticFeedback.lightImpact();
@@ -2828,9 +2893,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Need another layer?',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    l10n.breakNeedAnotherLayer,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -2840,7 +2905,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                       ActionChip(
                         key: const Key('break_followup_retry'),
                         avatar: const Icon(Icons.refresh_rounded, size: 18),
-                        label: const Text('Try another break'),
+                        label: Text(l10n.breakTryAnotherBreak),
                         onPressed: () => _complete(
                           BreakOutcome.stillStrong,
                           followUpAction: BreakFollowUpAction.retry,
@@ -2849,7 +2914,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                       ActionChip(
                         key: const Key('break_followup_zen'),
                         avatar: const Icon(Icons.spa_outlined, size: 18),
-                        label: const Text('Go to Zen Room'),
+                        label: Text(l10n.breakGoToZenRoom),
                         onPressed: () => _complete(
                           BreakOutcome.stillStrong,
                           followUpAction: BreakFollowUpAction.zenRoom,
@@ -2859,7 +2924,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                         ActionChip(
                           key: const Key('break_followup_support'),
                           avatar: const Icon(Icons.favorite_border, size: 18),
-                          label: const Text('Message support'),
+                          label: Text(l10n.breakMessageSupport),
                           onPressed: () => _complete(
                             BreakOutcome.stillStrong,
                             followUpAction: BreakFollowUpAction.trustedSupport,

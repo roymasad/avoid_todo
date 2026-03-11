@@ -836,4 +836,244 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get plusUnlockUnlimitedAvoidsHints =>
       'Unlimited avoids, break game hints';
+
+  @override
+  String get breakGamesSectionTitle => 'Break Games';
+
+  @override
+  String get breakRandomGamePoolTitle => 'Grupo aleatório de jogos';
+
+  @override
+  String get breakGamePoolLockedSubtitle =>
+      'Inicie um teste grátis ou desbloqueie o Plus para escolher quais Break Games podem aparecer aleatoriamente.';
+
+  @override
+  String get breakKeepAtLeastOneActivityEnabled =>
+      'Mantenha pelo menos uma atividade de break ativada.';
+
+  @override
+  String breakActivityEnabledCount(int enabledCount, int totalCount) {
+    return '$enabledCount de $totalCount ativados';
+  }
+
+  @override
+  String get breakRandomGamePoolDescription =>
+      'Escolha quais atividades de break podem ser selecionadas aleatoriamente.';
+
+  @override
+  String get breakActivityDefuseTitle => 'Desarmar';
+
+  @override
+  String get breakActivityDefuseSubtitle =>
+      'Tire a tensão do momento desarmando a situação.';
+
+  @override
+  String get breakActivityPairMatchTitle => 'Encontrar pares';
+
+  @override
+  String get breakActivityPairMatchSubtitle =>
+      'Leve sua mente para um pequeno desafio de memória.';
+
+  @override
+  String get breakActivityCubeResetTitle => 'Reset do cubo';
+
+  @override
+  String get breakActivityCubeResetSubtitle =>
+      'Gire um pequeno cubo até colocá-lo em ordem novamente.';
+
+  @override
+  String get breakActivityStackSweepTitle => 'Limpar pilha';
+
+  @override
+  String get breakActivityStackSweepSubtitle =>
+      'Remova as peças expostas até que a pilha desapareça.';
+
+  @override
+  String get breakActivityTriviaPivotTitle => 'Virada de trivia';
+
+  @override
+  String get breakActivityTriviaPivotSubtitle =>
+      'Dê ao seu cérebro outra coisa para mastigar.';
+
+  @override
+  String get breakActivityZenRoomTitle => 'Sala Zen';
+
+  @override
+  String get breakActivityZenRoomSubtitle =>
+      'Desacelere a cena e redefina o clima.';
+
+  @override
+  String breakPersonalBestTime(String value) {
+    return 'Melhor: $value';
+  }
+
+  @override
+  String breakPersonalBestCorrect(int count) {
+    return 'Melhor: $count corretas';
+  }
+
+  @override
+  String get breakExitTitle => 'Sair deste break?';
+
+  @override
+  String get breakExitBody =>
+      'Esta sessão será marcada como incompleta. Você sempre pode iniciar outro break na mesma hora.';
+
+  @override
+  String get breakStay => 'Ficar';
+
+  @override
+  String get breakExit => 'Sair';
+
+  @override
+  String get breakCustomizationLockedSubtitle =>
+      'Inicie um teste grátis ou desbloqueie o Plus para usar dicas e personalização dos Break Games.';
+
+  @override
+  String get breakHintStrengthTitle => 'Escolher força da dica';
+
+  @override
+  String get breakHintStrengthBody =>
+      'Você quer só um destaque suave ou a dica completa com setas também?';
+
+  @override
+  String get breakHintStrengthSubtle => 'Um pouco de ajuda';
+
+  @override
+  String get breakHintStrengthStrong => 'Muita ajuda';
+
+  @override
+  String breakSheetTitle(String item) {
+    return 'Break para \"$item\"';
+  }
+
+  @override
+  String get breakThisItem => 'este item';
+
+  @override
+  String get breakResume => 'Retomar';
+
+  @override
+  String get breakPause => 'Pausar';
+
+  @override
+  String get breakDefuseInstruction =>
+      'Estabilize o dial. Toque em travar quando a agulha entrar na janela calma.';
+
+  @override
+  String get breakDefuseTap => 'Toque';
+
+  @override
+  String get breakDefuseCompleteStatus =>
+      'Boa. O mecanismo agora está calmo. Continue respirando até o minuto acabar.';
+
+  @override
+  String breakDefuseRingsLeft(int count) {
+    return 'Faltam $count anéis. Continue no ritmo.';
+  }
+
+  @override
+  String get breakDefuseWaitStatus =>
+      'Espere a agulha cruzar a janela brilhante e então toque.';
+
+  @override
+  String get breakHintsLocked => 'Dicas bloqueadas';
+
+  @override
+  String get breakHintsOn => 'Dicas ativadas';
+
+  @override
+  String get breakHintsOff => 'Dicas desativadas';
+
+  @override
+  String get breakHintsSubtle => 'Dicas: um pouco';
+
+  @override
+  String get breakHintsStrong => 'Dicas: muito';
+
+  @override
+  String get breakPairMatchInstruction =>
+      'Encontre os pares de emoji. Pequenas buscas por padrões são ótimas para quebrar o piloto automático.';
+
+  @override
+  String breakPairMatchProgress(int matchedCount, int totalCount) {
+    return '$matchedCount de $totalCount pares encontrados';
+  }
+
+  @override
+  String get breakCubeResetInstruction =>
+      'Arraste para girar o cubo. Deslize nos adesivos visíveis para girar as camadas.';
+
+  @override
+  String breakCubeResetProgress(
+      int solvedCount, int totalCount, int twistCount) {
+    return '$solvedCount de $totalCount faces resolvidas em $twistCount giros';
+  }
+
+  @override
+  String breakStackSweepTilesLeft(int count) {
+    return '$count peças restantes';
+  }
+
+  @override
+  String breakTriviaCorrectInsight(String insight) {
+    return 'Correto. $insight';
+  }
+
+  @override
+  String breakTriviaIncorrectInsight(String insight) {
+    return 'Boa tentativa. $insight';
+  }
+
+  @override
+  String get breakNext => 'Próxima';
+
+  @override
+  String get breakZenTapDrop => 'Toque em uma gota';
+
+  @override
+  String get breakZenFooter =>
+      'Pegue uma gota quando quiser uma nova frase. Toques errados não fazem nada de propósito.';
+
+  @override
+  String get breakCheckInTitle => 'Confira';
+
+  @override
+  String get breakOutcomeQuestion =>
+      'O que mudou depois deste break de um minuto?';
+
+  @override
+  String get breakReplayActivity => 'Repetir atividade';
+
+  @override
+  String get breakContinueActivity => 'Continuar jogando / meditando';
+
+  @override
+  String get breakOutcomePassed => 'O impulso passou';
+
+  @override
+  String get breakOutcomeWeaker => 'Impulso mais fraco';
+
+  @override
+  String get breakOutcomeStillStrong => 'Ainda forte';
+
+  @override
+  String get breakNeedAnotherLayer => 'Precisa de outra camada?';
+
+  @override
+  String get breakTryAnotherBreak => 'Tentar outro break';
+
+  @override
+  String get breakGoToZenRoom => 'Ir para a Sala Zen';
+
+  @override
+  String get breakMessageSupport => 'Mandar mensagem ao apoio';
+
+  @override
+  String get breakTriviaData =>
+      'Qual planeta tem o dia mais curto?\nTerra\nJúpiter\nMarte\nJúpiter gira tão rápido que seu dia dura cerca de 10 horas.\n%%\nQuantos corações um polvo tem?\nUm\nTrês\nDois\nTrês. Dois para as brânquias e um para o resto do corpo.\n%%\nQual é o único mamífero que realmente consegue voar?\nEsquilo-voador\nMorcego\nPetauro-do-açúcar\nOs morcegos são os únicos mamíferos capazes de voo sustentado.\n%%\nQual oceano é o mais profundo?\nAtlântico\nPacífico\nÍndico\nA Fossa das Marianas fica no oceano Pacífico.\n%%\nQuantos ossos um adulto humano costuma ter?\n186\n206\n226\n206 é a contagem padrão depois que alguns ossos se fundem na vida adulta.\n%%\nQual animal é conhecido por dormir de cabeça para baixo?\nCoala\nMorcego\nLontra\nMorcegos ficam pendurados de cabeça para baixo para decolar rapidamente.\n%%\nQual gás as plantas absorvem principalmente do ar?\nOxigênio\nDióxido de carbono\nHélio\nAs plantas usam dióxido de carbono durante a fotossíntese.\n%%\nQual instrumento geralmente tem 88 teclas?\nViolino\nPiano\nFlauta\nUm piano padrão tem 88 teclas.\n%%\nQuantos lados tem um hexágono?\n5\n6\n8\nHexa significa seis.\n%%\nQual ave costuma ser associada ao envio de mensagens?\nPapagaio\nPombo\nCoruja\nPombos-correio foram usados para enviar mensagens a longas distâncias.\n%%\nQual é o maior órgão do corpo humano?\nFígado\nPele\nPulmões\nA pele é o maior órgão do corpo.\n%%\nQual peça de xadrez se move em forma de L?\nBispo\nCavalo\nTorre\nO cavalo é a única peça de xadrez que se move em padrão de L.\n%%\nQuantos continentes existem?\n5\n7\n6\nO modelo mais comum conta sete continentes.\n%%\nO que as abelhas coletam das flores?\nPedrinhas\nNéctar\nSal\nAs abelhas coletam néctar e pólen das flores.\n%%\nQual mês tem menos dias?\nAbril\nFevereiro\nNovembro\nFevereiro é o mais curto, com 28 dias na maioria dos anos.\n%%\nEm qual esporte se usa uma peteca?\nTênis\nBadminton\nSquash\nNo badminton se usa uma peteca em vez de uma bola.\n%%\nQue cor você obtém ao misturar azul e amarelo?\nRoxo\nVerde\nLaranja\nAzul e amarelo se combinam para formar verde.\n%%\nQual planeta é famoso por seus anéis?\nVênus\nSaturno\nMercúrio\nOs anéis de Saturno são sua característica mais reconhecida.\n%%\nQuantos minutos existem em duas horas?\n90\n120\n180\nDuas horas equivalem a 120 minutos.\n%%\nQual criatura marinha tem oito braços?\nLula\nPolvo\nEstrela-do-mar\nPolvos têm oito braços; lulas têm dez apêndices.\n%%\nComo se chama a água congelada?\nVapor\nGelo\nNévoa\nGelo é água em estado sólido.\n%%\nDe que direção o sol nasce?\nNorte\nLeste\nOeste\nO sol parece nascer no leste.\n%%\nQual mamífero passa a maior parte da vida no oceano?\nCamelo\nBaleia\nRaposa\nBaleias são mamíferos marinhos.\n%%\nQue forma tem três lados?\nCírculo\nTriângulo\nRetângulo\nUm triângulo tem exatamente três lados.\n%%\nQue fruta seca vira uva-passa?\nAmeixa\nUva\nCereja\nUvas-passas são uvas secas.\n%%\nQual é a estrela principal no centro do nosso sistema solar?\nPolaris\nO Sol\nSirius\nO Sol é a estrela em torno da qual nossos planetas orbitam.\n%%\nQuantos dias tem um ano bissexto?\n365\n366\n364\nAnos bissextos acrescentam um dia a fevereiro, totalizando 366 dias.\n%%\nQual animal é conhecido por mudar de cor para se camuflar?\nCoelho\nCamaleão\nPinguim\nCamaleões são famosos por mudar de cor.\n%%\nComo se chama a rocha derretida depois que chega à superfície?\nMagma\nLava\nQuartzo\nDebaixo da terra é magma; na superfície é lava.\n%%\nQual ponteiro de um relógio se move mais rápido?\nPonteiro das horas\nPonteiro dos segundos\nPonteiro dos minutos\nO ponteiro dos segundos dá uma volta completa a cada minuto.\n%%\nQual estação vem depois da primavera no hemisfério norte?\nInverno\nVerão\nOutono\nO verão vem depois da primavera.\n%%\nQuantas pernas uma aranha tem?\n6\n8\n10\nAranhas são aracnídeos com oito pernas.\n%%\nQual oceano fica entre a África e a Austrália?\nOceano Pacífico\nOceano Índico\nOceano Ártico\nO oceano Índico fica entre a África, a Ásia e a Austrália.\n%%\nEm que as lagartas se transformam?\nLibélulas\nBorboletas\nBesouros\nMuitas lagartas se transformam em borboletas ou mariposas.\n%%\nQual objeto doméstico indica a temperatura?\nBússola\nTermômetro\nBalança\nUm termômetro mede a temperatura.\n%%\nQuantas cordas um violino padrão tem?\n5\n4\n6\nViolinos normalmente têm quatro cordas.\n%%\nQual planeta fica mais perto do Sol?\nMarte\nMercúrio\nNetuno\nMercúrio é o planeta mais próximo do Sol.\n%%\nQual é o ponto de ebulição da água ao nível do mar em graus Celsius?\n90\n100\n110\nAo nível do mar, a água ferve a 100 °C.\n%%\nQual animal é famoso por construir represas?\nLontra\nCastor\nToupeira\nCastores constroem represas com galhos e lama.\n%%\nQual é o oposto de norte em uma bússola?\nLeste\nSul\nOeste\nSul é o oposto de norte.\n%%\nQue forma não tem cantos?\nQuadrado\nCírculo\nTriângulo\nCírculos não têm cantos nem arestas.\n%%\nQual planeta é conhecido como o planeta vermelho?\nVênus\nMarte\nUrano\nMarte parece vermelho por causa do óxido de ferro em sua superfície.\n%%\nQuantas horas existem em um dia completo?\n12\n24\n36\nUm dia completo tem 24 horas.\n%%\nO que você usa para escrever em um quadro-negro?\nTinta\nGiz\nCrayon\nGiz é a ferramenta clássica para escrever em um quadro-negro.\n%%\nQual animal é o mais alto em terra?\nElefante\nGirafa\nCamelo\nGirafas são os animais terrestres mais altos.\n%%\nQual sentido está mais ligado ao seu nariz?\nPaladar\nOlfato\nTato\nSeu nariz é responsável pelo sentido do olfato.\n%%\nQual utensílio de cozinha é usado para virar panquecas?\nBatedor\nEspátula\nConcha\nUma espátula é comumente usada para virar panquecas.\n%%\nQue número vem depois de 999?\n1001\n1000\n990\nDepois de 999 vem 1000.\n%%\nQual planeta fica mais distante do Sol?\nSaturno\nNetuno\nTerra\nNetuno é atualmente o planeta reconhecido mais distante do Sol.\n%%\nComo se chama uma palavra que significa o oposto de outra?\nSinônimo\nAntônimo\nAcrônimo\nUm antônimo é uma palavra com significado oposto.\n%%\nQual metal é líquido em temperatura ambiente?\nFerro\nMercúrio\nPrata\nMercúrio é um dos poucos metais líquidos em temperatura ambiente.\n%%\nQual é a substância natural mais dura da Terra?\nOuro\nDiamante\nQuartzo\nO diamante é o material natural mais duro.\n%%\nQual tipo sanguíneo é conhecido como doador universal?\nAB positivo\nO negativo\nA positivo\nO sangue O negativo geralmente pode ser dado em emergências para a maioria das pessoas.\n%%\nComo se chamam os animais que ficam ativos à noite?\nAquáticos\nNoturnos\nMigratórios\nAnimais noturnos ficam mais ativos durante a noite.\n%%\nQual idioma tem o maior número de falantes nativos no mundo?\nInglês\nChinês mandarim\nEspanhol\nO chinês mandarim tem o maior número de falantes nativos no mundo.\n%%\nQual país é famoso pelo símbolo da folha de bordo?\nSuécia\nCanadá\nNova Zelândia\nA folha de bordo é um dos símbolos nacionais mais conhecidos do Canadá.\n%%\nQual é o ingrediente principal do guacamole?\nPepino\nAbacate\nErvilha\nGuacamole é feito principalmente de abacate amassado.\n%%\nQual planeta gira mais de lado do que os outros?\nTerra\nUrano\nJúpiter\nUrano tem uma inclinação extrema e parece girar de lado.\n%%\nQuantos dentes um adulto costuma ter, incluindo os sisos?\n28\n32\n30\nUma dentição adulta completa normalmente inclui 32 dentes.\n%%\nQual deserto é o maior deserto quente da Terra?\nGobi\nSaara\nMojave\nO Saara é o maior deserto quente do mundo.\n%%\nComo se chama um cientista que estuda rochas?\nBiólogo\nGeólogo\nAstrônomo\nGeólogos estudam rochas, minerais e a estrutura da Terra.\n%%\nQual órgão bombeia sangue pelo corpo?\nFígado\nCoração\nRim\nO coração bombeia sangue pelo sistema circulatório.\n%%\nQual fruta tem sementes do lado de fora?\nMirtilo\nMorango\nMaçã\nMorangos são incomuns porque têm sementes do lado de fora.\n%%\nComo se chama o processo em que o vapor de água vira líquido?\nEvaporação\nCondensação\nCongelamento\nA condensação acontece quando o vapor de água esfria e vira líquido.\n%%\nQual famosa muralha foi construída para proteger o norte da China?\nMuro de Berlim\nGrande Muralha\nMuralha de Adriano\nA Grande Muralha da China foi construída e ampliada ao longo de séculos.\n%%\nQuantos jogadores um time de futebol tem em campo ao mesmo tempo?\n9\n11\n10\nUm time de futebol tem 11 jogadores em campo, incluindo o goleiro.\n%%\nQual ave não consegue voar, mas é famosa por viver na Antártida?\nGaivota\nPinguim\nFalcão\nPinguins são aves que não voam e são fortemente associados à Antártida.\n%%\nQuanto é 12 multiplicado por 12?\n124\n144\n154\n12 vezes 12 é 144.\n%%\nDe qual gás os humanos precisam para respirar e viver?\nNitrogênio\nOxigênio\nHidrogênio\nOs humanos dependem de oxigênio para respirar.\n%%\nQual é o maior planeta do nosso sistema solar?\nSaturno\nJúpiter\nNetuno\nJúpiter é o maior planeta do nosso sistema solar.\n%%\nEm que parte do corpo fica o fêmur?\nBraço\nPerna\nCrânio\nO fêmur é o osso da coxa, na perna.\n%%\nQual torre famosa é inclinada na Itália?\nTorre Eiffel\nTorre de Pisa\nTorre CN\nA Torre de Pisa é um dos marcos mais conhecidos da Itália.\n%%\nQuantos zeros existem em um milhão?\n5\n6\n7\nUm milhão é escrito como 1.000.000.\n%%\nQual animal marinho é conhecido por ter casco e se mover lentamente em terra?\nFoca\nTartaruga\nGolfinho\nTartarugas marinhas têm casco e se movem lentamente em terra firme.\n%%\nComo se chama a parte colorida do olho?\nRetina\nÍris\nPupila\nA íris é o anel colorido ao redor da pupila.\n%%\nQual instrumento é usado para observar estrelas e planetas?\nMicroscópio\nTelescópio\nPeriscópio\nUm telescópio é feito para observar objetos distantes no espaço.\n%%\nQual feriado é conhecido por abóboras e fantasias?\nPáscoa\nHalloween\nDia dos Namorados\nHalloween é associado a fantasias, doces e abóboras.\n%%\nQuanto é 100 dividido por 4?\n20\n25\n40\n100 dividido por 4 é 25.\n%%\nQual animal é conhecido como o rei da selva?\nTigre\nLeão\nLobo\nO leão costuma ser chamado de rei da selva.\n%%\nO que os ímãs atraem?\nMadeira\nFerro\nPlástico\nÍmãs atraem fortemente ferro e alguns outros metais.\n%%\nQue dia vem depois de sexta-feira?\nQuinta-feira\nSábado\nDomingo\nDepois de sexta-feira vem sábado.\n%%\nQual é a montanha mais alta acima do nível do mar?\nK2\nMonte Everest\nKilimanjaro\nO Monte Everest é a montanha mais alta acima do nível do mar.\n%%\nQual inseto brilha no escuro?\nFormiga\nVaga-lume\nGafanhoto\nVaga-lumes produzem luz por bioluminescência.\n%%\nQuantos meses existem em um ano?\n10\n12\n14\nUm ano padrão tem 12 meses.\n%%\nQue ferramenta é usada para cortar papel em trabalhos manuais?\nColher\nTesoura\nPincel\nTesouras são comumente usadas para cortar papel.\n%%\nQual planeta é conhecido por ter uma grande tempestade vermelha?\nMarte\nJúpiter\nVênus\nA Grande Mancha Vermelha de Júpiter é uma tempestade enorme e duradoura.\n%%\nQual é a principal função das raízes de uma planta?\nFazer as flores cantarem\nAbsorver água\nCaptar luz solar\nAs raízes ajudam a fixar a planta e a absorver água e nutrientes.\n%%\nQue forma tem quatro lados iguais e quatro ângulos retos?\nTriângulo\nQuadrado\nOval\nUm quadrado tem quatro lados iguais e quatro ângulos retos.\n%%\nQual país é famoso pelas pirâmides de Gizé?\nMéxico\nEgito\nÍndia\nAs pirâmides de Gizé ficam no Egito.\n%%\nComo se chama a chuva congelada que cai em pequenas bolinhas?\nNévoa\nGranizo miúdo\nVapor\nGranizo miúdo é precipitação congelada que cai em pequenas bolinhas.\n%%\nQue corpo d\'água separa a Europa e a África perto da Espanha?\nCanal da Mancha\nEstreito de Gibraltar\nEstreito de Bering\nO estreito de Gibraltar fica entre o sul da Espanha e o norte da África.\n%%\nQuantas rodas uma bicicleta padrão tem?\n1\n2\n3\nUma bicicleta padrão tem duas rodas.\n%%\nQual animal é conhecido por carregar sua casa nas costas?\nLagarto\nCaracol\nOuriço\nUm caracol carrega sua concha nas costas.\n%%\nQual é a cor principal da clorofila?\nVermelho\nVerde\nAzul\nA clorofila é o pigmento verde que as plantas usam para captar luz.\n%%\nQual continente habitado é o mais seco?\nÁfrica\nAustrália\nEuropa\nA Austrália é o continente habitado mais seco.\n%%\nComo se chama um grupo de leões?\nMatilha\nBando\nRebanho\nUm grupo de leões é chamado de bando.\n%%\nQual instrumento tem pedais e é comumente encontrado em igrejas?\nTrompete\nÓrgão\nTambor\nÓrgãos de tubos costumam ter teclados e pedais.\n%%\nQual ingrediente comum de cozinha faz o pão crescer?\nSal\nFermento\nPimenta\nO fermento produz gás que ajuda a massa do pão a crescer.\n%%\nQuanto é 7 multiplicado por 8?\n54\n56\n58\n7 vezes 8 é 56.\n%%\nQue parte da Terra é feita principalmente de metal derretido?\nCrosta\nNúcleo\nOceano\nO núcleo da Terra é composto em grande parte por metal, e seu núcleo externo é derretido.';
+
+  @override
+  String get breakZenFortunesData =>
+      'Faça uma pausa primeiro. Impulso não é destino.\n%%\nA vontade faz barulho. Ela não manda.\n%%\nDê a este momento mais 10 respirações antes de decidir qualquer coisa.\n%%\nPequenos desvios contam. Você já interrompeu a espiral.\n%%\nSe sua mente estiver em tempestade, reduza o horizonte ao próximo minuto.\n%%\nNada permanente precisa ser decidido dentro de uma onda passageira.\n%%\nVocê não precisa obedecer ao primeiro impulso que aparecer.\n%%\nTente tornar este minuto menor, mais gentil e mais lento.\n%%\nVocê pode adiar a vontade sem precisar vencê-la para sempre.\n%%\nA vitória não é perfeição. A vitória é criar espaço.\n%%\nUm próximo passo mais calmo vale mais do que um dramático.\n%%\nNote a vontade. Dê um nome a ela. Não alimente uma história.\n%%\nSeu sistema nervoso está pedindo cuidado, não punição.\n%%\nUma interrupção gentil pode redirecionar todo o momento.\n%%\nRespire como se estivesse ajudando um amigo, não se repreendendo.\n%%\nSe isso parecer agudo, responda com suavidade e estrutura.\n%%\nVocê pode se sentir desconfortável sem estar em perigo.\n%%\nO momento é intenso. Ainda assim, ele pode mudar.\n%%\nDê menos palco ao desejo e mais distância.\n%%\nUm sim adiado muitas vezes vira um não tranquilo.\n%%\nO corpo se acalma mais rápido quando você para de discutir com ele.\n%%\nEscolha o próximo minuto, não o futuro inteiro.\n%%\nRecupere o fôlego antes de seguir seus pensamentos.\n%%\nSeu progresso é feito de pequenas interrupções como esta.\n%%\nUma pausa não é fraqueza. É direção.\n%%\nDeixe a onda passar; você não precisa construir uma casa para ela.\n%%\nA vontade pode bater à porta. Ela não pode se mudar para dentro.\n%%\nDiminua o peso deste minuto e ele fica mais fácil de carregar.\n%%\nVocê não está atrasado. Está praticando a pausa em tempo real.\n%%\nUm sistema nervoso mais calmo toma decisões mais sábias.\n%%\nVocê pode adiar sem negar sua humanidade.\n%%\nO desejo quer velocidade. Responda com firmeza.\n%%\nIsto é um ponto de checagem, não um veredito sobre seu caráter.\n%%\nFique no corpo por uma respiração antes de seguir a história.\n%%\nUm pouco de espaço agora já é progresso real.\n%%\nVocê já sobreviveu a vontades fortes sem obedecê-las.\n%%\nA próxima ação gentil pode ser bem pequena e ainda assim contar.\n%%\nA calma costuma ser construída pela repetição, não pela revelação.\n%%\nInterrupções como esta ensinam ao seu cérebro um novo caminho.\n%%\nUm minuto de distância pode poupar uma hora de arrependimento.\n%%\nVocê pode querer alívio e ainda assim escolher com sabedoria.\n%%\nFaça menos. Desacelere. Deixe o calor baixar primeiro.\n%%\nA mente fica mais quieta quando o corpo se sente mais seguro.\n%%\nVocê pode honrar o que sente sem colocar isso em ação.\n%%\nEste momento não precisa de drama; precisa de espaço.\n%%\nTente soltar a mandíbula, os ombros e a pressão do tempo.\n%%\nVocê está no comando agora, mesmo que a curva seja suave.\n%%\nRespire baixo e devagar; deixe a urgência perder a deixa.\n%%\nDesejos costumam subir rápido e cair quando não são alimentados.\n%%\nEsta pausa já está mudando o final.\n%%\nVocê não precisa de um plano perfeito para dar um próximo passo melhor.\n%%\nDê um pouco de tédio ao impulso e ele costuma enfraquecer.\n%%\nHá força em ficar menos disponível para a vontade.\n%%\nUm corpo calmo pode segurar uma mente barulhenta com mais segurança.\n%%\nQue isto seja um recomeço, não um debate.\n%%\nO futuro que você está protegendo é construído em momentos exatamente como este.\n%%\nMesmo que tudo o que você faça seja adiar a espiral, isso importa.\n%%\nAcalme primeiro o sistema nervoso; o significado pode esperar.\n%%\nUma pausa sábia muitas vezes parece comum enquanto acontece.\n%%\nVocê está ensinando a si mesmo que urgência não é autoridade.\n%%\nPequenas escolhas limpas constroem uma confiança silenciosa.\n%%\nO alívio mais rápido nem sempre é o mais verdadeiro.\n%%\nFaça da próxima respiração sua tarefa inteira.\n%%\nReduza o ruído e depois decida.\n%%\nVocê pode encontrar este momento com menos força.\n%%\nA vontade pede atenção; ofereça observação no lugar.\n%%\nNão existe regra dizendo que você precisa continuar o velho padrão.\n%%\nAté uma desaceleração parcial já é uma vitória real.\n%%\nVocê não está preso à primeira emoção.\n%%\nUma decisão melhor muitas vezes começa com um corpo mais lento.\n%%\nA gentileza é permitida aqui.\n%%\nVocê pode continuar curioso em vez de reativo por mais um minuto.\n%%\nDeixe sua respiração marcar o ritmo.\n%%\nA tempestade na sua cabeça não precisa virar o clima da sua vida.\n%%\nEstabilidade muitas vezes é só alguns segundos mais calmos repetidos.';
 }

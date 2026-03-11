@@ -1056,5 +1056,331 @@
   "plusUnlockUnlimitedAvoidsHints": "Unlimited avoids, break game hints",
   "@plusUnlockUnlimitedAvoidsHints": {
     "description": "Benefit line in the Plus upgrade dialog for unlimited avoids and break game hints."
+  },
+  "breakGamesSectionTitle": "Break Games",
+  "breakRandomGamePoolTitle": "Pool casuale di giochi",
+  "breakGamePoolLockedSubtitle": "Avvia una prova gratuita o sblocca Plus per scegliere quali Break Games possono apparire casualmente.",
+  "breakKeepAtLeastOneActivityEnabled": "Mantieni attiva almeno una attività break.",
+  "breakActivityEnabledCount": "{enabledCount} su {totalCount} attivi",
+  "breakRandomGamePoolDescription": "Scegli quali attività break possono essere selezionate a caso.",
+  "breakActivityDefuseTitle": "Disinnesca",
+  "breakActivityDefuseSubtitle": "Smorza il momento disinnescando la tensione.",
+  "breakActivityPairMatchTitle": "Trova la coppia",
+  "breakActivityPairMatchSubtitle": "Porta la mente su una piccola sfida di memoria.",
+  "breakActivityCubeResetTitle": "Reset Cubo",
+  "breakActivityCubeResetSubtitle": "Riporta un piccolo cubo in ordine.",
+  "breakActivityStackSweepTitle": "Pulisci la pila",
+  "breakActivityStackSweepSubtitle": "Rimuovi le tessere esposte finché la pila non sparisce.",
+  "breakActivityTriviaPivotTitle": "Pivot quiz",
+  "breakActivityTriviaPivotSubtitle": "Dai al cervello qualcosa di diverso su cui concentrarsi.",
+  "breakActivityZenRoomTitle": "Stanza Zen",
+  "breakActivityZenRoomSubtitle": "Rallenta la scena e resetta il tono.",
+  "breakPersonalBestTime": "Record: {value}",
+  "breakPersonalBestCorrect": "Record: {count} corrette",
+  "breakExitTitle": "Uscire da questa pausa?",
+  "breakExitBody": "Questa sessione verrà segnata come incompleta. Puoi sempre iniziare subito un’altra pausa.",
+  "breakStay": "Resta",
+  "breakExit": "Esci",
+  "breakCustomizationLockedSubtitle": "Avvia una prova gratuita o sblocca Plus per usare suggerimenti e personalizzazione dei Break Games.",
+  "breakHintStrengthTitle": "Scegli l’intensità del suggerimento",
+  "breakHintStrengthBody": "Vuoi solo una leggera evidenziazione o l’indizio completo con anche le frecce?",
+  "breakHintStrengthSubtle": "Un po’ di aiuto",
+  "breakHintStrengthStrong": "Tanto aiuto",
+  "breakSheetTitle": "Pausa per \"{item}\"",
+  "breakThisItem": "questo elemento",
+  "breakResume": "Riprendi",
+  "breakPause": "Pausa",
+  "breakDefuseInstruction": "Stabilizza il quadrante. Tocca blocca quando la lancetta entra nella finestra calma.",
+  "breakDefuseTap": "Tocca",
+  "breakDefuseCompleteStatus": "Bene. Il meccanismo ora è calmo. Continua a respirare finché il minuto non finisce.",
+  "breakDefuseRingsLeft": "Restano {count} anelli. Resta nel ritmo.",
+  "breakDefuseWaitStatus": "Aspetta che la lancetta attraversi la finestra luminosa, poi tocca.",
+  "breakHintsLocked": "Aiuti bloccati",
+  "breakHintsOn": "Aiuti attivi",
+  "breakHintsOff": "Aiuti disattivi",
+  "breakHintsSubtle": "Aiuti: un po’",
+  "breakHintsStrong": "Aiuti: molto",
+  "breakPairMatchInstruction": "Trova le coppie di emoji uguali. Piccole ricerche di schemi aiutano molto a interrompere il pilota automatico.",
+  "breakPairMatchProgress": "{matchedCount} coppie su {totalCount} trovate",
+  "breakCubeResetInstruction": "Trascina per ruotare il cubo. Scorri sugli sticker visibili per girare i livelli.",
+  "breakCubeResetProgress": "{solvedCount} facce su {totalCount} risolte in {twistCount} mosse",
+  "breakStackSweepTilesLeft": "{count} tessere rimaste",
+  "breakTriviaCorrectInsight": "Corretto. {insight}",
+  "breakTriviaIncorrectInsight": "Bel tentativo. {insight}",
+  "breakNext": "Avanti",
+  "breakZenTapDrop": "Tocca una goccia",
+  "breakZenFooter": "Prendi una goccia quando vuoi una nuova frase. I tocchi mancati non fanno nulla di proposito.",
+  "breakCheckInTitle": "Fai il punto",
+  "breakOutcomeQuestion": "Cosa è cambiato dopo questa pausa di un minuto?",
+  "breakReplayActivity": "Rigioca attività",
+  "breakContinueActivity": "Continua a giocare / meditare",
+  "breakOutcomePassed": "Impulso passato",
+  "breakOutcomeWeaker": "Impulso più debole",
+  "breakOutcomeStillStrong": "Ancora forte",
+  "breakNeedAnotherLayer": "Serve un altro livello?",
+  "breakTryAnotherBreak": "Prova un’altra pausa",
+  "breakGoToZenRoom": "Vai alla Stanza Zen",
+  "breakMessageSupport": "Contatta il supporto",
+  "breakTriviaData": "Quale pianeta ha il giorno più corto?\nTerra\nGiove\nMarte\nGiove ruota così velocemente che un suo giorno dura circa 10 ore.\n%%\nQuanti cuori ha un polpo?\nUno\nTre\nDue\nTre. Due per le branchie e uno per il resto del corpo.\n%%\nQual è l'unico mammifero che può davvero volare?\nScoiattolo volante\nPipistrello\nPetauro dello zucchero\nI pipistrelli sono gli unici mammiferi capaci di un volo sostenuto.\n%%\nQuale oceano è il più profondo?\nAtlantico\nPacifico\nIndiano\nLa Fossa delle Marianne si trova nell'oceano Pacifico.\n%%\nQuante ossa ha di solito un essere umano adulto?\n186\n206\n226\n206 è il numero standard dopo che alcune ossa si fondono nell'età adulta.\n%%\nQuale animale è noto per dormire a testa in giù?\nKoala\nPipistrello\nLontra\nI pipistrelli riposano a testa in giù per poter prendere subito il volo.\n%%\nQuale gas assorbono soprattutto le piante dall'aria?\nOssigeno\nAnidride carbonica\nElio\nLe piante usano l'anidride carbonica durante la fotosintesi.\n%%\nQuale strumento ha di solito 88 tasti?\nViolino\nPianoforte\nFlauto\nUn pianoforte standard ha 88 tasti.\n%%\nQuanti lati ha un esagono?\n5\n6\n8\nEsa significa sei.\n%%\nQuale uccello è spesso associato alla consegna di messaggi?\nPappagallo\nPiccione\nGufo\nI piccioni viaggiatori venivano usati per inviare messaggi a lunga distanza.\n%%\nQual è l'organo più grande del corpo umano?\nFegato\nPelle\nPolmoni\nLa pelle è l'organo più grande del corpo.\n%%\nQuale pezzo degli scacchi si muove a L?\nAlfiere\nCavallo\nTorre\nIl cavallo è l'unico pezzo degli scacchi che si muove a L.\n%%\nQuanti continenti ci sono?\n5\n7\n6\nIl modello standard conta sette continenti.\n%%\nChe cosa raccolgono le api dai fiori?\nSassolini\nNettare\nSale\nLe api raccolgono nettare e polline dai fiori.\n%%\nQuale mese ha meno giorni?\nAprile\nFebbraio\nNovembre\nFebbraio è il più corto, con 28 giorni nella maggior parte degli anni.\n%%\nIn quale sport si usa un volano?\nTennis\nBadminton\nSquash\nNel badminton si usa un volano invece di una palla.\n%%\nChe colore ottieni mescolando blu e giallo?\nViola\nVerde\nArancione\nBlu e giallo insieme formano il verde.\n%%\nQuale pianeta è famoso per i suoi anelli?\nVenere\nSaturno\nMercurio\nGli anelli di Saturno sono la sua caratteristica più riconoscibile.\n%%\nQuanti minuti ci sono in due ore?\n90\n120\n180\nDue ore equivalgono a 120 minuti.\n%%\nQuale creatura marina ha otto braccia?\nCalamaro\nPolpo\nStella marina\nI polpi hanno otto braccia; i calamari hanno dieci appendici.\n%%\nCome si chiama l'acqua ghiacciata?\nVapore\nGhiaccio\nNebbia\nIl ghiaccio è acqua allo stato solido.\n%%\nDa quale direzione sorge il sole?\nNord\nEst\nOvest\nIl sole sembra sorgere a est.\n%%\nQuale mammifero passa la maggior parte della vita nell'oceano?\nCammello\nBalena\nVolpe\nLe balene sono mammiferi marini.\n%%\nQuale forma ha tre lati?\nCerchio\nTriangolo\nRettangolo\nUn triangolo ha esattamente tre lati.\n%%\nQuale frutto essiccato diventa un'uvetta?\nPrugna\nUva\nCiliegia\nL'uvetta è fatta con uva essiccata.\n%%\nQual è la stella principale al centro del nostro sistema solare?\nPolaris\nIl Sole\nSirio\nIl Sole è la stella attorno a cui orbitano i nostri pianeti.\n%%\nQuanti giorni ha un anno bisestile?\n365\n366\n364\nGli anni bisestili aggiungono un giorno a febbraio per un totale di 366 giorni.\n%%\nQuale animale è noto per cambiare colore per mimetizzarsi?\nConiglio\nCamaleonte\nPinguino\nI camaleonti sono famosi per cambiare colore.\n%%\nCome si chiama la roccia fusa quando raggiunge la superficie?\nMagma\nLava\nQuarzo\nSotto terra si chiama magma; in superficie lava.\n%%\nQuale lancetta di un orologio si muove più velocemente?\nLancetta delle ore\nLancetta dei secondi\nLancetta dei minuti\nLa lancetta dei secondi compie un giro completo ogni minuto.\n%%\nQuale stagione arriva dopo la primavera nell'emisfero nord?\nInverno\nEstate\nAutunno\nDopo la primavera arriva l'estate.\n%%\nQuante zampe ha un ragno?\n6\n8\n10\nI ragni sono aracnidi con otto zampe.\n%%\nQuale oceano si trova tra l'Africa e l'Australia?\nOceano Pacifico\nOceano Indiano\nOceano Artico\nL'oceano Indiano si trova tra Africa, Asia e Australia.\n%%\nIn cosa si trasformano i bruchi?\nLibellule\nFarfalle\nColeotteri\nMolti bruchi si trasformano in farfalle o falene.\n%%\nQuale oggetto di casa indica la temperatura?\nBussola\nTermometro\nBilancia\nUn termometro misura la temperatura.\n%%\nQuante corde ha un violino standard?\n5\n4\n6\nI violini hanno normalmente quattro corde.\n%%\nQuale pianeta è più vicino al Sole?\nMarte\nMercurio\nNettuno\nMercurio è il pianeta più vicino al Sole.\n%%\nQual è il punto di ebollizione dell'acqua al livello del mare in gradi Celsius?\n90\n100\n110\nAl livello del mare, l'acqua bolle a 100 °C.\n%%\nQuale animale è famoso per costruire dighe?\nLontra\nCastoro\nTalpa\nI castori costruiscono dighe con rami e fango.\n%%\nQual è l'opposto del nord su una bussola?\nEst\nSud\nOvest\nIl sud è l'opposto del nord.\n%%\nQuale forma non ha angoli?\nQuadrato\nCerchio\nTriangolo\nI cerchi non hanno angoli né spigoli.\n%%\nQuale pianeta è conosciuto come il pianeta rosso?\nVenere\nMarte\nUrano\nMarte appare rosso per l'ossido di ferro presente sulla sua superficie.\n%%\nQuante ore ci sono in un giorno intero?\n12\n24\n36\nUn giorno intero dura 24 ore.\n%%\nCon cosa si scrive su una lavagna?\nInchiostro\nGesso\nPastello\nIl gesso è lo strumento classico per scrivere sulla lavagna.\n%%\nQuale animale è il più alto sulla terraferma?\nElefante\nGiraffa\nCammello\nLe giraffe sono gli animali terrestri più alti.\n%%\nQuale senso è più legato al tuo naso?\nGusto\nOlfatto\nTatto\nIl naso è collegato al senso dell'olfatto.\n%%\nQuale utensile da cucina si usa per girare i pancake?\nFrusta\nSpatola\nMestolo\nUna spatola si usa comunemente per girare i pancake.\n%%\nQuale numero viene dopo 999?\n1001\n1000\n990\nDopo 999 viene 1000.\n%%\nQuale pianeta è il più lontano dal Sole?\nSaturno\nNettuno\nTerra\nNettuno è attualmente il pianeta riconosciuto più lontano dal Sole.\n%%\nCome si chiama una parola che significa il contrario di un'altra?\nSinonimo\nAntonimo\nAcronimo\nUn antonimo è una parola con significato opposto.\n%%\nQuale metallo è liquido a temperatura ambiente?\nFerro\nMercurio\nArgento\nIl mercurio è uno dei pochi metalli liquidi a temperatura ambiente.\n%%\nQual è la sostanza naturale più dura sulla Terra?\nOro\nDiamante\nQuarzo\nIl diamante è il materiale naturale più duro.\n%%\nQuale gruppo sanguigno è conosciuto come donatore universale?\nAB positivo\nO negativo\nA positivo\nIl sangue O negativo può di solito essere dato in emergenza alla maggior parte delle persone.\n%%\nCome si chiamano gli animali attivi di notte?\nAcquatici\nNotturni\nMigratori\nGli animali notturni sono più attivi durante la notte.\n%%\nQuale lingua ha il maggior numero di madrelingua nel mondo?\nInglese\nCinese mandarino\nSpagnolo\nIl cinese mandarino ha il numero più alto di madrelingua al mondo.\n%%\nQuale paese è famoso per il simbolo della foglia d'acero?\nSvezia\nCanada\nNuova Zelanda\nLa foglia d'acero è uno dei simboli nazionali più noti del Canada.\n%%\nQual è l'ingrediente principale del guacamole?\nCetriolo\nAvocado\nPisello\nIl guacamole è preparato soprattutto con avocado schiacciato.\n%%\nQuale pianeta ruota più di lato rispetto agli altri?\nTerra\nUrano\nGiove\nUrano ha un'inclinazione estrema e sembra ruotare su un fianco.\n%%\nQuanti denti ha di solito un adulto, inclusi i denti del giudizio?\n28\n32\n30\nUna dentatura adulta completa comprende di solito 32 denti.\n%%\nQuale deserto è il più grande deserto caldo della Terra?\nGobi\nSahara\nMojave\nIl Sahara è il più grande deserto caldo del mondo.\n%%\nCome si chiama uno scienziato che studia le rocce?\nBiologo\nGeologo\nAstronomo\nI geologi studiano rocce, minerali e struttura della Terra.\n%%\nQuale organo pompa il sangue nel corpo?\nFegato\nCuore\nRene\nIl cuore pompa il sangue nel sistema circolatorio.\n%%\nQuale frutto ha i semi all'esterno?\nMirtillo\nFragola\nMela\nLe fragole sono insolite perché hanno i semi all'esterno.\n%%\nCome si chiama il processo in cui il vapore acqueo diventa liquido?\nEvaporazione\nCondensazione\nCongelamento\nLa condensazione avviene quando il vapore acqueo si raffredda e diventa liquido.\n%%\nQuale famosa muraglia fu costruita per proteggere il nord della Cina?\nMuro di Berlino\nGrande Muraglia\nVallo di Adriano\nLa Grande Muraglia cinese fu costruita ed estesa nel corso dei secoli.\n%%\nQuanti giocatori ha una squadra di calcio in campo nello stesso momento?\n9\n11\n10\nUna squadra di calcio schiera 11 giocatori, incluso il portiere.\n%%\nQuale uccello non può volare ma è famoso per vivere in Antartide?\nGabbiano\nPinguino\nFalco\nI pinguini sono uccelli incapaci di volare e fortemente associati all'Antartide.\n%%\nQuanto fa 12 moltiplicato per 12?\n124\n144\n154\n12 per 12 fa 144.\n%%\nDi quale gas hanno bisogno gli esseri umani per respirare e vivere?\nAzoto\nOssigeno\nIdrogeno\nGli esseri umani hanno bisogno di ossigeno per respirare.\n%%\nQual è il pianeta più grande del nostro sistema solare?\nSaturno\nGiove\nNettuno\nGiove è il pianeta più grande del nostro sistema solare.\n%%\nIn quale parte del corpo si trova il femore?\nBraccio\nGamba\nCranio\nIl femore è l'osso della coscia nella gamba.\n%%\nQuale famosa torre pende in Italia?\nTorre Eiffel\nTorre di Pisa\nTorre CN\nLa Torre di Pisa è uno dei monumenti più conosciuti d'Italia.\n%%\nQuanti zeri ci sono in un milione?\n5\n6\n7\nUn milione si scrive 1.000.000.\n%%\nQuale animale marino è noto per avere un guscio e muoversi lentamente sulla terra?\nFoca\nTartaruga\nDelfino\nLe tartarughe marine hanno un guscio e si muovono lentamente sulla terraferma.\n%%\nCome si chiama la parte colorata dell'occhio?\nRetina\nIride\nPupilla\nL'iride è l'anello colorato attorno alla pupilla.\n%%\nQuale strumento si usa per osservare stelle e pianeti?\nMicroscopio\nTelescopio\nPeriscopio\nUn telescopio è progettato per osservare oggetti lontani nello spazio.\n%%\nQuale festa è famosa per zucche e costumi?\nPasqua\nHalloween\nSan Valentino\nHalloween è associato a costumi, dolci e zucche.\n%%\nQuanto fa 100 diviso 4?\n20\n25\n40\n100 diviso 4 fa 25.\n%%\nQuale animale è conosciuto come il re della giungla?\nTigre\nLeone\nLupo\nIl leone è spesso chiamato il re della giungla.\n%%\nCosa attirano i magneti?\nLegno\nFerro\nPlastica\nI magneti attirano fortemente il ferro e alcuni altri metalli.\n%%\nQuale giorno viene dopo venerdì?\nGiovedì\nSabato\nDomenica\nDopo venerdì arriva sabato.\n%%\nQual è la montagna più alta sopra il livello del mare?\nK2\nMonte Everest\nKilimangiaro\nIl monte Everest è la montagna più alta sopra il livello del mare.\n%%\nQuale insetto brilla al buio?\nFormica\nLucciola\nCavalletta\nLe lucciole producono luce tramite bioluminescenza.\n%%\nQuanti mesi ha un anno?\n10\n12\n14\nUn anno standard ha 12 mesi.\n%%\nQuale strumento si usa per tagliare la carta nei lavoretti?\nCucchiaio\nForbici\nPennello\nLe forbici si usano comunemente per tagliare la carta.\n%%\nQuale pianeta è noto per avere una gigantesca tempesta rossa?\nMarte\nGiove\nVenere\nLa Grande Macchia Rossa di Giove è una tempesta enorme e di lunga durata.\n%%\nQual è il compito principale delle radici in una pianta?\nFar cantare i fiori\nAssorbire acqua\nCatturare la luce del sole\nLe radici aiutano ad ancorare la pianta e ad assorbire acqua e nutrienti.\n%%\nQuale forma ha quattro lati uguali e quattro angoli retti?\nTriangolo\nQuadrato\nOvale\nUn quadrato ha quattro lati uguali e quattro angoli retti.\n%%\nQuale paese è famoso per le piramidi di Giza?\nMessico\nEgitto\nIndia\nLe piramidi di Giza si trovano in Egitto.\n%%\nCome si chiama la pioggia gelata che cade in piccoli granuli?\nNebbia\nNevischio\nVapore\nIl nevischio è una precipitazione gelata che cade in piccoli granuli.\n%%\nQuale specchio d'acqua separa Europa e Africa vicino alla Spagna?\nCanale della Manica\nStretto di Gibilterra\nStretto di Bering\nLo stretto di Gibilterra si trova tra il sud della Spagna e il nord dell'Africa.\n%%\nQuante ruote ha una bicicletta standard?\n1\n2\n3\nUna bicicletta standard ha due ruote.\n%%\nQuale animale è noto per portare la sua casa sul dorso?\nLucertola\nLumaca\nRiccio\nUna lumaca porta il proprio guscio sul dorso.\n%%\nQual è il colore principale della clorofilla?\nRosso\nVerde\nBlu\nLa clorofilla è il pigmento verde che le piante usano per catturare la luce.\n%%\nQuale continente abitato è il più secco?\nAfrica\nAustralia\nEuropa\nL'Australia è il continente abitato più secco.\n%%\nCome si chiama un gruppo di leoni?\nBranco\nPride\nMandria\nUn gruppo di leoni si chiama pride.\n%%\nQuale strumento ha pedali e si trova comunemente nelle chiese?\nTromba\nOrgano\nTamburo\nGli organi a canne hanno spesso sia tastiere sia pedali.\n%%\nQuale ingrediente da cucina comune fa lievitare il pane?\nSale\nLievito\nPepe\nIl lievito produce gas che aiuta l'impasto del pane a lievitare.\n%%\nQuanto fa 7 moltiplicato per 8?\n54\n56\n58\n7 per 8 fa 56.\n%%\nQuale parte della Terra è composta soprattutto da metallo fuso?\nCrosta\nNucleo\nOceano\nIl nucleo terrestre è composto in gran parte da metallo e il suo nucleo esterno è fuso.",
+  "breakZenFortunesData": "Fai prima una pausa. Lo slancio non è destino.\n%%\nL'impulso è rumoroso. Non comanda lui.\n%%\nDai a questo momento ancora 10 respiri prima di decidere qualsiasi cosa.\n%%\nLe piccole deviazioni contano. Hai già interrotto la spirale.\n%%\nSe la tua mente è in tempesta, riduci l'orizzonte al prossimo minuto.\n%%\nNulla di permanente va deciso dentro un'onda temporanea.\n%%\nNon devi obbedire al primo impulso che compare.\n%%\nProva a rendere questo minuto più piccolo, più morbido e più lento.\n%%\nPuoi rimandare l'impulso senza doverlo sconfiggere per sempre.\n%%\nLa vittoria non è perfezione. La vittoria è creare spazio.\n%%\nUn passo successivo più calmo vale più di uno drammatico.\n%%\nNota l'impulso. Dagli un nome. Non costruirci sopra una storia.\n%%\nIl tuo sistema nervoso sta chiedendo cura, non punizione.\n%%\nUna gentile interruzione può deviare tutto il momento.\n%%\nRespira come se stessi aiutando un amico, non rimproverando te stesso.\n%%\nSe sembra tagliente, rispondi con dolcezza e struttura.\n%%\nPuoi stare a disagio senza essere in pericolo.\n%%\nIl momento è intenso. Può ancora cambiare.\n%%\nDai meno teatro al craving e più distanza.\n%%\nUn sì rimandato spesso diventa un no sereno.\n%%\nIl corpo si calma più in fretta quando smetti di litigare con lui.\n%%\nScegli il prossimo minuto, non tutto il futuro.\n%%\nRiprendi fiato prima di inseguire i pensieri.\n%%\nI tuoi progressi sono fatti di piccole interruzioni come questa.\n%%\nUna pausa non è debolezza. È guida.\n%%\nLascia passare l'onda; non devi costruirle una casa.\n%%\nL'impulso può bussare. Non può trasferirsi dentro.\n%%\nAbbassa la posta di questo minuto e sarà più facile da portare.\n%%\nNon sei in ritardo. Stai praticando la pausa in tempo reale.\n%%\nUn sistema nervoso più morbido prende decisioni più sagge.\n%%\nPuoi rimandare senza negare la tua umanità.\n%%\nIl craving vuole velocità. Rispondi con fermezza.\n%%\nQuesto è un punto di controllo, non un verdetto sul tuo carattere.\n%%\nResta nel corpo per un respiro prima di seguire la storia.\n%%\nUn po' di spazio adesso è già un vero progresso.\n%%\nHai già attraversato impulsi forti senza obbedirgli.\n%%\nLa prossima azione gentile può essere molto piccola e contare comunque.\n%%\nLa calma si costruisce spesso con la ripetizione, non con la rivelazione.\n%%\nInterruzioni come questa insegnano al tuo cervello una nuova strada.\n%%\nUn minuto di distanza può evitarti un'ora di rimpianto.\n%%\nTi è concesso volere sollievo e scegliere comunque con saggezza.\n%%\nFai meno. Rallenta. Lascia scendere prima il calore.\n%%\nLa mente si fa più quieta quando il corpo si sente più al sicuro.\n%%\nPuoi onorare ciò che senti senza metterlo in scena.\n%%\nQuesto momento non ha bisogno di dramma; ha bisogno di spazio.\n%%\nProva a sciogliere mascella, spalle e pressione del tempo.\n%%\nOra stai guidando tu, anche se la curva è dolce.\n%%\nRespira in basso e lentamente; lascia che l'urgenza perda il suo momento.\n%%\nI craving spesso salgono in fretta e svaniscono se non li alimenti.\n%%\nQuesta pausa sta già cambiando il finale.\n%%\nNon ti serve un piano perfetto per fare un passo migliore.\n%%\nDai un po' di noia all'impulso e spesso si indebolisce.\n%%\nC'è forza nel renderti meno disponibile all'impulso.\n%%\nUn corpo calmo può contenere una mente rumorosa con più sicurezza.\n%%\nChe questo sia un reset, non un dibattito.\n%%\nIl futuro che stai proteggendo si costruisce in momenti esattamente come questo.\n%%\nAnche se fai solo slittare la spirale, conta lo stesso.\n%%\nCalma prima il sistema nervoso; il significato può aspettare.\n%%\nUna pausa saggia spesso sembra ordinaria mentre accade.\n%%\nTi stai insegnando che l'urgenza non è autorità.\n%%\nPiccole scelte pulite costruiscono una fiducia silenziosa.\n%%\nIl sollievo più rapido non è sempre quello più vero.\n%%\nFai del prossimo respiro il tuo unico compito.\n%%\nRiduci il rumore, poi decidi.\n%%\nPuoi incontrare questo momento con meno forza.\n%%\nL'impulso chiede attenzione; offrigli osservazione invece.\n%%\nNon esiste alcuna regola che dica che devi continuare il vecchio schema.\n%%\nAnche un rallentamento parziale è una vittoria reale.\n%%\nNon sei intrappolato nella prima emozione.\n%%\nUna decisione migliore spesso inizia con un corpo più lento.\n%%\nQui la gentilezza è permessa.\n%%\nPuoi restare curioso invece che reattivo per ancora un minuto.\n%%\nLascia che il tuo respiro dia il ritmo.\n%%\nLa tempesta nella tua testa non deve diventare il clima della tua vita.\n%%\nLa stabilità spesso è solo qualche secondo più quieto, ripetuto.",
+  "@breakGamesSectionTitle": {
+    "description": "Section title for break games in the drawer and settings."
+  },
+  "@breakRandomGamePoolTitle": {
+    "description": "Title for the break game random pool settings."
+  },
+  "@breakGamePoolLockedSubtitle": {
+    "description": "Paywall subtitle shown when random break game pool customization is locked."
+  },
+  "@breakKeepAtLeastOneActivityEnabled": {
+    "description": "Snackbar message shown when the user tries to disable the final enabled break activity."
+  },
+  "@breakActivityEnabledCount": {
+    "description": "Summary showing how many break activities are enabled in the random pool.",
+    "placeholders": {
+      "enabledCount": {
+        "type": "int"
+      },
+      "totalCount": {
+        "type": "int"
+      }
+    }
+  },
+  "@breakRandomGamePoolDescription": {
+    "description": "Description text for the break game random pool settings sheet."
+  },
+  "@breakActivityDefuseTitle": {
+    "description": "Title for the Defuse break activity."
+  },
+  "@breakActivityDefuseSubtitle": {
+    "description": "Subtitle for the Defuse break activity."
+  },
+  "@breakActivityPairMatchTitle": {
+    "description": "Title for the Pair Match break activity."
+  },
+  "@breakActivityPairMatchSubtitle": {
+    "description": "Subtitle for the Pair Match break activity."
+  },
+  "@breakActivityCubeResetTitle": {
+    "description": "Title for the Cube Reset break activity."
+  },
+  "@breakActivityCubeResetSubtitle": {
+    "description": "Subtitle for the Cube Reset break activity."
+  },
+  "@breakActivityStackSweepTitle": {
+    "description": "Title for the Stack Sweep break activity."
+  },
+  "@breakActivityStackSweepSubtitle": {
+    "description": "Subtitle for the Stack Sweep break activity."
+  },
+  "@breakActivityTriviaPivotTitle": {
+    "description": "Title for the Trivia Pivot break activity."
+  },
+  "@breakActivityTriviaPivotSubtitle": {
+    "description": "Subtitle for the Trivia Pivot break activity."
+  },
+  "@breakActivityZenRoomTitle": {
+    "description": "Title for the Zen Room break activity."
+  },
+  "@breakActivityZenRoomSubtitle": {
+    "description": "Subtitle for the Zen Room break activity."
+  },
+  "@breakPersonalBestTime": {
+    "description": "Personal best label for time-based break activities.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@breakPersonalBestCorrect": {
+    "description": "Personal best label for trivia break activities.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@breakExitTitle": {
+    "description": "Confirmation dialog title when leaving a break early."
+  },
+  "@breakExitBody": {
+    "description": "Confirmation dialog body when leaving a break early."
+  },
+  "@breakStay": {
+    "description": "Action label to stay in the current break."
+  },
+  "@breakExit": {
+    "description": "Action label to exit the current break."
+  },
+  "@breakCustomizationLockedSubtitle": {
+    "description": "Paywall subtitle shown when break hints or customization are locked."
+  },
+  "@breakHintStrengthTitle": {
+    "description": "Title for choosing cube hint strength."
+  },
+  "@breakHintStrengthBody": {
+    "description": "Body text for choosing cube hint strength."
+  },
+  "@breakHintStrengthSubtle": {
+    "description": "Option label for subtle cube hints."
+  },
+  "@breakHintStrengthStrong": {
+    "description": "Option label for strong cube hints."
+  },
+  "@breakSheetTitle": {
+    "description": "Header title for the active break sheet, showing the avoided item.",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "@breakThisItem": {
+    "description": "Fallback label for an avoided item with no name in the break sheet title."
+  },
+  "@breakResume": {
+    "description": "Tooltip for resuming a paused break timer."
+  },
+  "@breakPause": {
+    "description": "Tooltip for pausing an active break timer."
+  },
+  "@breakDefuseInstruction": {
+    "description": "Instruction text for the Defuse break activity."
+  },
+  "@breakDefuseTap": {
+    "description": "Center button label in the Defuse break activity."
+  },
+  "@breakDefuseCompleteStatus": {
+    "description": "Status text shown after completing the Defuse activity before the timer ends."
+  },
+  "@breakDefuseRingsLeft": {
+    "description": "Status text showing how many Defuse rings remain.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@breakDefuseWaitStatus": {
+    "description": "Status text instructing the user how to hit the Defuse timing window."
+  },
+  "@breakHintsLocked": {
+    "description": "Button label when break hints are locked behind Plus."
+  },
+  "@breakHintsOn": {
+    "description": "Button label when break hints are enabled."
+  },
+  "@breakHintsOff": {
+    "description": "Button label when break hints are disabled."
+  },
+  "@breakHintsSubtle": {
+    "description": "Button label when subtle break hints are enabled."
+  },
+  "@breakHintsStrong": {
+    "description": "Button label when strong break hints are enabled."
+  },
+  "@breakPairMatchInstruction": {
+    "description": "Instruction text for the Pair Match break activity."
+  },
+  "@breakPairMatchProgress": {
+    "description": "Progress text showing matched emoji pairs in Pair Match.",
+    "placeholders": {
+      "matchedCount": {
+        "type": "int"
+      },
+      "totalCount": {
+        "type": "int"
+      }
+    }
+  },
+  "@breakCubeResetInstruction": {
+    "description": "Instruction text for the Cube Reset break activity."
+  },
+  "@breakCubeResetProgress": {
+    "description": "Progress text showing solved faces and twists in Cube Reset.",
+    "placeholders": {
+      "solvedCount": {
+        "type": "int"
+      },
+      "totalCount": {
+        "type": "int"
+      },
+      "twistCount": {
+        "type": "int"
+      }
+    }
+  },
+  "@breakStackSweepTilesLeft": {
+    "description": "Remaining tile count shown in the Stack Sweep break activity.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@breakTriviaCorrectInsight": {
+    "description": "Feedback shown after a correct trivia answer.",
+    "placeholders": {
+      "insight": {
+        "type": "String"
+      }
+    }
+  },
+  "@breakTriviaIncorrectInsight": {
+    "description": "Feedback shown after an incorrect trivia answer.",
+    "placeholders": {
+      "insight": {
+        "type": "String"
+      }
+    }
+  },
+  "@breakNext": {
+    "description": "Button label to advance to the next trivia question."
+  },
+  "@breakZenTapDrop": {
+    "description": "Prompt badge shown in the Zen Room activity."
+  },
+  "@breakZenFooter": {
+    "description": "Footer instruction text for the Zen Room activity."
+  },
+  "@breakCheckInTitle": {
+    "description": "Title for the outcome check-in screen after a break."
+  },
+  "@breakOutcomeQuestion": {
+    "description": "Question shown on the outcome check-in screen after a break."
+  },
+  "@breakReplayActivity": {
+    "description": "Button label to replay a completed break activity."
+  },
+  "@breakContinueActivity": {
+    "description": "Button label to continue an unfinished break activity."
+  },
+  "@breakOutcomePassed": {
+    "description": "Outcome option label when the urge passed after a break."
+  },
+  "@breakOutcomeWeaker": {
+    "description": "Outcome option label when the urge feels weaker after a break."
+  },
+  "@breakOutcomeStillStrong": {
+    "description": "Outcome option label when the urge still feels strong after a break."
+  },
+  "@breakNeedAnotherLayer": {
+    "description": "Heading for follow-up options when the urge still feels strong."
+  },
+  "@breakTryAnotherBreak": {
+    "description": "Follow-up action to try another break activity."
+  },
+  "@breakGoToZenRoom": {
+    "description": "Follow-up action to switch to the Zen Room break activity."
+  },
+  "@breakMessageSupport": {
+    "description": "Follow-up action to message trusted support after a break."
+  },
+  "@breakTriviaData": {
+    "description": "Localized trivia dataset for the Trivia Pivot break activity. Each record is separated by newline-percent-percent-newline and contains question, wrong option, correct option, wrong option, and insight on separate lines."
+  },
+  "@breakZenFortunesData": {
+    "description": "Localized fortune lines for the Zen Room break activity separated by newline-percent-percent-newline."
   }
 }

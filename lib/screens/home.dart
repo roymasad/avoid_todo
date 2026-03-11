@@ -291,6 +291,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   }
 
   Future<void> _showBreakGamePoolSettings() async {
+    final l10n = AppLocalizations.of(context) ??
+        lookupAppLocalizations(const Locale('en'));
     final colorScheme = Theme.of(context).colorScheme;
     Set<BreakActivityType> enabledActivities =
         Set<BreakActivityType>.from(_enabledBreakActivities);
@@ -312,16 +314,15 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               if (!hasBreakCustomizationAccess) {
                 _showPlusDialog(
                   this.context,
-                  subtitle:
-                      'Start a free trial or unlock Plus to choose which break games appear at random.',
+                  subtitle: l10n.breakGamePoolLockedSubtitle,
                   entryPoint: 'break_game_pool_locked',
                 );
                 return;
               }
               if (!enabled && enabledActivities.length == 1) {
                 ScaffoldMessenger.of(this.context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Keep at least one break activity enabled.'),
+                  SnackBar(
+                    content: Text(l10n.breakKeepAtLeastOneActivityEnabled),
                   ),
                 );
                 return;
@@ -376,15 +377,18 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Random game pool',
-                                style: TextStyle(
+                              Text(
+                                l10n.breakRandomGamePoolTitle,
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                               Text(
-                                '${enabledActivities.length} of ${BreakActivityType.values.length} enabled',
+                                l10n.breakActivityEnabledCount(
+                                  enabledActivities.length,
+                                  BreakActivityType.values.length,
+                                ),
                                 style: TextStyle(
                                   color: colorScheme.onSurfaceVariant,
                                 ),
@@ -400,7 +404,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Choose which break activities can be picked at random.',
+                      l10n.breakRandomGamePoolDescription,
                       style: TextStyle(
                         fontSize: 13,
                         color: colorScheme.onSurfaceVariant,
@@ -415,17 +419,19 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                             ListTile(
                               key: Key('break_game_toggle_${activity.name}'),
                               leading: Icon(
-                                BreakHelper.definitionFor(activity).icon,
+                                BreakHelper.definitionFor(activity, l10n).icon,
                                 size: 20,
                                 color: hasBreakCustomizationAccess
                                     ? null
                                     : colorScheme.onSurfaceVariant
                                         .withValues(alpha: 0.75),
                               ),
-                              title:
-                                  Text(BreakHelper.definitionFor(activity).title),
+                              title: Text(
+                                  BreakHelper.definitionFor(activity, l10n)
+                                      .title),
                               subtitle: Text(
-                                BreakHelper.definitionFor(activity).subtitle,
+                                BreakHelper.definitionFor(activity, l10n)
+                                    .subtitle,
                                 style: TextStyle(
                                   color: hasBreakCustomizationAccess
                                       ? null
@@ -460,7 +466,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                               borderRadius:
                                                   BorderRadius.circular(999),
                                               border: Border.all(
-                                                color: colorScheme.outlineVariant
+                                                color: colorScheme
+                                                    .outlineVariant
                                                     .withValues(alpha: 0.55),
                                               ),
                                             ),
@@ -468,8 +475,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                             child: Align(
                                               alignment:
                                                   enabledActivities.contains(
-                                                    activity,
-                                                  )
+                                                activity,
+                                              )
                                                       ? Alignment.centerRight
                                                       : Alignment.centerLeft,
                                               child: Container(
@@ -5239,19 +5246,27 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               }
             },
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Text(
-              'Break Games',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              (l10n ?? lookupAppLocalizations(const Locale('en')))
+                  .breakGamesSectionTitle,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ),
           ListTile(
             key: const Key('drawer_break_games_tile'),
             leading: const Icon(Icons.sports_esports_outlined),
-            title: const Text('Random game pool'),
+            title: Text(
+              (l10n ?? lookupAppLocalizations(const Locale('en')))
+                  .breakRandomGamePoolTitle,
+            ),
             subtitle: Text(
-              '${_enabledBreakActivities.length} of ${BreakActivityType.values.length} enabled',
+              (l10n ?? lookupAppLocalizations(const Locale('en')))
+                  .breakActivityEnabledCount(
+                _enabledBreakActivities.length,
+                BreakActivityType.values.length,
+              ),
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
