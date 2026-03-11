@@ -50,6 +50,7 @@ class HelpScreen extends StatelessWidget {
             _buildFAQItem(context, l10n.faq9Question, l10n.faq9Answer),
             _buildFAQItem(context, l10n.faq10Question, l10n.faq10Answer),
             _buildFAQItem(context, l10n.faq11Question, l10n.faq11Answer),
+            _buildFAQItem(context, l10n.faq12Question, l10n.faq12Answer),
             const SizedBox(height: 32),
             _buildHelpSection(
               context,

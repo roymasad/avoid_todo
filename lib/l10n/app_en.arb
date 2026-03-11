@@ -437,13 +437,21 @@
   "@onboardingRelapseDesc": {
     "description": "Onboarding slide 4 description."
   },
+  "onboardingBreakGamesTitle": "Defuse Urges with Break Games",
+  "@onboardingBreakGamesTitle": {
+    "description": "Onboarding slide 5 title."
+  },
+  "onboardingBreakGamesDesc": "When an urge hits, tap Break on an active avoid to launch a fast 60-second reset. These tiny games and calming activities are built to interrupt autopilot before a slip happens.",
+  "@onboardingBreakGamesDesc": {
+    "description": "Onboarding slide 5 description."
+  },
   "onboardingBadgesTitle": "Earn Rewards Along the Way",
   "@onboardingBadgesTitle": {
-    "description": "Onboarding slide 5 title."
+    "description": "Onboarding slide 6 title."
   },
   "onboardingBadgesDesc": "Unlock badges for streaks and savings milestones. Complete goals, earn XP, and level up through 100 tiers as your habits get stronger.",
   "@onboardingBadgesDesc": {
-    "description": "Onboarding slide 5 description."
+    "description": "Onboarding slide 6 description."
   },
   "getStarted": "Get Started",
   "@getStarted": {
@@ -560,6 +568,14 @@
   "faq11Answer": "Avoid only collects basic app usage analytics, such as screen visits and major button taps, to help improve the product. It does not send your habit names, relapse notes, contact names, location names, or other personally identifiable or user-entered habit content to analytics.",
   "@faq11Answer": {
     "description": "FAQ 11 answer."
+  },
+  "faq12Question": "What are Break Games and when should I use them?",
+  "@faq12Question": {
+    "description": "FAQ 12 question."
+  },
+  "faq12Answer": "Break Games are short urge-interruption activities you can launch from the Break button on an active avoid. They run for about 60 seconds and are meant to distract, steady, or redirect you during the risky moment right before a slip. Some games also track personal bests, and Plus or trial access unlocks hints and random game pool controls.",
+  "@faq12Answer": {
+    "description": "FAQ 12 answer."
   },
   "coachMarkAddTitle": "Add your first habit",
   "@coachMarkAddTitle": {
@@ -1036,5 +1052,9 @@
   "widgetAndroidStep5Desc": "Drag the widget to any empty spot on your home screen.",
   "@widgetAndroidStep5Desc": {
     "description": "Android widget setup step 5 description."
+  },
+  "plusUnlockUnlimitedAvoidsHints": "Unlimited avoids, break game hints",
+  "@plusUnlockUnlimitedAvoidsHints": {
+    "description": "Benefit line in the Plus upgrade dialog for unlimited avoids and break game hints."
   }
 }

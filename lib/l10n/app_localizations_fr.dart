@@ -344,6 +344,14 @@ class AppLocalizationsFr extends AppLocalizations {
       'Appuyez sur Rechute pour noter ce qui vous a déclenché. Avec le temps, Avoid repère vos schémas pour que vous puissiez les anticiper. Sans jugement, juste de la conscience.';
 
   @override
+  String get onboardingBreakGamesTitle =>
+      'Désamorcez les envies avec les Break Games';
+
+  @override
+  String get onboardingBreakGamesDesc =>
+      'Quand une envie monte, appuyez sur Break sur un avoid actif pour lancer un reset rapide de 60 secondes. Ces mini-jeux et activités apaisantes sont pensés pour casser le pilote automatique avant qu\'une rechute n\'arrive.';
+
+  @override
   String get onboardingBadgesTitle => 'Gagnez des récompenses en chemin';
 
   @override
@@ -452,6 +460,14 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get faq11Answer =>
       'Avoid collecte uniquement des données d\'usage basiques de l\'application, comme les écrans visités et les principaux boutons touchés, afin d\'améliorer le produit. Il n\'envoie pas aux analytics les noms de vos habitudes, les notes de rechute, les noms de contacts, les noms de lieux ni tout autre contenu identifiable ou saisi par l\'utilisateur.';
+
+  @override
+  String get faq12Question =>
+      'Que sont les Break Games et quand faut-il les utiliser ?';
+
+  @override
+  String get faq12Answer =>
+      'Les Break Games sont de courtes activités d\'interruption d\'envie que vous pouvez lancer depuis le bouton Break d\'un avoid actif. Elles durent environ 60 secondes et servent à vous distraire, vous stabiliser ou vous rediriger au moment critique juste avant une rechute. Certains jeux enregistrent aussi vos meilleurs scores, et Plus ou l\'essai débloquent les aides et le contrôle du pool aléatoire.';
 
   @override
   String get coachMarkAddTitle => 'Ajoutez votre première habitude';
@@ -826,4 +842,8 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get widgetAndroidStep5Desc =>
       'Faites glisser le widget vers un endroit vide de votre écran d\'accueil.';
+
+  @override
+  String get plusUnlockUnlimitedAvoidsHints =>
+      'Unlimited avoids, break game hints';
 }

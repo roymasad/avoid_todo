@@ -44,6 +44,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       color: Colors.orange,
     ),
     OnboardingData(
+      titleKey: (l10n) => l10n.onboardingBreakGamesTitle,
+      descKey: (l10n) => l10n.onboardingBreakGamesDesc,
+      icon: Icons.sports_esports_rounded,
+      color: const Color(0xFF6A4C93),
+    ),
+    OnboardingData(
       titleKey: (l10n) => l10n.onboardingBadgesTitle,
       descKey: (l10n) => l10n.onboardingBadgesDesc,
       icon: Icons.emoji_events,

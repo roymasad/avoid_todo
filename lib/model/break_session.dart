@@ -18,6 +18,7 @@ class BreakSessionResult {
   final BreakSessionStatus status;
   final BreakOutcome? outcome;
   final BreakFollowUpAction? followUpAction;
+  final int? score;
   final DateTime startedAt;
   final DateTime endedAt;
 
@@ -28,6 +29,7 @@ class BreakSessionResult {
     required this.endedAt,
     this.outcome,
     this.followUpAction,
+    this.score,
   });
 
   bool get isHelpful =>

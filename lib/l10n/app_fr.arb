@@ -437,13 +437,21 @@
   "@onboardingRelapseDesc": {
     "description": "Onboarding slide 4 description."
   },
+  "onboardingBreakGamesTitle": "Désamorcez les envies avec les Break Games",
+  "@onboardingBreakGamesTitle": {
+    "description": "Onboarding slide 5 title."
+  },
+  "onboardingBreakGamesDesc": "Quand une envie monte, appuyez sur Break sur un avoid actif pour lancer un reset rapide de 60 secondes. Ces mini-jeux et activités apaisantes sont pensés pour casser le pilote automatique avant qu'une rechute n'arrive.",
+  "@onboardingBreakGamesDesc": {
+    "description": "Onboarding slide 5 description."
+  },
   "onboardingBadgesTitle": "Gagnez des récompenses en chemin",
   "@onboardingBadgesTitle": {
-    "description": "Onboarding slide 5 title."
+    "description": "Onboarding slide 6 title."
   },
   "onboardingBadgesDesc": "Débloquez des badges pour vos séries et économies. Complétez des objectifs, gagnez de l'XP et montez de niveau parmi 100 paliers au fil de vos progrès.",
   "@onboardingBadgesDesc": {
-    "description": "Onboarding slide 5 description."
+    "description": "Onboarding slide 6 description."
   },
   "getStarted": "Commencer",
   "@getStarted": {
@@ -560,6 +568,14 @@
   "faq11Answer": "Avoid collecte uniquement des données d'usage basiques de l'application, comme les écrans visités et les principaux boutons touchés, afin d'améliorer le produit. Il n'envoie pas aux analytics les noms de vos habitudes, les notes de rechute, les noms de contacts, les noms de lieux ni tout autre contenu identifiable ou saisi par l'utilisateur.",
   "@faq11Answer": {
     "description": "FAQ 11 answer."
+  },
+  "faq12Question": "Que sont les Break Games et quand faut-il les utiliser ?",
+  "@faq12Question": {
+    "description": "FAQ 12 question."
+  },
+  "faq12Answer": "Les Break Games sont de courtes activités d'interruption d'envie que vous pouvez lancer depuis le bouton Break d'un avoid actif. Elles durent environ 60 secondes et servent à vous distraire, vous stabiliser ou vous rediriger au moment critique juste avant une rechute. Certains jeux enregistrent aussi vos meilleurs scores, et Plus ou l'essai débloquent les aides et le contrôle du pool aléatoire.",
+  "@faq12Answer": {
+    "description": "FAQ 12 answer."
   },
   "coachMarkAddTitle": "Ajoutez votre première habitude",
   "@coachMarkAddTitle": {
@@ -1036,5 +1052,9 @@
   "widgetAndroidStep5Desc": "Faites glisser le widget vers un endroit vide de votre écran d'accueil.",
   "@widgetAndroidStep5Desc": {
     "description": "Android widget setup step 5 description."
+  },
+  "plusUnlockUnlimitedAvoidsHints": "Unlimited avoids, break game hints",
+  "@plusUnlockUnlimitedAvoidsHints": {
+    "description": "Benefit line in the Plus upgrade dialog for unlimited avoids and break game hints."
   }
 }

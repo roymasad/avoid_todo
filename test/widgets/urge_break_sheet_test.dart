@@ -137,6 +137,148 @@ void main() {
     expect(find.byKey(const Key('break_replay_activity')), findsOneWidget);
   });
 
+  testWidgets('replaying after a completed scored activity shows a personal best',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 12),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.defuse,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    for (var i = 0; i < 180; i++) {
+      await tester.tap(find.byKey(const Key('defuse_safe_crack')));
+      await tester.pump(const Duration(milliseconds: 90));
+      if (find.byKey(const Key('break_outcome_view')).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(seconds: 1));
+
+    await tester.tap(find.byKey(const Key('break_replay_activity')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byKey(const Key('break_activity_defuse')), findsOneWidget);
+    expect(find.byKey(const Key('break_personal_best')), findsOneWidget);
+    expect(find.textContaining('Best:'), findsOneWidget);
+  });
+
+  testWidgets('best scored attempt survives replay and abort',
+      (WidgetTester tester) async {
+    BreakSessionResult? result;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 12),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.defuse,
+          onResult: (value) => result = value,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    for (var i = 0; i < 180; i++) {
+      await tester.tap(find.byKey(const Key('defuse_safe_crack')));
+      await tester.pump(const Duration(milliseconds: 90));
+      if (find.byKey(const Key('break_outcome_view')).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(seconds: 1));
+
+    await tester.tap(find.byKey(const Key('break_replay_activity')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await tester.tap(find.byKey(const Key('break_sheet_close')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Exit'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(result?.status, BreakSessionStatus.aborted);
+    expect(result?.score, isNotNull);
+    expect(result!.score!, greaterThan(0));
+  });
+
+  testWidgets('defuse activity exposes a bottom hint toggle',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.defuse,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byKey(const Key('break_activity_defuse')), findsOneWidget);
+    expect(find.byKey(const Key('defuse_hint_toggle')), findsOneWidget);
+    expect(find.text('Hints off'), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(const Key('defuse_hint_toggle')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('defuse_hint_toggle')));
+    await tester.pump();
+
+    expect(find.text('Hints on'), findsOneWidget);
+  });
+
+  testWidgets('pause button freezes and resumes the break timer',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.defuse,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('00:05'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('break_pause_toggle')));
+    await tester.pump();
+
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('00:05'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('break_pause_toggle')));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.text('00:04'), findsOneWidget);
+  });
+
   testWidgets('early exit requires confirmation and returns aborted status',
       (WidgetTester tester) async {
     BreakSessionResult? result;
@@ -225,6 +367,63 @@ void main() {
     expect(find.textContaining('Tap a drop'), findsWidgets);
   });
 
+  testWidgets('trivia hints remove one false answer when enabled',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.triviaPivot,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('break_activity_trivia')), findsOneWidget);
+    expect(find.byKey(const Key('trivia_hint_toggle')), findsOneWidget);
+    expect(find.text('Hints off'), findsOneWidget);
+    expect(find.byType(OutlinedButton), findsNWidgets(3));
+
+    await tester.ensureVisible(find.byKey(const Key('trivia_hint_toggle')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('trivia_hint_toggle')));
+    await tester.pump();
+
+    expect(find.text('Hints on'), findsOneWidget);
+    expect(find.byType(OutlinedButton), findsNWidgets(2));
+  });
+
+  testWidgets('pair match exposes a hint toggle', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.pairMatch,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('break_activity_pairs')), findsOneWidget);
+    expect(find.byKey(const Key('pair_hint_toggle')), findsOneWidget);
+    expect(find.text('Hints off'), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(const Key('pair_hint_toggle')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('pair_hint_toggle')));
+    await tester.pump();
+
+    expect(find.text('Hints on'), findsOneWidget);
+  });
+
   testWidgets('stack sweep activity renders its board',
       (WidgetTester tester) async {
     await tester.pumpWidget(
@@ -244,6 +443,15 @@ void main() {
     expect(find.byKey(const Key('break_activity_stack')), findsOneWidget);
     expect(find.byKey(const Key('stack_sweep_board')), findsOneWidget);
     expect(find.byKey(const Key('stack_tile_0')), findsOneWidget);
+    expect(find.byKey(const Key('stack_hint_toggle')), findsOneWidget);
+    expect(find.text('Hints off'), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(const Key('stack_hint_toggle')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('stack_hint_toggle')));
+    await tester.pump();
+
+    expect(find.text('Hints on'), findsOneWidget);
   });
 
   testWidgets('cube reset activity renders the cube and controls',
@@ -260,10 +468,26 @@ void main() {
     );
 
     await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byKey(const Key('break_activity_cube')), findsOneWidget);
     expect(find.byKey(const Key('cube_scene')), findsOneWidget);
+    expect(find.byKey(const Key('cube_hint_toggle')), findsOneWidget);
+    expect(find.text('Hints off'), findsOneWidget);
     expect(find.textContaining('Solved '), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('cube_hint_toggle')));
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(find.text('Choose hint strength'), findsOneWidget);
+    expect(find.text('A bit of help'), findsOneWidget);
+    expect(find.text('A lot of help'), findsOneWidget);
+
+    await tester.tap(find.text('A bit of help'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(find.text('Hints: a bit'), findsOneWidget);
   });
 }

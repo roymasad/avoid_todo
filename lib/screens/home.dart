@@ -131,6 +131,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   bool _syncEnabled = false;
   TrustedSupportContact? _trustedSupportContact;
   final Map<String, BreakActivityType> _lastBreakActivityByTodo = {};
+  Set<BreakActivityType> _enabledBreakActivities =
+      BreakActivityType.values.toSet();
 
   // Phase 1 New Fields
   bool _isRecurring = true;
@@ -258,14 +260,260 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
   Future<void> _loadNotificationPref() async {
     final prefs = await SharedPreferences.getInstance();
+    final savedBreakActivities =
+        prefs.getStringList('enabled_break_activities');
+    final enabledBreakActivities = savedBreakActivities == null
+        ? BreakActivityType.values.toSet()
+        : savedBreakActivities
+            .map(_breakActivityTypeFromName)
+            .whereType<BreakActivityType>()
+            .toSet();
     setState(() {
       _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
       _widgetEnabled = prefs.getBool('widget_enabled') ?? false;
       _syncEnabled = prefs.getBool('sync_enabled') ?? false;
+      _enabledBreakActivities = enabledBreakActivities.isEmpty
+          ? BreakActivityType.values.toSet()
+          : enabledBreakActivities;
       _commitmentPromptFrequency = _commitmentPromptFrequencyFromString(
         prefs.getString('commitment_prompt_frequency'),
       );
     });
+  }
+
+  BreakActivityType? _breakActivityTypeFromName(String name) {
+    for (final activity in BreakActivityType.values) {
+      if (activity.name == name) {
+        return activity;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _showBreakGamePoolSettings() async {
+    final colorScheme = Theme.of(context).colorScheme;
+    Set<BreakActivityType> enabledActivities =
+        Set<BreakActivityType>.from(_enabledBreakActivities);
+
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, modalSetState) {
+            final hasBreakCustomizationAccess =
+                context.watch<PurchaseProvider>().isPlus;
+
+            Future<void> onToggle(
+              BreakActivityType activity,
+              bool enabled,
+            ) async {
+              if (!hasBreakCustomizationAccess) {
+                _showPlusDialog(
+                  this.context,
+                  subtitle:
+                      'Start a free trial or unlock Plus to choose which break games appear at random.',
+                  entryPoint: 'break_game_pool_locked',
+                );
+                return;
+              }
+              if (!enabled && enabledActivities.length == 1) {
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Keep at least one break activity enabled.'),
+                  ),
+                );
+                return;
+              }
+
+              final nextEnabled =
+                  Set<BreakActivityType>.from(enabledActivities);
+              if (enabled) {
+                nextEnabled.add(activity);
+              } else {
+                nextEnabled.remove(activity);
+              }
+
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setStringList(
+                'enabled_break_activities',
+                nextEnabled.map((item) => item.name).toList(),
+              );
+              await AppAnalytics.instance.trackEvent(
+                'break_activity_preference_changed',
+                parameters: {
+                  'source_screen': 'home_tab',
+                  'activity_type': activity.name,
+                  'enabled': enabled,
+                },
+              );
+              if (!mounted) return;
+
+              setState(() {
+                _enabledBreakActivities = nextEnabled;
+              });
+              modalSetState(() {
+                enabledActivities = nextEnabled;
+              });
+            }
+
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.sports_esports_outlined,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Random game pool',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Text(
+                                '${enabledActivities.length} of ${BreakActivityType.values.length} enabled',
+                                style: TextStyle(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(sheetContext),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Choose which break activities can be picked at random.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Flexible(
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: [
+                          for (final activity in BreakActivityType.values)
+                            ListTile(
+                              key: Key('break_game_toggle_${activity.name}'),
+                              leading: Icon(
+                                BreakHelper.definitionFor(activity).icon,
+                                size: 20,
+                                color: hasBreakCustomizationAccess
+                                    ? null
+                                    : colorScheme.onSurfaceVariant
+                                        .withValues(alpha: 0.75),
+                              ),
+                              title:
+                                  Text(BreakHelper.definitionFor(activity).title),
+                              subtitle: Text(
+                                BreakHelper.definitionFor(activity).subtitle,
+                                style: TextStyle(
+                                  color: hasBreakCustomizationAccess
+                                      ? null
+                                      : colorScheme.onSurfaceVariant
+                                          .withValues(alpha: 0.75),
+                                ),
+                              ),
+                              onTap: hasBreakCustomizationAccess
+                                  ? null
+                                  : () => onToggle(
+                                        activity,
+                                        !enabledActivities.contains(activity),
+                                      ),
+                              trailing: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  IgnorePointer(
+                                    child: hasBreakCustomizationAccess
+                                        ? Switch.adaptive(
+                                            value: enabledActivities.contains(
+                                              activity,
+                                            ),
+                                            onChanged: (value) =>
+                                                onToggle(activity, value),
+                                          )
+                                        : Container(
+                                            width: 52,
+                                            height: 32,
+                                            decoration: BoxDecoration(
+                                              color: colorScheme.outlineVariant
+                                                  .withValues(alpha: 0.28),
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                              border: Border.all(
+                                                color: colorScheme.outlineVariant
+                                                    .withValues(alpha: 0.55),
+                                              ),
+                                            ),
+                                            padding: const EdgeInsets.all(2),
+                                            child: Align(
+                                              alignment:
+                                                  enabledActivities.contains(
+                                                    activity,
+                                                  )
+                                                      ? Alignment.centerRight
+                                                      : Alignment.centerLeft,
+                                              child: Container(
+                                                width: 24,
+                                                height: 24,
+                                                decoration: const BoxDecoration(
+                                                  color: Colors.white,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                  ),
+                                  if (!hasBreakCustomizationAccess)
+                                    Positioned(
+                                      right: -4,
+                                      top: -2,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.amber.shade700,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.lock,
+                                          size: 8,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   CommitmentPromptFrequency _commitmentPromptFrequencyFromString(
@@ -2532,6 +2780,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         BreakHelper.pickActivity(
           todo.avoidType,
           previous: previous,
+          enabledActivities: _enabledBreakActivities,
         );
     _lastBreakActivityByTodo[todo.id!] = activityType;
 
@@ -2570,6 +2819,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       endedAt: result.endedAt,
       status: result.status,
       outcome: result.outcome,
+      score: result.score,
     );
 
     if (result.status == BreakSessionStatus.aborted) {
@@ -4260,21 +4510,38 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     return '${contact.contactName} · $channel · $masked · $status';
   }
 
-  Widget _buildPlusBadge() {
+  Widget _buildDrawerBadge(String label, {required Color color}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.amber.shade700,
+        color: color,
         borderRadius: BorderRadius.circular(4),
       ),
-      child: const Text(
-        'Plus',
-        style: TextStyle(
+      child: Text(
+        label,
+        style: const TextStyle(
           fontSize: 10,
           color: Colors.white,
           fontWeight: FontWeight.bold,
         ),
       ),
+    );
+  }
+
+  Widget _buildDrawerTitleWithBadge(
+    String title, {
+    String? badgeLabel,
+    Color? badgeColor,
+  }) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(title),
+        if (badgeLabel != null && badgeColor != null)
+          _buildDrawerBadge(badgeLabel, color: badgeColor),
+      ],
     );
   }
 
@@ -4972,6 +5239,30 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               }
             },
           ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: Text(
+              'Break Games',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ),
+          ListTile(
+            key: const Key('drawer_break_games_tile'),
+            leading: const Icon(Icons.sports_esports_outlined),
+            title: const Text('Random game pool'),
+            subtitle: Text(
+              '${_enabledBreakActivities.length} of ${BreakActivityType.values.length} enabled',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.pop(context);
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  _showBreakGamePoolSettings();
+                }
+              });
+            },
+          ),
           // Home Screen Widget toggle (Plus-gated, always visible)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -4990,26 +5281,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     Icons.widgets_outlined,
                     color: isPlus ? null : Colors.grey,
                   ),
-                  title: Row(
-                    children: [
-                      Text(l10n?.homeScreenWidget ?? 'Home Screen Widget'),
-                      if (!isPlus) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.shade700,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text('Plus',
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
-                        ),
-                      ],
-                    ],
+                  title: _buildDrawerTitleWithBadge(
+                    l10n?.homeScreenWidget ?? 'Home Screen Widget',
+                    badgeLabel: !isPlus ? 'Plus' : null,
+                    badgeColor: !isPlus ? Colors.amber.shade700 : null,
                   ),
                   subtitle: Text(
                     l10n?.homeScreenWidgetDesc ??
@@ -5084,14 +5359,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                 Icons.flag_outlined,
                 color: isPlus ? null : Colors.grey,
               ),
-              title: Row(
-                children: [
-                  const Text('Commitment Check-In'),
-                  if (!isPlus) ...[
-                    const SizedBox(width: 8),
-                    _buildPlusBadge(),
-                  ],
-                ],
+              title: _buildDrawerTitleWithBadge(
+                'Commitment Check-In',
+                badgeLabel: !isPlus ? 'Plus' : null,
+                badgeColor: !isPlus ? Colors.amber.shade700 : null,
               ),
               subtitle: Text(
                 _commitmentFrequencySubtitle(isPlus),
@@ -5134,31 +5405,16 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     Icons.cloud_sync_outlined,
                     color: hasPurchasedPlus ? null : Colors.grey,
                   ),
-                  title: Row(
-                    children: [
-                      Text(l10n?.cloudSync ?? 'Cloud Sync'),
-                      if (!hasPurchasedPlus) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: hasTrial
-                                ? Colors.blueGrey.shade600
-                                : Colors.amber.shade700,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            hasTrial ? 'Buy Plus' : 'Plus',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
+                  title: _buildDrawerTitleWithBadge(
+                    l10n?.cloudSync ?? 'Cloud Sync',
+                    badgeLabel: !hasPurchasedPlus
+                        ? (hasTrial ? 'Buy Plus' : 'Plus')
+                        : null,
+                    badgeColor: !hasPurchasedPlus
+                        ? (hasTrial
+                            ? Colors.blueGrey.shade600
+                            : Colors.amber.shade700)
+                        : null,
                   ),
                   subtitle: Text(
                     hasTrial
@@ -5228,14 +5484,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                 Icons.support_agent_outlined,
                 color: isPlus ? null : Colors.grey,
               ),
-              title: Row(
-                children: [
-                  const Text('Trusted Support'),
-                  if (!isPlus) ...[
-                    const SizedBox(width: 8),
-                    _buildPlusBadge(),
-                  ],
-                ],
+              title: _buildDrawerTitleWithBadge(
+                'Trusted Support',
+                badgeLabel: !isPlus ? 'Plus' : null,
+                badgeColor: !isPlus ? Colors.amber.shade700 : null,
               ),
               subtitle: Text(
                 _trustedSupportSubtitle(),

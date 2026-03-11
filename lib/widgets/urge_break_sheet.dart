@@ -4,10 +4,14 @@ import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 import '../helpers/break_helper.dart';
+import '../helpers/database_helper.dart';
 import '../model/break_session.dart';
 import '../model/todo.dart';
+import '../providers/purchase_provider.dart';
+import 'plus_upgrade_dialog.dart';
 
 class UrgeBreakSheet extends StatefulWidget {
   final ToDo todo;
@@ -29,7 +33,7 @@ class UrgeBreakSheet extends StatefulWidget {
 
 class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     with TickerProviderStateMixin {
-  static const List<double> _defuseSuccessWindows = [
+  static const List<double> _defuseHintedSuccessWindows = [
     0.12,
     0.10,
     0.08,
@@ -89,19 +93,26 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     Color(0xFFF77F00),
     Color(0xFF457B9D),
   ];
+  static const Color _cubeHintColor = Color(0xFF8B5CF6);
 
   final Random _random = Random();
   late final AnimationController _ambientController;
+  late final AnimationController _cubeHintPulseController;
   late final AnimationController _cubeMoveController;
   late final AnimationController _defuseDialController;
   late final ConfettiController _confettiController;
   late final DateTime _startedAt;
+  late DateTime _attemptStartedAt;
   Timer? _ticker;
   int _secondsRemaining = 0;
+  bool _isPaused = false;
   bool _showOutcome = false;
   bool _showStillStrongOptions = false;
   bool _activityCompleted = false;
   bool _finished = false;
+  int? _personalBestScore;
+  int? _bestScoreEarnedThisSheet;
+  DateTime? _activityCompletedAt;
 
   int _defuseCount = 0;
   int _defuseTargetTapCount = 4;
@@ -121,6 +132,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   double _cubePitch = -0.46;
   int _cubeMoveCount = 0;
   int _cubeScrambleLength = 0;
+  _CubeHintMode _cubeHintMode = _CubeHintMode.off;
+  bool _stackHintsEnabled = false;
+  final List<_CubeSliceMove> _cubeMoveHistory = <_CubeSliceMove>[];
   List<int> _pairDeck = [];
   List<String> _pairMatchEmojis = const [];
   List<_StackSweepTile> _stackTiles = const [];
@@ -129,9 +143,14 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   final Set<int> _removedStackTileIds = <int>{};
   final Set<int> _removingStackTileIds = <int>{};
   bool _pairLocked = false;
+  bool _pairHintsEnabled = false;
+  bool _defuseHintsEnabled = false;
   List<int> _triviaOrder = const [];
+  List<List<int>> _triviaOptionOrders = const [];
   int _triviaIndex = 0;
   int? _triviaSelectedAnswer;
+  bool _triviaHintsEnabled = false;
+  int _triviaCorrectCount = 0;
   String? _zenFortune;
   List<double> _zenDropXSeeds = const [];
   List<double> _zenDropOffsets = const [];
@@ -146,6 +165,10 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     _ambientController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 24),
+    );
+    _cubeHintPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
     );
     _cubeMoveController = AnimationController(
       vsync: this,
@@ -163,15 +186,37 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
       duration: const Duration(milliseconds: 900),
     );
     _startedAt = DateTime.now();
+    _attemptStartedAt = _startedAt;
     _secondsRemaining = widget.duration.inSeconds;
     _randomizeActivityState();
+    _loadPersonalBestScore();
     if (widget.activityType == BreakActivityType.zenRoom) {
       _ambientController.repeat();
+    }
+    if (widget.activityType == BreakActivityType.cubeReset) {
+      _cubeHintPulseController.repeat(reverse: true);
     }
     if (widget.activityType == BreakActivityType.defuse) {
       _startDefuseDial();
     }
     _startTicker();
+  }
+
+  Future<void> _loadPersonalBestScore() async {
+    if (!BreakHelper.supportsPersonalBest(widget.activityType)) {
+      return;
+    }
+    try {
+      final best = await DatabaseHelper.instance.getBestBreakScore(
+        widget.activityType,
+      );
+      if (!mounted) return;
+      setState(() {
+        _updatePersonalBestWithScore(best);
+      });
+    } catch (_) {
+      // Widget tests do not bootstrap sqflite. Ignore unavailable storage.
+    }
   }
 
   @override
@@ -181,6 +226,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
       timer.cancel();
     }
     _ambientController.dispose();
+    _cubeHintPulseController.dispose();
     _cubeMoveController.dispose();
     _defuseDialController.dispose();
     _confettiController.dispose();
@@ -218,6 +264,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
       BreakSessionResult(
         activityType: widget.activityType,
         status: BreakSessionStatus.aborted,
+        score: _scoreToPersist(),
         startedAt: _startedAt,
         endedAt: DateTime.now(),
       ),
@@ -235,9 +282,101 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
         status: BreakSessionStatus.completed,
         outcome: outcome,
         followUpAction: followUpAction,
+        score: _scoreToPersist(),
         startedAt: _startedAt,
         endedAt: DateTime.now(),
       ),
+    );
+  }
+
+  void _togglePause() {
+    HapticFeedback.selectionClick();
+    if (_isPaused) {
+      _resumeSession();
+    } else {
+      _pauseSession();
+    }
+  }
+
+  void _pauseSession() {
+    if (_isPaused || _showOutcome) return;
+    _ticker?.cancel();
+    setState(() {
+      _isPaused = true;
+    });
+  }
+
+  void _resumeSession() {
+    if (!_isPaused) return;
+    if (!_showOutcome && _secondsRemaining > 0) {
+      _startTicker();
+    }
+    setState(() {
+      _isPaused = false;
+    });
+  }
+
+  int? _currentAttemptScore() {
+    switch (widget.activityType) {
+      case BreakActivityType.defuse:
+      case BreakActivityType.pairMatch:
+      case BreakActivityType.cubeReset:
+      case BreakActivityType.stackSweep:
+        final completedAt = _activityCompletedAt;
+        if (!_activityCompleted || completedAt == null) {
+          return null;
+        }
+        return completedAt.difference(_attemptStartedAt).inMilliseconds;
+      case BreakActivityType.triviaPivot:
+        return _triviaCorrectCount;
+      case BreakActivityType.zenRoom:
+        return null;
+    }
+  }
+
+  int? _scoreToPersist() {
+    final current = _currentAttemptScore();
+    final best = _bestScoreEarnedThisSheet;
+    if (current == null) return best;
+    if (best == null) return current;
+    if (BreakHelper.prefersLowerPersonalBest(widget.activityType)) {
+      return min(best, current);
+    }
+    return max(best, current);
+  }
+
+  String? _personalBestText() {
+    final currentScore = _scoreToPersist();
+    if (!BreakHelper.supportsPersonalBest(widget.activityType)) {
+      return null;
+    }
+
+    int? best = _personalBestScore;
+    if (currentScore != null) {
+      if (best == null) {
+        best = currentScore;
+      } else if (BreakHelper.prefersLowerPersonalBest(widget.activityType)) {
+        best = min(best, currentScore);
+      } else {
+        best = max(best, currentScore);
+      }
+    }
+
+    if (best == null || best <= 0) {
+      return null;
+    }
+    return BreakHelper.personalBestLabel(widget.activityType, best);
+  }
+
+  bool get _hasBreakCustomizationAccess =>
+      Provider.of<PurchaseProvider?>(context, listen: false)?.isPlus ?? true;
+
+  void _showBreakCustomizationLockedDialog(String entryPoint) {
+    showPlusUpgradeDialog(
+      context,
+      subtitle:
+          'Start a free trial or unlock Plus to use break game hints and customization.',
+      entryPoint: entryPoint,
     );
   }
 
@@ -343,6 +482,8 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     _pairMatchEmojis = emojiSelection.take(10).toList();
     _pairDeck = _buildPairDeck();
     _stackTiles = _buildStackTiles();
+    _pairHintsEnabled = false;
+    _defuseHintsEnabled = false;
     _defuseTargetTapCount = 4;
     _defuseCount = 0;
     _defuseBaseDialPeriodMs = 2150 + _random.nextInt(900);
@@ -353,13 +494,22 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     );
     _resetCubePuzzle();
     _defuseLastAttemptAccurate = false;
+    _triviaCorrectCount = 0;
     _defuseDialController
       ..duration = Duration(milliseconds: _defuseBaseDialPeriodMs)
       ..value = _random.nextDouble();
     _triviaOrder =
         List<int>.generate(BreakHelper.triviaPrompts.length, (i) => i)
           ..shuffle(_random);
+    _triviaOptionOrders = List<List<int>>.generate(
+      BreakHelper.triviaPrompts.length,
+      (promptIndex) => List<int>.generate(
+        BreakHelper.triviaPrompts[promptIndex].options.length,
+        (optionIndex) => optionIndex,
+      )..shuffle(_random),
+    );
     _triviaIndex = 0;
+    _triviaHintsEnabled = false;
     _zenFortune = BreakHelper
         .zenFortunes[_random.nextInt(BreakHelper.zenFortunes.length)];
     _zenDropXSeeds = List<double>.generate(14, (_) => _random.nextDouble());
@@ -403,6 +553,23 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     });
   }
 
+  void _updatePersonalBestWithScore(int? score) {
+    if (score == null || score <= 0) return;
+    if (!BreakHelper.supportsPersonalBest(widget.activityType)) return;
+
+    final existing = _personalBestScore;
+    if (existing == null) {
+      _personalBestScore = score;
+      return;
+    }
+
+    if (BreakHelper.prefersLowerPersonalBest(widget.activityType)) {
+      _personalBestScore = min(existing, score);
+    } else {
+      _personalBestScore = max(existing, score);
+    }
+  }
+
   Future<void> _handleActivityCompleted() async {
     if (_activityCompleted || !mounted) return;
     _ticker?.cancel();
@@ -411,16 +578,31 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     }
     HapticFeedback.mediumImpact();
     _confettiController.play();
+    final completedAt = DateTime.now();
+    final score = completedAt.difference(_attemptStartedAt).inMilliseconds;
     setState(() {
+      _activityCompletedAt = completedAt;
+      _bestScoreEarnedThisSheet = _mergeScores(_bestScoreEarnedThisSheet, score);
+      _updatePersonalBestWithScore(score);
       _activityCompleted = true;
       _showOutcome = true;
       _showStillStrongOptions = false;
     });
   }
 
+  int? _mergeScores(int? existing, int? candidate) {
+    if (candidate == null || candidate <= 0) return existing;
+    if (existing == null || existing <= 0) return candidate;
+    if (BreakHelper.prefersLowerPersonalBest(widget.activityType)) {
+      return min(existing, candidate);
+    }
+    return max(existing, candidate);
+  }
+
   void _continueCurrentActivity() {
     HapticFeedback.lightImpact();
     setState(() {
+      _isPaused = false;
       _secondsRemaining = 30;
       _showOutcome = false;
       _showStillStrongOptions = false;
@@ -434,6 +616,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   void _resetCurrentActivity() {
     HapticFeedback.lightImpact();
     setState(() {
+      _isPaused = false;
+      _attemptStartedAt = DateTime.now();
+      _activityCompletedAt = null;
       _secondsRemaining = widget.duration.inSeconds;
       _showOutcome = false;
       _showStillStrongOptions = false;
@@ -487,8 +672,13 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   }
 
   double _defuseWindowForStep(int step) {
-    final clamped = step.clamp(0, _defuseSuccessWindows.length - 1);
-    return _defuseSuccessWindows[clamped];
+    final clamped = step.clamp(0, _defuseHintedSuccessWindows.length - 1);
+    final hintedWindow = _defuseHintedSuccessWindows[clamped];
+    if (_defuseHintsEnabled ||
+        clamped == _defuseHintedSuccessWindows.length - 1) {
+      return hintedWindow;
+    }
+    return hintedWindow * 0.7;
   }
 
   List<Color> _defuseRingColors() {
@@ -624,7 +814,134 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
 
   void _onTriviaAnswer(int index) {
     HapticFeedback.selectionClick();
-    setState(() => _triviaSelectedAnswer = index);
+    final prompt = BreakHelper.triviaPrompts[_triviaOrder[_triviaIndex]];
+    final withinScoringWindow =
+        DateTime.now().difference(_attemptStartedAt) <= widget.duration;
+    setState(() {
+      _triviaSelectedAnswer = index;
+      if (withinScoringWindow && index == prompt.answerIndex) {
+        _triviaCorrectCount += 1;
+        _bestScoreEarnedThisSheet =
+            _mergeScores(_bestScoreEarnedThisSheet, _triviaCorrectCount);
+        _updatePersonalBestWithScore(_triviaCorrectCount);
+      }
+    });
+  }
+
+  void _togglePairHints() {
+    if (!_hasBreakCustomizationAccess) {
+      _showBreakCustomizationLockedDialog('break_pair_hints_locked');
+      return;
+    }
+    HapticFeedback.selectionClick();
+    setState(() {
+      _pairHintsEnabled = !_pairHintsEnabled;
+    });
+  }
+
+  void _toggleDefuseHints() {
+    if (!_hasBreakCustomizationAccess) {
+      _showBreakCustomizationLockedDialog('break_defuse_hints_locked');
+      return;
+    }
+    HapticFeedback.selectionClick();
+    setState(() {
+      _defuseHintsEnabled = !_defuseHintsEnabled;
+    });
+  }
+
+  Set<int> _pairHintIndices() {
+    if (!_pairHintsEnabled || _revealedCards.length != 1) {
+      return const <int>{};
+    }
+
+    final firstIndex = _revealedCards.first;
+    final pairValue = _pairDeck[firstIndex];
+    final matchIndex =
+        List<int>.generate(_pairDeck.length, (i) => i).firstWhere(
+      (index) => index != firstIndex && _pairDeck[index] == pairValue,
+      orElse: () => -1,
+    );
+    if (matchIndex == -1) {
+      return const <int>{};
+    }
+
+    const columns = 4;
+    final hiddenCandidates = List<int>.generate(_pairDeck.length, (i) => i)
+        .where(
+          (index) =>
+              index != firstIndex &&
+              !_matchedCards.contains(index) &&
+              !_revealedCards.contains(index),
+        )
+        .toList();
+    hiddenCandidates.sort((a, b) {
+      final matchRow = matchIndex ~/ columns;
+      final matchCol = matchIndex % columns;
+      final aDistance =
+          ((a ~/ columns) - matchRow).abs() + ((a % columns) - matchCol).abs();
+      final bDistance =
+          ((b ~/ columns) - matchRow).abs() + ((b % columns) - matchCol).abs();
+      if (aDistance != bDistance) {
+        return aDistance.compareTo(bDistance);
+      }
+      return a.compareTo(b);
+    });
+
+    final selected = <int>{matchIndex};
+    for (final index in hiddenCandidates) {
+      selected.add(index);
+      if (selected.length == 4) {
+        break;
+      }
+    }
+    return selected;
+  }
+
+  List<int> _triviaOptionOrderFor(int promptIndex) {
+    return _triviaOptionOrders[promptIndex];
+  }
+
+  int? _triviaRemovedOptionIndex(BreakTriviaPrompt prompt, int promptIndex) {
+    if (!_triviaHintsEnabled || prompt.options.length <= 2) {
+      return null;
+    }
+    final optionOrder = _triviaOptionOrderFor(promptIndex);
+    for (var orderIndex = optionOrder.length - 1;
+        orderIndex >= 0;
+        orderIndex--) {
+      final index = optionOrder[orderIndex];
+      if (index != prompt.answerIndex) {
+        return index;
+      }
+    }
+    return null;
+  }
+
+  List<int> _visibleTriviaOptionIndices(
+      BreakTriviaPrompt prompt, int promptIndex) {
+    final removedIndex = _triviaRemovedOptionIndex(prompt, promptIndex);
+    return _triviaOptionOrderFor(promptIndex)
+        .where((index) => index != removedIndex)
+        .toList();
+  }
+
+  void _toggleTriviaHints(BreakTriviaPrompt prompt, int promptIndex) {
+    if (!_hasBreakCustomizationAccess) {
+      _showBreakCustomizationLockedDialog('break_trivia_hints_locked');
+      return;
+    }
+    HapticFeedback.selectionClick();
+    final nextEnabled = !_triviaHintsEnabled;
+    final removedIndex =
+        nextEnabled ? _triviaRemovedOptionIndex(prompt, promptIndex) : null;
+    setState(() {
+      _triviaHintsEnabled = nextEnabled;
+      if (_triviaSelectedAnswer != null &&
+          _triviaSelectedAnswer == removedIndex) {
+        _triviaSelectedAnswer = null;
+      }
+    });
   }
 
   List<_CubeStickerState> _buildSolvedCubeStickers() {
@@ -714,12 +1031,15 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     }
   }
 
-  void _mutateCubeLayer(_CubeSliceMove move) {
+  void _mutateCubeLayerOn(
+    List<_CubeStickerState> stickers,
+    _CubeSliceMove move,
+  ) {
     final turns = ((move.quarterTurns % 4) + 4) % 4;
     if (turns == 0) return;
 
     for (var turn = 0; turn < turns; turn++) {
-      for (final sticker in _cubeStickers) {
+      for (final sticker in stickers) {
         if (_cubeCoordOnAxis(sticker.position, move.axis) != move.layer) {
           continue;
         }
@@ -728,6 +1048,19 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
         sticker.normal = _rotateCubeVectorPositive(sticker.normal, move.axis);
       }
     }
+  }
+
+  void _mutateCubeLayer(_CubeSliceMove move) {
+    _mutateCubeLayerOn(_cubeStickers, move);
+  }
+
+  void _recordCubeMove(_CubeSliceMove move) {
+    if (_cubeMoveHistory.isNotEmpty &&
+        move.isInverseOf(_cubeMoveHistory.last)) {
+      _cubeMoveHistory.removeLast();
+      return;
+    }
+    _cubeMoveHistory.add(move);
   }
 
   bool _isCubeSolved() => _cubeSolvedFaceCount() == 6;
@@ -749,15 +1082,74 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     return solvedFaces;
   }
 
+  _CubeSliceMove? _cubeHintMove() {
+    if (_cubeAnimatingMove != null || _activityCompleted) return null;
+    if (_cubeHintMode == _CubeHintMode.off) return null;
+    if (_cubeMoveHistory.isEmpty) return null;
+    return _cubeMoveHistory.last.inverse;
+  }
+
+  Future<void> _toggleCubeHints() async {
+    if (!_hasBreakCustomizationAccess) {
+      _showBreakCustomizationLockedDialog('break_cube_hints_locked');
+      return;
+    }
+    HapticFeedback.selectionClick();
+    if (_cubeHintMode != _CubeHintMode.off) {
+      setState(() {
+        _cubeHintMode = _CubeHintMode.off;
+      });
+      return;
+    }
+
+    final nextMode = await showDialog<_CubeHintMode>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Choose hint strength'),
+        content: const Text(
+          'Do you want just a gentle highlight, or the full cue with arrows too?',
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(context, _CubeHintMode.subtle),
+            child: const Text('A bit of help'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, _CubeHintMode.strong),
+            child: const Text('A lot of help'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || nextMode == null) return;
+    setState(() {
+      _cubeHintMode = nextMode;
+    });
+  }
+
+  void _toggleStackHints() {
+    if (!_hasBreakCustomizationAccess) {
+      _showBreakCustomizationLockedDialog('break_stack_hints_locked');
+      return;
+    }
+    HapticFeedback.selectionClick();
+    setState(() {
+      _stackHintsEnabled = !_stackHintsEnabled;
+    });
+  }
+
   void _resetCubePuzzle() {
     _cubeMoveController.stop();
     _cubeStickers = _buildSolvedCubeStickers();
     _cubeMoveCount = 0;
     _cubeScrambleLength = 5 + _random.nextInt(3);
+    _cubeMoveHistory.clear();
     _cubeYaw = -0.72;
     _cubePitch = -0.46;
     _cubeAnimatingMove = null;
     _cubeMoveController.value = 0;
+    _cubeMoveHistory.clear();
     _cubeActiveFace = null;
     _cubeTouchedSticker = null;
     _cubeDragStart = null;
@@ -777,6 +1169,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
           .toList();
       final move = choices[_random.nextInt(choices.length)];
       _mutateCubeLayer(move);
+      _recordCubeMove(move);
       previous = move;
     }
 
@@ -802,6 +1195,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
 
     setState(() {
       _mutateCubeLayer(move);
+      _recordCubeMove(move);
       _cubeAnimatingMove = null;
       _cubeMoveController.value = 0;
     });
@@ -1066,6 +1460,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     const spacing = 10.0;
     const columns = 4;
     const rows = 5;
+    final hintIndices = _pairHintIndices();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1089,6 +1484,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
             final visible =
                 _revealedCards.contains(index) || _matchedCards.contains(index);
             final matched = _matchedCards.contains(index);
+            final hinted = hintIndices.contains(index) && !visible;
             return InkWell(
               key: Key('pair_card_$index'),
               borderRadius: BorderRadius.circular(18),
@@ -1115,16 +1511,21 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                         ? definition.color.withValues(
                             alpha: matched ? 0.8 : 0.45,
                           )
-                        : Theme.of(context)
-                            .colorScheme
-                            .outlineVariant
-                            .withValues(alpha: 0.7),
+                        : hinted
+                            ? definition.color.withValues(alpha: 0.72)
+                            : Theme.of(context)
+                                .colorScheme
+                                .outlineVariant
+                                .withValues(alpha: 0.7),
+                    width: hinted ? 2.1 : 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
+                      color: hinted
+                          ? definition.color.withValues(alpha: 0.16)
+                          : Colors.black.withValues(alpha: 0.03),
+                      blurRadius: hinted ? 10 : 6,
+                      offset: Offset(0, hinted ? 5 : 3),
                     ),
                   ],
                 ),
@@ -1151,7 +1552,11 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     );
   }
 
-  Widget _buildCubeScene(BreakActivityDefinition definition) {
+  Widget _buildCubeScene(
+    BreakActivityDefinition definition,
+    _CubeSliceMove? hintMove, {
+    required bool showArrowHints,
+  }) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final sceneSize = Size(constraints.maxWidth, constraints.maxHeight);
@@ -1163,7 +1568,10 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
           onPanCancel: _resetCubeDrag,
           onPanEnd: (_) => _onCubePanEnd(sceneSize),
           child: AnimatedBuilder(
-            animation: _cubeMoveController,
+            animation: Listenable.merge([
+              _cubeMoveController,
+              _cubeHintPulseController,
+            ]),
             builder: (context, _) {
               return CustomPaint(
                 size: sceneSize,
@@ -1173,9 +1581,13 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                   yaw: _cubeYaw,
                   pitch: _cubePitch,
                   accentColor: definition.color,
+                  hintColor: _cubeHintColor,
                   activeFace: _cubeActiveFace,
                   animatedMove: _cubeAnimatingMove,
                   animatedProgress: _cubeMoveController.value,
+                  hintMove: hintMove,
+                  hintPulse: _cubeHintPulseController.value,
+                  showArrowHints: showArrowHints,
                 ),
               );
             },
@@ -1296,6 +1708,20 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                             color: definition.color,
                           ),
                         ),
+                        if (!_showOutcome) ...[
+                          const SizedBox(width: 6),
+                          IconButton(
+                            key: const Key('break_pause_toggle'),
+                            onPressed: _togglePause,
+                            icon: Icon(
+                              _isPaused
+                                  ? Icons.play_arrow_rounded
+                                  : Icons.pause_rounded,
+                              color: definition.color,
+                            ),
+                            tooltip: _isPaused ? 'Resume' : 'Pause',
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -1346,6 +1772,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   }
 
   Widget _buildActivityView(BreakActivityDefinition definition) {
+    final canUseHintHelpers = _hasBreakCustomizationAccess;
     switch (widget.activityType) {
       case BreakActivityType.defuse:
         final progress = _defuseTargetTapCount == 0
@@ -1357,6 +1784,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
               progress,
             ) ??
             definition.color;
+        final personalBestText = _personalBestText();
         return Column(
           key: const Key('break_activity_defuse'),
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1408,65 +1836,60 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                           0,
                           _defuseTargetTapCount - 1,
                         );
-                        return Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            GestureDetector(
-                              key: const Key('defuse_safe_crack'),
-                              onTap: _onDefuseTap,
-                              child: SizedBox(
-                                width: dialSize,
-                                height: dialSize,
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    CustomPaint(
-                                      size: Size.square(dialSize),
-                                      painter: _SafeCrackDialPainter(
-                                        color: crackColor,
-                                        ringColors: ringColors,
-                                        targetTurns: _defuseTargets,
-                                        needleTurn: _defuseDialController.value,
-                                        successWindows: _defuseSuccessWindows,
-                                        activeStep: activeStep,
-                                        unlockedCount: _defuseCount,
-                                      ),
+                        return GestureDetector(
+                          key: const Key('defuse_safe_crack'),
+                          onTap: _onDefuseTap,
+                          child: SizedBox(
+                            width: dialSize,
+                            height: dialSize,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                CustomPaint(
+                                  size: Size.square(dialSize),
+                                  painter: _SafeCrackDialPainter(
+                                    color: crackColor,
+                                    ringColors: ringColors,
+                                    targetTurns: _defuseTargets,
+                                    needleTurn: _defuseDialController.value,
+                                    successWindows: List<double>.generate(
+                                      _defuseTargetTapCount,
+                                      _defuseWindowForStep,
                                     ),
-                                    Container(
-                                      width: coreSize,
-                                      height: coreSize,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: [
-                                            Colors.white,
-                                            crackColor.withValues(alpha: 0.18),
-                                          ],
-                                        ),
-                                        border: Border.all(
-                                          color: crackColor.withValues(
-                                            alpha: 0.2,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          'Tap',
-                                          style: TextStyle(
-                                            fontSize: labelFontSize,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                    activeStep: activeStep,
+                                    unlockedCount: _defuseCount,
+                                  ),
                                 ),
-                              ),
+                                Container(
+                                  width: coreSize,
+                                  height: coreSize,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Colors.white,
+                                        crackColor.withValues(alpha: 0.18),
+                                      ],
+                                    ),
+                                    border: Border.all(
+                                      color: crackColor.withValues(alpha: 0.2),
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'Tap',
+                                      style: TextStyle(
+                                        fontSize: labelFontSize,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         );
                       },
                     ),
@@ -1495,9 +1918,66 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
               borderRadius: BorderRadius.circular(999),
               color: crackColor,
             ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: personalBestText == null
+                      ? const SizedBox.shrink()
+                      : Text(
+                          personalBestText,
+                          key: const Key('break_personal_best'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: crackColor.withValues(alpha: 0.8),
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 12),
+                TextButton.icon(
+                  key: const Key('defuse_hint_toggle'),
+                  onPressed: _toggleDefuseHints,
+                  style: TextButton.styleFrom(
+                    foregroundColor: crackColor,
+                    backgroundColor: crackColor.withValues(
+                      alpha: !canUseHintHelpers
+                          ? 0.05
+                          : (_defuseHintsEnabled ? 0.14 : 0.07),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                      side: BorderSide(
+                        color: crackColor.withValues(
+                          alpha: !canUseHintHelpers
+                              ? 0.12
+                              : (_defuseHintsEnabled ? 0.26 : 0.16),
+                        ),
+                      ),
+                    ),
+                  ),
+                  icon: Icon(
+                    !canUseHintHelpers
+                        ? Icons.lock_outline_rounded
+                        : _defuseHintsEnabled
+                        ? Icons.lightbulb_rounded
+                        : Icons.lightbulb_outline_rounded,
+                    size: 18,
+                  ),
+                  label: Text(!canUseHintHelpers
+                      ? 'Hints locked'
+                      : (_defuseHintsEnabled ? 'Hints on' : 'Hints off')),
+                ),
+              ],
+            ),
           ],
         );
       case BreakActivityType.pairMatch:
+        final personalBestText = _personalBestText();
         return Column(
           key: const Key('break_activity_pairs'),
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1520,10 +2000,73 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                 child: _buildPairGrid(definition),
               ),
             ),
-            Text('Matched ${_matchedCards.length ~/ 2} of 10 pairs'),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Matched ${_matchedCards.length ~/ 2} of 10 pairs'),
+                      if (personalBestText != null)
+                        Text(
+                          personalBestText,
+                          key: const Key('break_personal_best'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: definition.color.withValues(alpha: 0.8),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                TextButton.icon(
+                  key: const Key('pair_hint_toggle'),
+                  onPressed: _togglePairHints,
+                  style: TextButton.styleFrom(
+                    foregroundColor: definition.color,
+                    backgroundColor: definition.color.withValues(
+                      alpha: !canUseHintHelpers
+                          ? 0.05
+                          : (_pairHintsEnabled ? 0.14 : 0.07),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                      side: BorderSide(
+                        color: definition.color.withValues(
+                          alpha: !canUseHintHelpers
+                              ? 0.12
+                              : (_pairHintsEnabled ? 0.26 : 0.16),
+                        ),
+                      ),
+                    ),
+                  ),
+                  icon: Icon(
+                    !canUseHintHelpers
+                        ? Icons.lock_outline_rounded
+                        : _pairHintsEnabled
+                        ? Icons.lightbulb_rounded
+                        : Icons.lightbulb_outline_rounded,
+                    size: 18,
+                  ),
+                  label: Text(!canUseHintHelpers
+                      ? 'Hints locked'
+                      : (_pairHintsEnabled ? 'Hints on' : 'Hints off')),
+                ),
+              ],
+            ),
           ],
         );
       case BreakActivityType.cubeReset:
+        final hintMove = _cubeHintMove();
+        final showArrowHints = _cubeHintMode == _CubeHintMode.strong;
+        final personalBestText = _personalBestText();
         return Column(
           key: const Key('break_activity_cube'),
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1554,43 +2097,91 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
-                  child: _buildCubeScene(definition),
+                  child: _buildCubeScene(
+                    definition,
+                    hintMove,
+                    showArrowHints: showArrowHints,
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            Text(
-              _cubeActiveFace == null
-                  ? 'Drag empty space to rotate the cube. Swipe a visible sticker row or column to turn that layer.'
-                  : switch (_cubeActiveFace!) {
-                      _CubeFace.up => 'Swipe on the top face to turn a layer.',
-                      _CubeFace.front =>
-                        'Swipe on the front face to turn a layer.',
-                      _CubeFace.right =>
-                        'Swipe on the right face to turn a layer.',
-                      _CubeFace.down =>
-                        'Rotate the cube to reach the bottom face.',
-                      _CubeFace.left =>
-                        'Rotate the cube to reach the left face.',
-                      _CubeFace.back =>
-                        'Rotate the cube to reach the back face.',
-                    },
-              style: TextStyle(
-                color: definition.color.withValues(alpha: 0.78),
-                height: 1.3,
-              ),
-            ),
             const SizedBox(height: 10),
-            Text(
-              'Solved ${_cubeSolvedFaceCount()} of 6 faces in $_cubeMoveCount twists',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: definition.color,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Solved ${_cubeSolvedFaceCount()} of 6 faces in $_cubeMoveCount twists',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: definition.color,
+                        ),
+                      ),
+                      if (personalBestText != null)
+                        Text(
+                          personalBestText,
+                          key: const Key('break_personal_best'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: definition.color.withValues(alpha: 0.8),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                TextButton.icon(
+                  key: const Key('cube_hint_toggle'),
+                  onPressed: _toggleCubeHints,
+                  style: TextButton.styleFrom(
+                    foregroundColor: definition.color,
+                    backgroundColor: definition.color.withValues(
+                      alpha: !canUseHintHelpers
+                          ? 0.05
+                          : (_cubeHintMode == _CubeHintMode.off ? 0.07 : 0.14),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                      side: BorderSide(
+                        color: definition.color.withValues(
+                          alpha: !canUseHintHelpers
+                              ? 0.12
+                              : (_cubeHintMode == _CubeHintMode.off
+                                  ? 0.16
+                                  : 0.26),
+                        ),
+                      ),
+                    ),
+                  ),
+                  icon: Icon(
+                    !canUseHintHelpers
+                        ? Icons.lock_outline_rounded
+                        : _cubeHintMode == _CubeHintMode.off
+                        ? Icons.lightbulb_outline_rounded
+                        : Icons.lightbulb_rounded,
+                    size: 18,
+                  ),
+                  label: Text(!canUseHintHelpers
+                      ? 'Hints locked'
+                      : switch (_cubeHintMode) {
+                          _CubeHintMode.off => 'Hints off',
+                          _CubeHintMode.subtle => 'Hints: a bit',
+                          _CubeHintMode.strong => 'Hints: a lot',
+                        }),
+                ),
+              ],
             ),
           ],
         );
       case BreakActivityType.stackSweep:
+        final personalBestText = _personalBestText();
         return Column(
           key: const Key('break_activity_stack'),
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1643,6 +2234,10 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                         ...renderedTiles.map((tile) {
                           final rect = _stackTileRectFor(tile, size);
                           final removable = _isStackTileRemovable(tile, size);
+                          final showBlockedHint =
+                              _stackHintsEnabled && !removable;
+                          final emphasizeAsAvailable =
+                              removable || !_stackHintsEnabled;
                           final removing =
                               _removingStackTileIds.contains(tile.id);
                           final removed =
@@ -1681,38 +2276,57 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                                             gradient: LinearGradient(
                                               begin: Alignment.topLeft,
                                               end: Alignment.bottomRight,
-                                              colors: removable
+                                              colors: emphasizeAsAvailable
                                                   ? const [
                                                       Color(0xFFFFFBF1),
                                                       Color(0xFFF4E8D3),
                                                     ]
-                                                  : [
-                                                      const Color(
-                                                        0xFFFFFBF1,
-                                                      ).withValues(alpha: 0.9),
-                                                      const Color(
-                                                        0xFFF4E8D3,
-                                                      ).withValues(alpha: 0.76),
-                                                    ],
+                                                  : showBlockedHint
+                                                      ? [
+                                                          const Color(
+                                                            0xFFFFFBF1,
+                                                          ).withValues(
+                                                              alpha: 0.9),
+                                                          const Color(
+                                                            0xFFF4E8D3,
+                                                          ).withValues(
+                                                              alpha: 0.76),
+                                                        ]
+                                                      : const [
+                                                          Color(0xFFFFFBF1),
+                                                          Color(0xFFF4E8D3),
+                                                        ],
                                             ),
                                             border: Border.all(
-                                              color: removable
+                                              color: emphasizeAsAvailable
                                                   ? definition.color
-                                                  : definition.color.withValues(
-                                                      alpha: 0.22,
-                                                    ),
-                                              width: removable ? 1.8 : 1,
+                                                  : showBlockedHint
+                                                      ? definition.color
+                                                          .withValues(
+                                                          alpha: 0.22,
+                                                        )
+                                                      : const Color(
+                                                          0xFFDCCCB5,
+                                                        ).withValues(
+                                                          alpha: 0.72,
+                                                        ),
+                                              width: emphasizeAsAvailable
+                                                  ? 1.8
+                                                  : showBlockedHint
+                                                      ? 1
+                                                      : 0.85,
                                             ),
                                             boxShadow: [
                                               BoxShadow(
                                                 color: Colors.black.withValues(
-                                                  alpha:
-                                                      removable ? 0.14 : 0.07,
+                                                  alpha: emphasizeAsAvailable
+                                                      ? 0.14
+                                                      : 0.07,
                                                 ),
                                                 blurRadius: removable ? 18 : 10,
                                                 offset: Offset(
                                                   0,
-                                                  removable ? 10 : 5,
+                                                  emphasizeAsAvailable ? 10 : 5,
                                                 ),
                                               ),
                                             ],
@@ -1728,7 +2342,12 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                                                     border: Border.all(
                                                       color: Colors.white
                                                           .withValues(
-                                                        alpha: 0.35,
+                                                        alpha:
+                                                            emphasizeAsAvailable
+                                                                ? 0.35
+                                                                : showBlockedHint
+                                                                    ? 0.30
+                                                                    : 0.16,
                                                       ),
                                                     ),
                                                   ),
@@ -1739,7 +2358,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                                                   tile.symbol,
                                                   style: TextStyle(
                                                     fontSize:
-                                                        removable ? 19 : 18,
+                                                        emphasizeAsAvailable
+                                                            ? 19
+                                                            : 18,
                                                   ),
                                                 ),
                                               ),
@@ -1784,77 +2405,209 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                 ),
               ),
             ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: personalBestText == null
+                      ? const SizedBox.shrink()
+                      : Text(
+                          personalBestText,
+                          key: const Key('break_personal_best'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: definition.color.withValues(alpha: 0.8),
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 12),
+                TextButton.icon(
+                  key: const Key('stack_hint_toggle'),
+                  onPressed: _toggleStackHints,
+                  style: TextButton.styleFrom(
+                    foregroundColor: definition.color,
+                    backgroundColor: definition.color.withValues(
+                      alpha: !canUseHintHelpers
+                          ? 0.05
+                          : (_stackHintsEnabled ? 0.14 : 0.07),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                      side: BorderSide(
+                        color: definition.color.withValues(
+                          alpha: !canUseHintHelpers
+                              ? 0.12
+                              : (_stackHintsEnabled ? 0.26 : 0.16),
+                        ),
+                      ),
+                    ),
+                  ),
+                  icon: Icon(
+                    !canUseHintHelpers
+                        ? Icons.lock_outline_rounded
+                        : _stackHintsEnabled
+                        ? Icons.lightbulb_rounded
+                        : Icons.lightbulb_outline_rounded,
+                    size: 18,
+                  ),
+                  label: Text(!canUseHintHelpers
+                      ? 'Hints locked'
+                      : (_stackHintsEnabled ? 'Hints on' : 'Hints off')),
+                ),
+              ],
+            ),
           ],
         );
       case BreakActivityType.triviaPivot:
-        final prompt = BreakHelper.triviaPrompts[_triviaOrder[_triviaIndex]];
+        final promptIndex = _triviaOrder[_triviaIndex];
+        final prompt = BreakHelper.triviaPrompts[promptIndex];
+        final visibleOptionIndices = _visibleTriviaOptionIndices(
+          prompt,
+          promptIndex,
+        );
+        final personalBestText = _personalBestText();
         return Column(
           key: const Key('break_activity_trivia'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              prompt.question,
-              style: const TextStyle(
-                fontSize: 21,
-                fontWeight: FontWeight.bold,
-                height: 1.2,
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      prompt.question,
+                      style: const TextStyle(
+                        fontSize: 21,
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    for (final i in visibleOptionIndices)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: OutlinedButton(
+                          key: Key('trivia_option_$i'),
+                          onPressed: _triviaSelectedAnswer == null
+                              ? () => _onTriviaAnswer(i)
+                              : null,
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 14,
+                            ),
+                            backgroundColor: _triviaOptionColors[
+                                    i % _triviaOptionColors.length]
+                                .withValues(
+                              alpha: _triviaSelectedAnswer == i ? 0.24 : 0.12,
+                            ),
+                            side: BorderSide(
+                              color: _triviaSelectedAnswer == i
+                                  ? _triviaOptionColors[
+                                      i % _triviaOptionColors.length]
+                                  : _triviaOptionColors[
+                                          i % _triviaOptionColors.length]
+                                      .withValues(alpha: 0.6),
+                              width: _triviaSelectedAnswer == i ? 2 : 1.2,
+                            ),
+                            foregroundColor: _triviaOptionColors[
+                                i % _triviaOptionColors.length],
+                          ),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              prompt.options[i],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (_triviaSelectedAnswer != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        _triviaSelectedAnswer == prompt.answerIndex
+                            ? 'Correct. ${prompt.insight}'
+                            : 'Nice try. ${prompt.insight}',
+                        style: const TextStyle(height: 1.35),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 16),
-            for (var i = 0; i < prompt.options.length; i++)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: OutlinedButton(
-                  key: Key('trivia_option_$i'),
-                  onPressed: () => _onTriviaAnswer(i),
-                  style: OutlinedButton.styleFrom(
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: personalBestText == null
+                      ? const SizedBox.shrink()
+                      : Text(
+                          personalBestText,
+                          key: const Key('break_personal_best'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: definition.color.withValues(alpha: 0.8),
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 12),
+                if (_triviaSelectedAnswer != null) ...[
+                  FilledButton.icon(
+                    key: const Key('trivia_next'),
+                    onPressed: _nextTrivia,
+                    icon: const Icon(Icons.arrow_forward_rounded),
+                    label: const Text('Next'),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                TextButton.icon(
+                  key: const Key('trivia_hint_toggle'),
+                  onPressed: () => _toggleTriviaHints(prompt, promptIndex),
+                  style: TextButton.styleFrom(
+                    foregroundColor: definition.color,
+                    backgroundColor: definition.color.withValues(
+                      alpha: !canUseHintHelpers
+                          ? 0.05
+                          : (_triviaHintsEnabled ? 0.14 : 0.07),
+                    ),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 14,
+                      horizontal: 12,
+                      vertical: 8,
                     ),
-                    backgroundColor:
-                        _triviaOptionColors[i % _triviaOptionColors.length]
-                            .withValues(
-                      alpha: _triviaSelectedAnswer == i ? 0.24 : 0.12,
-                    ),
-                    side: BorderSide(
-                      color: _triviaSelectedAnswer == i
-                          ? _triviaOptionColors[i % _triviaOptionColors.length]
-                          : _triviaOptionColors[i % _triviaOptionColors.length]
-                              .withValues(alpha: 0.6),
-                      width: _triviaSelectedAnswer == i ? 2 : 1.2,
-                    ),
-                    foregroundColor:
-                        _triviaOptionColors[i % _triviaOptionColors.length],
-                  ),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      prompt.options[i],
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                      side: BorderSide(
+                        color: definition.color.withValues(
+                          alpha: !canUseHintHelpers
+                              ? 0.12
+                              : (_triviaHintsEnabled ? 0.26 : 0.16),
+                        ),
+                      ),
                     ),
                   ),
+                  icon: Icon(
+                    !canUseHintHelpers
+                        ? Icons.lock_outline_rounded
+                        : _triviaHintsEnabled
+                        ? Icons.lightbulb_rounded
+                        : Icons.lightbulb_outline_rounded,
+                    size: 18,
+                  ),
+                  label: Text(!canUseHintHelpers
+                      ? 'Hints locked'
+                      : (_triviaHintsEnabled ? 'Hints on' : 'Hints off')),
                 ),
-              ),
-            if (_triviaSelectedAnswer != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                _triviaSelectedAnswer == prompt.answerIndex
-                    ? 'Correct. ${prompt.insight}'
-                    : 'Nice try. ${prompt.insight}',
-                style: const TextStyle(height: 1.35),
-              ),
-              const Spacer(),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton.icon(
-                  key: const Key('trivia_next'),
-                  onPressed: _nextTrivia,
-                  icon: const Icon(Icons.arrow_forward_rounded),
-                  label: const Text('Next'),
-                ),
-              ),
-            ],
+              ],
+            ),
           ],
         );
       case BreakActivityType.zenRoom:
@@ -2341,15 +3094,21 @@ class _SafeCrackDialPainter extends CustomPainter {
   }
 }
 
+enum _CubeHintMode { off, subtle, strong }
+
 class _CubePainter extends CustomPainter {
   final List<Color> faceColors;
   final List<_CubeStickerState> stickers;
   final double yaw;
   final double pitch;
   final Color accentColor;
+  final Color hintColor;
   final _CubeFace? activeFace;
   final _CubeSliceMove? animatedMove;
   final double animatedProgress;
+  final _CubeSliceMove? hintMove;
+  final double hintPulse;
+  final bool showArrowHints;
 
   const _CubePainter({
     required this.faceColors,
@@ -2357,9 +3116,13 @@ class _CubePainter extends CustomPainter {
     required this.yaw,
     required this.pitch,
     required this.accentColor,
+    required this.hintColor,
     required this.activeFace,
     required this.animatedMove,
     required this.animatedProgress,
+    required this.hintMove,
+    required this.hintPulse,
+    required this.showArrowHints,
   });
 
   @override
@@ -2424,26 +3187,67 @@ class _CubePainter extends CustomPainter {
         for (final sticker in projectedStickers.where(
           (sticker) => sticker.baseFace == face.face,
         )) {
+          final hintMatch = hintMove != null &&
+              _CubeProjection.coordOnAxis(sticker.position, hintMove!.axis) ==
+                  hintMove!.layer;
+          final hintStrength = 0.11 + (hintPulse * 0.12);
+          final glowStrength = 0.10 + (hintPulse * 0.12);
           canvas.drawPath(
             sticker.tilePath,
             Paint()
               ..style = PaintingStyle.fill
-              ..color = const Color(0xFF142033),
+              ..color = hintMatch
+                  ? hintColor.withValues(alpha: hintStrength)
+                  : const Color(0xFF142033),
           );
+          if (hintMatch) {
+            canvas.drawPath(
+              sticker.tilePath,
+              Paint()
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 5
+                ..strokeJoin = StrokeJoin.round
+                ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4)
+                ..color = hintColor.withValues(alpha: glowStrength),
+            );
+            canvas.drawPath(
+              sticker.tilePath,
+              Paint()
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 2.1
+                ..strokeJoin = StrokeJoin.round
+                ..color = hintColor.withValues(
+                  alpha: 0.24 + (hintPulse * 0.14),
+                ),
+            );
+          }
           canvas.drawPath(
             sticker.path,
             Paint()
               ..style = PaintingStyle.fill
               ..color = faceColors[sticker.colorIndex],
           );
+          if (hintMatch && showArrowHints) {
+            _drawHintArrow(
+              canvas,
+              sticker: sticker,
+              move: hintMove!,
+              size: size,
+            );
+          }
           canvas.drawPath(
             sticker.path,
             Paint()
               ..style = PaintingStyle.stroke
-              ..strokeWidth = sticker.baseFace == activeFace ? 2 : 1
+              ..strokeWidth =
+                  sticker.baseFace == activeFace || hintMatch ? 2.1 : 1
               ..color = sticker.baseFace == activeFace
                   ? accentColor.withValues(alpha: 0.7)
-                  : Colors.black.withValues(alpha: 0.15),
+                  : hintMatch
+                      ? hintColor.withValues(
+                          alpha: 0.34 + (hintPulse * 0.12),
+                        )
+                      : Colors.black.withValues(alpha: 0.15),
           );
         }
       }
@@ -2490,6 +3294,92 @@ class _CubePainter extends CustomPainter {
   bool shouldRepaint(covariant _CubePainter oldDelegate) {
     return true;
   }
+
+  void _drawHintArrow(
+    Canvas canvas, {
+    required _CubeProjectedSticker sticker,
+    required _CubeSliceMove move,
+    required Size size,
+  }) {
+    final arrowVector = _hintArrowVector(sticker, move, size);
+    if (arrowVector == null || arrowVector.distance < 8) {
+      return;
+    }
+
+    final direction = arrowVector / arrowVector.distance;
+    final center = _stickerCenter(sticker.path.getBounds());
+    final shaftLength =
+        min(sticker.path.getBounds().width, sticker.path.getBounds().height) *
+            0.42;
+    final tip = center + (direction * shaftLength * 0.46);
+    final tail = center - (direction * shaftLength * 0.34);
+    final normal = Offset(-direction.dy, direction.dx);
+    final headBase = tip - (direction * 8);
+    final leftWing = headBase + (normal * 5);
+    final rightWing = headBase - (normal * 5);
+
+    final glowPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 4.5
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3)
+      ..color = hintColor.withValues(alpha: 0.16 + (hintPulse * 0.10));
+    final arrowPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 1.9
+      ..color = Colors.white.withValues(alpha: 0.78);
+
+    final arrowPath = Path()
+      ..moveTo(tail.dx, tail.dy)
+      ..lineTo(tip.dx, tip.dy)
+      ..moveTo(tip.dx, tip.dy)
+      ..lineTo(leftWing.dx, leftWing.dy)
+      ..moveTo(tip.dx, tip.dy)
+      ..lineTo(rightWing.dx, rightWing.dy);
+
+    canvas.drawPath(arrowPath, glowPaint);
+    canvas.drawPath(arrowPath, arrowPaint);
+  }
+
+  Offset? _hintArrowVector(
+    _CubeProjectedSticker sticker,
+    _CubeSliceMove move,
+    Size size,
+  ) {
+    for (final swipeVector in [sticker.u, sticker.v]) {
+      final axisVector = sticker.normal.cross(swipeVector);
+      final axisInt = _CubeInt3(
+        axisVector.x.round(),
+        axisVector.y.round(),
+        axisVector.z.round(),
+      );
+      if (axisInt.principalAxis != move.axis) {
+        continue;
+      }
+      final desiredTurn = move.quarterTurns.sign * axisInt.axisSign;
+      if (desiredTurn == 0) {
+        continue;
+      }
+      final tangent = axisVector.cross(sticker.center);
+      final tangentScreen = _CubeProjection.projectVectorToScreen(
+        origin: sticker.center,
+        vector: tangent,
+        size: size,
+        yaw: yaw,
+        pitch: pitch,
+      );
+      if (tangentScreen.distance < 0.001) {
+        continue;
+      }
+      return tangentScreen * desiredTurn.toDouble();
+    }
+    return null;
+  }
+
+  Offset _stickerCenter(Rect rect) => rect.center;
 }
 
 class _CubeFaceIndex {
@@ -2618,6 +3508,20 @@ class _CubeSliceMove {
     _CubeSliceMove(axis: _CubeAxis.z, layer: -1, quarterTurns: 1),
     _CubeSliceMove(axis: _CubeAxis.z, layer: -1, quarterTurns: -1),
   ];
+
+  bool sameSliceAs(_CubeSliceMove other) {
+    return axis == other.axis && layer == other.layer;
+  }
+
+  bool isInverseOf(_CubeSliceMove other) {
+    return sameSliceAs(other) && quarterTurns == -other.quarterTurns;
+  }
+
+  _CubeSliceMove get inverse => _CubeSliceMove(
+        axis: axis,
+        layer: layer,
+        quarterTurns: -quarterTurns,
+      );
 }
 
 class _CubeProjectedFace {
@@ -2876,6 +3780,10 @@ class _CubeProjection {
 
   static _CubeFace _faceForNormal(_CubeInt3 normal) {
     return _CubeFace.values.firstWhere((face) => face.normal == normal);
+  }
+
+  static int coordOnAxis(_CubeInt3 vector, _CubeAxis axis) {
+    return _coordOnAxis(vector, axis);
   }
 
   static int _coordOnAxis(_CubeInt3 vector, _CubeAxis axis) {

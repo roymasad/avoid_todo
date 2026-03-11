@@ -341,6 +341,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tap Slip to record what triggered you. Over time, Avoid spots your patterns so you can get ahead of them. No judgment, just awareness.';
 
   @override
+  String get onboardingBreakGamesTitle => 'Defuse Urges with Break Games';
+
+  @override
+  String get onboardingBreakGamesDesc =>
+      'When an urge hits, tap Break on an active avoid to launch a fast 60-second reset. These tiny games and calming activities are built to interrupt autopilot before a slip happens.';
+
+  @override
   String get onboardingBadgesTitle => 'Earn Rewards Along the Way';
 
   @override
@@ -445,6 +452,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get faq11Answer =>
       'Avoid only collects basic app usage analytics, such as screen visits and major button taps, to help improve the product. It does not send your habit names, relapse notes, contact names, location names, or other personally identifiable or user-entered habit content to analytics.';
+
+  @override
+  String get faq12Question =>
+      'What are Break Games and when should I use them?';
+
+  @override
+  String get faq12Answer =>
+      'Break Games are short urge-interruption activities you can launch from the Break button on an active avoid. They run for about 60 seconds and are meant to distract, steady, or redirect you during the risky moment right before a slip. Some games also track personal bests, and Plus or trial access unlocks hints and random game pool controls.';
 
   @override
   String get coachMarkAddTitle => 'Add your first habit';
@@ -812,4 +827,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get widgetAndroidStep5Desc =>
       'Drag the widget to any empty spot on your home screen.';
+
+  @override
+  String get plusUnlockUnlimitedAvoidsHints =>
+      'Unlimited avoids, break game hints';
 }

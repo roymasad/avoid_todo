@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../helpers/app_analytics.dart';
+import '../l10n/app_localizations.dart';
 import '../model/trial_status.dart';
 import '../providers/purchase_provider.dart';
 import 'tracked_screen.dart';
@@ -16,6 +17,7 @@ Future<void> showPlusUpgradeDialog(
   final messenger = ScaffoldMessenger.of(context);
   final trialStatus = purchase.trialStatus;
   final dateFormat = DateFormat.yMMMd();
+  final l10n = AppLocalizations.of(context);
 
   AppAnalytics.instance.trackEvent(
     'plus_dialog_opened',
@@ -122,10 +124,15 @@ Future<void> showPlusUpgradeDialog(
             const SizedBox(height: 12),
             const Text('What you unlock:'),
             const SizedBox(height: 10),
-            const Row(children: [
-              Text('♾️', style: TextStyle(fontSize: 16)),
-              SizedBox(width: 8),
-              Expanded(child: Text('Unlimited habits'))
+            Row(children: [
+              const Text('♾️', style: TextStyle(fontSize: 16)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n?.plusUnlockUnlimitedAvoidsHints ??
+                      'Unlimited avoids, break game hints',
+                ),
+              ),
             ]),
             const SizedBox(height: 6),
             const Row(children: [

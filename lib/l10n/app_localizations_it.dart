@@ -341,6 +341,14 @@ class AppLocalizationsIt extends AppLocalizations {
       'Tocca Ricaduta per registrare cosa ti ha fatto cedere. Con il tempo, Avoid individua i tuoi schemi per aiutarti ad anticiparli. Nessun giudizio, solo consapevolezza.';
 
   @override
+  String get onboardingBreakGamesTitle =>
+      'Disinnesca gli impulsi con i Break Games';
+
+  @override
+  String get onboardingBreakGamesDesc =>
+      'Quando arriva un impulso, tocca Break su un avoid attivo per avviare un reset rapido di 60 secondi. Questi mini giochi e attività calmanti servono a interrompere il pilota automatico prima che avvenga una ricaduta.';
+
+  @override
   String get onboardingBadgesTitle => 'Ottieni ricompense lungo il percorso';
 
   @override
@@ -447,6 +455,13 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get faq11Answer =>
       'Avoid raccoglie solo analisi di base sull\'uso dell\'app, come le schermate visitate e i tocchi sui pulsanti principali, per migliorare il prodotto. Non invia alle analytics i nomi delle tue abitudini, le note sulle ricadute, i nomi dei contatti, i nomi dei luoghi o altri contenuti identificabili o inseriti dall\'utente.';
+
+  @override
+  String get faq12Question => 'Cosa sono i Break Games e quando dovrei usarli?';
+
+  @override
+  String get faq12Answer =>
+      'I Break Games sono brevi attività per interrompere un impulso che puoi avviare dal pulsante Break su un avoid attivo. Durano circa 60 secondi e servono a distrarti, stabilizzarti o reindirizzarti proprio nel momento rischioso prima di una ricaduta. Alcuni giochi salvano anche i tuoi record personali, e Plus o la prova sbloccano gli aiuti e il controllo del pool casuale.';
 
   @override
   String get coachMarkAddTitle => 'Aggiungi la tua prima abitudine';
@@ -821,4 +836,8 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get widgetAndroidStep5Desc =>
       'Trascina il widget in qualsiasi punto libero della schermata Home.';
+
+  @override
+  String get plusUnlockUnlimitedAvoidsHints =>
+      'Unlimited avoids, break game hints';
 }

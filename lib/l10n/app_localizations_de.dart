@@ -345,6 +345,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Tippe auf Rückfall, um festzuhalten, was dich ausgelöst hat. Mit der Zeit erkennt Avoid deine Muster, damit du ihnen zuvor kommen kannst. Kein Urteil, nur Bewusstsein.';
 
   @override
+  String get onboardingBreakGamesTitle => 'Entschärfe Impulse mit Break Games';
+
+  @override
+  String get onboardingBreakGamesDesc =>
+      'Wenn ein Impuls kommt, tippe bei einem aktiven Avoid auf Break, um einen schnellen 60-Sekunden-Reset zu starten. Diese kleinen Spiele und beruhigenden Aktivitäten sollen den Autopilot unterbrechen, bevor ein Rückfall passiert.';
+
+  @override
   String get onboardingBadgesTitle => 'Belohnungen auf dem Weg verdienen';
 
   @override
@@ -452,6 +459,14 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get faq11Answer =>
       'Avoid sammelt nur grundlegende Nutzungsanalysen der App, zum Beispiel besuchte Bildschirme und wichtige Button-Klicks, um das Produkt zu verbessern. Es sendet keine Habit-Namen, Rückfallnotizen, Kontaktnamen, Ortsnamen oder andere identifizierbare bzw. vom Nutzer eingegebene Inhalte an Analytics.';
+
+  @override
+  String get faq12Question =>
+      'Was sind Break Games und wann sollte ich sie benutzen?';
+
+  @override
+  String get faq12Answer =>
+      'Break Games sind kurze Aktivitäten zur Unterbrechung eines Impulses, die du über den Break-Button bei einem aktiven Avoid starten kannst. Sie dauern etwa 60 Sekunden und sollen dich genau in dem riskanten Moment vor einem Rückfall ablenken, beruhigen oder umlenken. Manche Spiele speichern auch persönliche Bestwerte, und mit Plus oder Trial bekommst du Hinweise sowie die Kontrolle über den zufälligen Spielepool.';
 
   @override
   String get coachMarkAddTitle => 'Füge deine erste Gewohnheit hinzu';
@@ -825,4 +840,8 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get widgetAndroidStep5Desc =>
       'Ziehe das Widget an eine freie Stelle auf deinem Home-Bildschirm.';
+
+  @override
+  String get plusUnlockUnlimitedAvoidsHints =>
+      'Unlimited avoids, break game hints';
 }

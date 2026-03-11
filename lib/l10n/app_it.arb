@@ -437,13 +437,21 @@
   "@onboardingRelapseDesc": {
     "description": "Onboarding slide 4 description."
   },
+  "onboardingBreakGamesTitle": "Disinnesca gli impulsi con i Break Games",
+  "@onboardingBreakGamesTitle": {
+    "description": "Onboarding slide 5 title."
+  },
+  "onboardingBreakGamesDesc": "Quando arriva un impulso, tocca Break su un avoid attivo per avviare un reset rapido di 60 secondi. Questi mini giochi e attività calmanti servono a interrompere il pilota automatico prima che avvenga una ricaduta.",
+  "@onboardingBreakGamesDesc": {
+    "description": "Onboarding slide 5 description."
+  },
   "onboardingBadgesTitle": "Ottieni ricompense lungo il percorso",
   "@onboardingBadgesTitle": {
-    "description": "Onboarding slide 5 title."
+    "description": "Onboarding slide 6 title."
   },
   "onboardingBadgesDesc": "Sblocca badge per le serie e i traguardi di risparmio. Completa obiettivi, guadagna XP e sali attraverso 100 livelli mentre le tue abitudini diventano più forti.",
   "@onboardingBadgesDesc": {
-    "description": "Onboarding slide 5 description."
+    "description": "Onboarding slide 6 description."
   },
   "getStarted": "Inizia",
   "@getStarted": {
@@ -560,6 +568,14 @@
   "faq11Answer": "Avoid raccoglie solo analisi di base sull'uso dell'app, come le schermate visitate e i tocchi sui pulsanti principali, per migliorare il prodotto. Non invia alle analytics i nomi delle tue abitudini, le note sulle ricadute, i nomi dei contatti, i nomi dei luoghi o altri contenuti identificabili o inseriti dall'utente.",
   "@faq11Answer": {
     "description": "FAQ 11 answer."
+  },
+  "faq12Question": "Cosa sono i Break Games e quando dovrei usarli?",
+  "@faq12Question": {
+    "description": "FAQ 12 question."
+  },
+  "faq12Answer": "I Break Games sono brevi attività per interrompere un impulso che puoi avviare dal pulsante Break su un avoid attivo. Durano circa 60 secondi e servono a distrarti, stabilizzarti o reindirizzarti proprio nel momento rischioso prima di una ricaduta. Alcuni giochi salvano anche i tuoi record personali, e Plus o la prova sbloccano gli aiuti e il controllo del pool casuale.",
+  "@faq12Answer": {
+    "description": "FAQ 12 answer."
   },
   "coachMarkAddTitle": "Aggiungi la tua prima abitudine",
   "@coachMarkAddTitle": {
@@ -1036,5 +1052,9 @@
   "widgetAndroidStep5Desc": "Trascina il widget in qualsiasi punto libero della schermata Home.",
   "@widgetAndroidStep5Desc": {
     "description": "Android widget setup step 5 description."
+  },
+  "plusUnlockUnlimitedAvoidsHints": "Unlimited avoids, break game hints",
+  "@plusUnlockUnlimitedAvoidsHints": {
+    "description": "Benefit line in the Plus upgrade dialog for unlimited avoids and break game hints."
   }
 }

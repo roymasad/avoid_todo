@@ -41,6 +41,58 @@ class BreakHelper {
   static const int xpHelpfulBreak = 5;
   static const String sourceHelpfulBreak = 'helpful_break';
 
+  static bool supportsPersonalBest(BreakActivityType type) {
+    switch (type) {
+      case BreakActivityType.defuse:
+      case BreakActivityType.pairMatch:
+      case BreakActivityType.cubeReset:
+      case BreakActivityType.stackSweep:
+      case BreakActivityType.triviaPivot:
+        return true;
+      case BreakActivityType.zenRoom:
+        return false;
+    }
+  }
+
+  static bool prefersLowerPersonalBest(BreakActivityType type) {
+    switch (type) {
+      case BreakActivityType.defuse:
+      case BreakActivityType.pairMatch:
+      case BreakActivityType.cubeReset:
+      case BreakActivityType.stackSweep:
+        return true;
+      case BreakActivityType.triviaPivot:
+      case BreakActivityType.zenRoom:
+        return false;
+    }
+  }
+
+  static String formatPersonalBestValue(BreakActivityType type, int score) {
+    if (prefersLowerPersonalBest(type)) {
+      final seconds = score ~/ 1000;
+      final centiseconds = (score % 1000) ~/ 10;
+      return '$seconds.${centiseconds.toString().padLeft(2, '0')}s';
+    }
+    return score.toString();
+  }
+
+  static String personalBestLabel(BreakActivityType type, int score) {
+    switch (type) {
+      case BreakActivityType.defuse:
+        return 'Best: ${formatPersonalBestValue(type, score)}';
+      case BreakActivityType.pairMatch:
+        return 'Best: ${formatPersonalBestValue(type, score)}';
+      case BreakActivityType.cubeReset:
+        return 'Best: ${formatPersonalBestValue(type, score)}';
+      case BreakActivityType.stackSweep:
+        return 'Best: ${formatPersonalBestValue(type, score)}';
+      case BreakActivityType.triviaPivot:
+        return 'Best: $score correct';
+      case BreakActivityType.zenRoom:
+        return 'Best: $score';
+    }
+  }
+
   static const List<BreakActivityDefinition> _definitions = [
     BreakActivityDefinition(
       type: BreakActivityType.defuse,
@@ -823,9 +875,17 @@ class BreakHelper {
     AvoidType type, {
     Random? random,
     BreakActivityType? previous,
+    Iterable<BreakActivityType>? enabledActivities,
   }) {
     final generator = random ?? Random();
     final pool = List<BreakActivityType>.from(poolFor(type));
+    if (enabledActivities != null) {
+      final enabledSet = enabledActivities.toSet();
+      pool.removeWhere((activity) => !enabledSet.contains(activity));
+    }
+    if (pool.isEmpty) {
+      pool.addAll(poolFor(type));
+    }
     if (previous != null && pool.length > 1) {
       pool.remove(previous);
     }

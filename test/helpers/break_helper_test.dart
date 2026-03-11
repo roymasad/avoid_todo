@@ -51,4 +51,37 @@ void main() {
     expect(picked, isNot(BreakActivityType.zenRoom));
     expect(BreakHelper.poolFor(AvoidType.people), contains(picked));
   });
+
+  test('picker honors enabled activity filters', () {
+    for (var i = 0; i < 10; i++) {
+      final picked = BreakHelper.pickActivity(
+        AvoidType.place,
+        enabledActivities: const [
+          BreakActivityType.stackSweep,
+          BreakActivityType.triviaPivot,
+        ],
+      );
+
+      expect(
+        picked,
+        anyOf(
+          BreakActivityType.stackSweep,
+          BreakActivityType.triviaPivot,
+        ),
+      );
+    }
+  });
+
+  test('picker falls back to avoid-type pool if enabled filter empties it', () {
+    final pool = BreakHelper.poolFor(AvoidType.people);
+
+    for (var i = 0; i < 10; i++) {
+      final picked = BreakHelper.pickActivity(
+        AvoidType.people,
+        enabledActivities: const [BreakActivityType.pairMatch],
+      );
+
+      expect(pool, contains(picked));
+    }
+  });
 }

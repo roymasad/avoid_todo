@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'break_helper.dart';
 import '../model/todo.dart';
 import '../model/tag.dart';
 import '../model/relapse_log.dart';
@@ -19,6 +20,14 @@ class DatabaseHelper {
     return _database!;
   }
 
+  Future<void> _ensureBreakScoreColumn(Database db) async {
+    final columns = await db.rawQuery("PRAGMA table_info('break_sessions')");
+    final hasScoreColumn = columns.any((row) => row['name'] == 'score');
+    if (!hasScoreColumn) {
+      await db.execute('ALTER TABLE break_sessions ADD COLUMN score INTEGER');
+    }
+  }
+
   /// Closes the current connection and clears the cache so the next call to
   /// [database] opens a fresh connection. Call this before replacing the DB
   /// file (e.g. during a backup restore).
@@ -35,7 +44,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 15,
+      version: 16,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -165,6 +174,7 @@ class DatabaseHelper {
       endedAt TEXT NOT NULL,
       status TEXT NOT NULL,
       outcome TEXT,
+      score INTEGER,
       FOREIGN KEY (todoId) REFERENCES todo (id) ON DELETE CASCADE
     )
     ''');
@@ -374,9 +384,17 @@ class DatabaseHelper {
         endedAt TEXT NOT NULL,
         status TEXT NOT NULL,
         outcome TEXT,
+        score INTEGER,
         FOREIGN KEY (todoId) REFERENCES todo (id) ON DELETE CASCADE
       )
       ''');
+    }
+    if (oldVersion < 16) {
+      try {
+        await db.execute('ALTER TABLE break_sessions ADD COLUMN score INTEGER');
+      } catch (_) {
+        // Column may already exist.
+      }
     }
   }
 
@@ -616,8 +634,11 @@ class DatabaseHelper {
     required DateTime endedAt,
     required BreakSessionStatus status,
     BreakOutcome? outcome,
+    int? score,
   }) async {
     final db = await instance.database;
+    await _ensureBreakScoreColumn(db);
+    final sanitizedScore = score != null && score > 0 ? score : null;
     return db.insert('break_sessions', {
       'todoId': todoId,
       'activityType': activityType.name,
@@ -625,7 +646,27 @@ class DatabaseHelper {
       'endedAt': endedAt.toIso8601String(),
       'status': status.name,
       'outcome': outcome?.name,
+      'score': sanitizedScore,
     });
+  }
+
+  Future<int?> getBestBreakScore(BreakActivityType activityType) async {
+    final db = await instance.database;
+    await _ensureBreakScoreColumn(db);
+    final aggregate = BreakHelper.prefersLowerPersonalBest(activityType)
+        ? 'MIN(score)'
+        : 'MAX(score)';
+    final result = await db.rawQuery('''
+      SELECT $aggregate AS bestScore
+      FROM break_sessions
+      WHERE activityType = ?
+        AND score IS NOT NULL
+        AND score > 0
+    ''', [
+      activityType.name,
+    ]);
+    final value = result.first['bestScore'] as num?;
+    return value?.toInt();
   }
 
   Future<BreakSessionSummary> getBreakSummaryForTodo(String todoId) async {

@@ -437,13 +437,21 @@
   "@onboardingRelapseDesc": {
     "description": "Onboarding slide 4 description."
   },
+  "onboardingBreakGamesTitle": "Entschärfe Impulse mit Break Games",
+  "@onboardingBreakGamesTitle": {
+    "description": "Onboarding slide 5 title."
+  },
+  "onboardingBreakGamesDesc": "Wenn ein Impuls kommt, tippe bei einem aktiven Avoid auf Break, um einen schnellen 60-Sekunden-Reset zu starten. Diese kleinen Spiele und beruhigenden Aktivitäten sollen den Autopilot unterbrechen, bevor ein Rückfall passiert.",
+  "@onboardingBreakGamesDesc": {
+    "description": "Onboarding slide 5 description."
+  },
   "onboardingBadgesTitle": "Belohnungen auf dem Weg verdienen",
   "@onboardingBadgesTitle": {
-    "description": "Onboarding slide 5 title."
+    "description": "Onboarding slide 6 title."
   },
   "onboardingBadgesDesc": "Schalte Abzeichen für Serien und Spar-Meilensteine frei. Erreiche Ziele, sammle XP und steige durch 100 Stufen auf, während deine Gewohnheiten stärker werden.",
   "@onboardingBadgesDesc": {
-    "description": "Onboarding slide 5 description."
+    "description": "Onboarding slide 6 description."
   },
   "getStarted": "Loslegen",
   "@getStarted": {
@@ -560,6 +568,14 @@
   "faq11Answer": "Avoid sammelt nur grundlegende Nutzungsanalysen der App, zum Beispiel besuchte Bildschirme und wichtige Button-Klicks, um das Produkt zu verbessern. Es sendet keine Habit-Namen, Rückfallnotizen, Kontaktnamen, Ortsnamen oder andere identifizierbare bzw. vom Nutzer eingegebene Inhalte an Analytics.",
   "@faq11Answer": {
     "description": "FAQ 11 answer."
+  },
+  "faq12Question": "Was sind Break Games und wann sollte ich sie benutzen?",
+  "@faq12Question": {
+    "description": "FAQ 12 question."
+  },
+  "faq12Answer": "Break Games sind kurze Aktivitäten zur Unterbrechung eines Impulses, die du über den Break-Button bei einem aktiven Avoid starten kannst. Sie dauern etwa 60 Sekunden und sollen dich genau in dem riskanten Moment vor einem Rückfall ablenken, beruhigen oder umlenken. Manche Spiele speichern auch persönliche Bestwerte, und mit Plus oder Trial bekommst du Hinweise sowie die Kontrolle über den zufälligen Spielepool.",
+  "@faq12Answer": {
+    "description": "FAQ 12 answer."
   },
   "coachMarkAddTitle": "Füge deine erste Gewohnheit hinzu",
   "@coachMarkAddTitle": {
@@ -1036,5 +1052,9 @@
   "widgetAndroidStep5Desc": "Ziehe das Widget an eine freie Stelle auf deinem Home-Bildschirm.",
   "@widgetAndroidStep5Desc": {
     "description": "Android widget setup step 5 description."
+  },
+  "plusUnlockUnlimitedAvoidsHints": "Unlimited avoids, break game hints",
+  "@plusUnlockUnlimitedAvoidsHints": {
+    "description": "Benefit line in the Plus upgrade dialog for unlimited avoids and break game hints."
   }
 }

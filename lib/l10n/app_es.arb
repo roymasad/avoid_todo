@@ -437,13 +437,21 @@
   "@onboardingRelapseDesc": {
     "description": "Onboarding slide 4 description."
   },
+  "onboardingBreakGamesTitle": "Desactiva impulsos con Break Games",
+  "@onboardingBreakGamesTitle": {
+    "description": "Onboarding slide 5 title."
+  },
+  "onboardingBreakGamesDesc": "Cuando aparezca un impulso, toca Break en un avoid activo para lanzar un reinicio rápido de 60 segundos. Estos minijuegos y actividades calmantes están diseñados para interrumpir el piloto automático antes de que ocurra una recaída.",
+  "@onboardingBreakGamesDesc": {
+    "description": "Onboarding slide 5 description."
+  },
   "onboardingBadgesTitle": "Consigue recompensas en el camino",
   "@onboardingBadgesTitle": {
-    "description": "Onboarding slide 5 title."
+    "description": "Onboarding slide 6 title."
   },
   "onboardingBadgesDesc": "Desbloquea insignias por rachas y metas de ahorro. Completa objetivos, gana XP y sube por 100 niveles a medida que tus hábitos se fortalecen.",
   "@onboardingBadgesDesc": {
-    "description": "Onboarding slide 5 description."
+    "description": "Onboarding slide 6 description."
   },
   "getStarted": "Comenzar",
   "@getStarted": {
@@ -560,6 +568,14 @@
   "faq11Answer": "Avoid solo recopila analíticas básicas de uso de la app, como visitas a pantallas y toques en botones principales, para ayudar a mejorar el producto. No envía a analíticas los nombres de tus hábitos, notas de recaídas, nombres de contactos, nombres de ubicaciones ni otro contenido identificable o escrito por el usuario.",
   "@faq11Answer": {
     "description": "FAQ 11 answer."
+  },
+  "faq12Question": "¿Qué son los Break Games y cuándo debería usarlos?",
+  "@faq12Question": {
+    "description": "FAQ 12 question."
+  },
+  "faq12Answer": "Los Break Games son actividades cortas para interrumpir un impulso que puedes abrir desde el botón Break de un avoid activo. Duran unos 60 segundos y están pensados para distraerte, estabilizarte o redirigirte justo en el momento de riesgo antes de una recaída. Algunos juegos también guardan tus mejores marcas, y Plus o la prueba desbloquean pistas y el control del grupo de juegos aleatorios.",
+  "@faq12Answer": {
+    "description": "FAQ 12 answer."
   },
   "coachMarkAddTitle": "Añade tu primer hábito",
   "@coachMarkAddTitle": {
@@ -1036,5 +1052,9 @@
   "widgetAndroidStep5Desc": "Arrastra el widget a cualquier espacio vacío de tu pantalla de inicio.",
   "@widgetAndroidStep5Desc": {
     "description": "Android widget setup step 5 description."
+  },
+  "plusUnlockUnlimitedAvoidsHints": "Unlimited avoids, break game hints",
+  "@plusUnlockUnlimitedAvoidsHints": {
+    "description": "Benefit line in the Plus upgrade dialog for unlimited avoids and break game hints."
   }
 }

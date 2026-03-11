@@ -757,10 +757,22 @@ abstract class AppLocalizations {
   /// Onboarding slide 5 title.
   ///
   /// In en, this message translates to:
+  /// **'Defuse Urges with Break Games'**
+  String get onboardingBreakGamesTitle;
+
+  /// Onboarding slide 5 description.
+  ///
+  /// In en, this message translates to:
+  /// **'When an urge hits, tap Break on an active avoid to launch a fast 60-second reset. These tiny games and calming activities are built to interrupt autopilot before a slip happens.'**
+  String get onboardingBreakGamesDesc;
+
+  /// Onboarding slide 6 title.
+  ///
+  /// In en, this message translates to:
   /// **'Earn Rewards Along the Way'**
   String get onboardingBadgesTitle;
 
-  /// Onboarding slide 5 description.
+  /// Onboarding slide 6 description.
   ///
   /// In en, this message translates to:
   /// **'Unlock badges for streaks and savings milestones. Complete goals, earn XP, and level up through 100 tiers as your habits get stronger.'**
@@ -939,6 +951,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Avoid only collects basic app usage analytics, such as screen visits and major button taps, to help improve the product. It does not send your habit names, relapse notes, contact names, location names, or other personally identifiable or user-entered habit content to analytics.'**
   String get faq11Answer;
+
+  /// FAQ 12 question.
+  ///
+  /// In en, this message translates to:
+  /// **'What are Break Games and when should I use them?'**
+  String get faq12Question;
+
+  /// FAQ 12 answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Break Games are short urge-interruption activities you can launch from the Break button on an active avoid. They run for about 60 seconds and are meant to distract, steady, or redirect you during the risky moment right before a slip. Some games also track personal bests, and Plus or trial access unlocks hints and random game pool controls.'**
+  String get faq12Answer;
 
   /// Coach mark step 1 title.
   ///
@@ -1635,6 +1659,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Drag the widget to any empty spot on your home screen.'**
   String get widgetAndroidStep5Desc;
+
+  /// Benefit line in the Plus upgrade dialog for unlimited avoids and break game hints.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited avoids, break game hints'**
+  String get plusUnlockUnlimitedAvoidsHints;
 }
 
 class _AppLocalizationsDelegate
