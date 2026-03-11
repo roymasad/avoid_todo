@@ -904,6 +904,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Gib deinem Kopf etwas anderes zum Beschäftigen.';
 
   @override
+  String get breakActivityFortuneCookieTitle => 'Glückskeks';
+
+  @override
+  String get breakActivityFortuneCookieSubtitle =>
+      'Brich den Keks auf und kratze die Krümel weg, um einen ruhigeren Gedanken freizulegen.';
+
+  @override
   String get breakActivityZenRoomTitle => 'Zen-Raum';
 
   @override
@@ -1037,6 +1044,24 @@ class AppLocalizationsDe extends AppLocalizations {
   String get breakNext => 'Weiter';
 
   @override
+  String get breakFortuneCookieTapStatus =>
+      'Tippe auf den Keks, um ihn zu knacken.';
+
+  @override
+  String get breakFortuneCookieTapHint => 'Tippen zum Knacken';
+
+  @override
+  String get breakFortuneCookieScratchStatus =>
+      'Kratze die Krümel weg, um den Spruch darunter freizulegen.';
+
+  @override
+  String get breakFortuneCookieRevealStatus =>
+      'Gut. Lass den Satz einen Moment wirken.';
+
+  @override
+  String get breakFortuneCookieFortuneLabel => 'GLÜCK';
+
+  @override
   String get breakZenTapDrop => 'Tippe auf einen Tropfen';
 
   @override
@@ -1084,4 +1109,8 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get breakZenFortunesData =>
       'Mach erst eine Pause. Schwung ist kein Schicksal.\n%%\nDer Drang ist laut. Er hat nicht das Sagen.\n%%\nGib diesem Moment noch 10 Atemzüge, bevor du irgendetwas entscheidest.\n%%\nKleine Umwege zählen. Du hast die Spirale schon unterbrochen.\n%%\nWenn dein Kopf stürmt, verkleinere den Horizont auf die nächste Minute.\n%%\nNichts Dauerhaftes muss mitten in einer vorübergehenden Welle entschieden werden.\n%%\nDu musst nicht dem ersten Impuls folgen, der auftaucht.\n%%\nVersuche, diese Minute kleiner, weicher und langsamer zu machen.\n%%\nDu darfst den Drang aufschieben, ohne ihn für immer besiegen zu müssen.\n%%\nDer Sieg ist nicht Perfektion. Der Sieg ist Raum.\n%%\nEin ruhigerer nächster Schritt ist besser als ein dramatischer.\n%%\nBemerke den Drang. Benenne ihn. Gib ihm keine Geschichte.\n%%\nDein Nervensystem braucht Fürsorge, nicht Strafe.\n%%\nEine sanfte Unterbrechung kann den ganzen Moment umlenken.\n%%\nAtme so, als würdest du einem Freund helfen, nicht dich selbst schimpfen.\n%%\nWenn es scharf wirkt, antworte mit Sanftheit und Struktur.\n%%\nDu kannst dich unwohl fühlen, ohne in Gefahr zu sein.\n%%\nDer Moment ist intensiv. Er ist trotzdem veränderbar.\n%%\nGib dem Verlangen weniger Bühne und mehr Abstand.\n%%\nEin verschobenes Ja wird oft zu einem friedlichen Nein.\n%%\nDer Körper beruhigt sich schneller, wenn du aufhörst, mit ihm zu streiten.\n%%\nWähle die nächste Minute, nicht die ganze Zukunft.\n%%\nHol erst Luft, bevor du deinen Gedanken folgst.\n%%\nDein Fortschritt besteht aus kleinen Unterbrechungen wie dieser.\n%%\nEine Pause ist keine Schwäche. Sie ist Steuerung.\n%%\nLass die Welle durchziehen; du musst ihr kein Zuhause bauen.\n%%\nDer Drang darf anklopfen. Einziehen darf er nicht.\n%%\nSenke die Bedeutung dieser Minute, dann wird sie leichter zu tragen.\n%%\nDu bist nicht zu spät. Du übst die Pause in Echtzeit.\n%%\nEin weicheres Nervensystem trifft klügere Entscheidungen.\n%%\nDu kannst verschieben, ohne deine Menschlichkeit zu verleugnen.\n%%\nDas Verlangen will Tempo. Antworte mit Ruhe.\n%%\nDas ist ein Kontrollpunkt, kein Urteil über deinen Charakter.\n%%\nBleib für einen Atemzug beim Körper, bevor du der Geschichte folgst.\n%%\nEin wenig Raum jetzt ist echter Fortschritt.\n%%\nDu hast starke Dränge schon überstanden, ohne ihnen zu folgen.\n%%\nDie nächste freundliche Handlung kann sehr klein sein und trotzdem zählen.\n%%\nRuhe entsteht oft durch Wiederholung, nicht durch Offenbarung.\n%%\nUnterbrechungen wie diese zeigen deinem Gehirn einen neuen Weg.\n%%\nEine Minute Abstand kann eine Stunde Reue sparen.\n%%\nDu darfst Erleichterung wollen und trotzdem klug wählen.\n%%\nMach weniger. Werde langsamer. Lass erst die Hitze sinken.\n%%\nDer Kopf wird leiser, wenn sich der Körper sicherer fühlt.\n%%\nDu kannst das Gefühl würdigen, ohne es auszuleben.\n%%\nDieser Moment braucht kein Drama; er braucht Raum.\n%%\nVersuch, Kiefer, Schultern und den Zeitdruck zu lockern.\n%%\nDu steuerst jetzt, auch wenn die Kurve sanft ist.\n%%\nAtme tief und langsam; lass die Dringlichkeit ihren Einsatz verpassen.\n%%\nVerlangen steigt oft schnell an und fällt ab, wenn es nicht gefüttert wird.\n%%\nDiese Pause verändert das Ende schon.\n%%\nDu brauchst keinen perfekten Plan für einen besseren nächsten Schritt.\n%%\nGib dem Impuls etwas Langeweile, dann wird er oft schwächer.\n%%\nEs ist Stärke, für den Drang weniger verfügbar zu sein.\n%%\nEin ruhiger Körper kann einen lauten Kopf sicherer halten.\n%%\nLass das ein Neustart sein, keine Debatte.\n%%\nDie Zukunft, die du schützt, entsteht in genau solchen Momenten.\n%%\nAuch wenn du nur die Spirale verschiebst, zählt das.\n%%\nBeruhige zuerst das Nervensystem; Bedeutung kann warten.\n%%\nEine kluge Pause fühlt sich oft gewöhnlich an, während sie passiert.\n%%\nDu zeigst dir selbst, dass Dringlichkeit keine Autorität ist.\n%%\nKleine saubere Entscheidungen bauen stille Zuversicht auf.\n%%\nDie schnellste Erleichterung ist nicht immer die wahrste.\n%%\nMach den nächsten Atemzug zu deiner ganzen Aufgabe.\n%%\nReduziere das Rauschen, dann entscheide.\n%%\nDu kannst diesem Moment mit weniger Härte begegnen.\n%%\nDer Drang will Aufmerksamkeit; gib ihm lieber Beobachtung.\n%%\nEs gibt keine Regel, die sagt, dass du das alte Muster fortsetzen musst.\n%%\nSchon ein teilweises Langsamerwerden ist ein echter Gewinn.\n%%\nDu bist nicht im ersten Gefühl gefangen.\n%%\nEine bessere Entscheidung beginnt oft mit einem langsameren Körper.\n%%\nSanftheit ist hier erlaubt.\n%%\nDu kannst noch eine Minute neugierig statt reaktiv bleiben.\n%%\nLass deinen Atem das Tempo setzen.\n%%\nDer Sturm in deinem Kopf muss nicht zum Wetter deines Lebens werden.\n%%\nStabilität sind oft nur ein paar ruhigere Sekunden, immer wieder.';
+
+  @override
+  String get breakFortuneCookieWisdomsData =>
+      'Atme zuerst. Der nächste Schritt kann warten.\n%%\nEine langsamere Minute kann die ganze Stimmung verändern.\n%%\nVerschiebe den Drang, nicht deine Freundlichkeit.\n%%\nKleine Pausen sind trotzdem starke Entscheidungen.\n%%\nDu musst diesen Moment nicht mit Lautstärke lösen.\n%%\nLass erst die Schultern sinken, bevor du die Ansprüche sinken lässt.\n%%\nEin Verlangen ist ein Besucher, kein Chef.\n%%\nGib dieser Welle Raum, dann schrumpft sie.\n%%\nSanft schlägt dramatisch, wenn Frieden das Ziel ist.\n%%\nEin ruhiger Atemzug ist schon eine neue Richtung.\n%%\nDu darfst Erleichterung wollen, ohne dem Drang zu folgen.\n%%\nTriff die nächste Entscheidung mit einem weicheren Körper.\n%%\nDiese Minute verdient Geduld, nicht Druck.\n%%\nLeiser Fortschritt ist trotzdem Fortschritt.\n%%\nNichts Wichtiges wird durch Hast besser.\n%%\nBleib länger beim Atem als bei der Geschichte.\n%%\nEin wenig Raum jetzt kann später viel ersparen.\n%%\nDu unterbrichst gerade den alten Weg.\n%%\nDer Drang ist real. Deine Wahl auch.\n%%\nEine Pause ist eine Fähigkeit, keine Ausrede.\n%%\nLass die Hitze sinken, bevor du antwortest.\n%%\nSanftere Gedanken kommen nach ruhigeren Atemzügen.\n%%\nDu darfst die Szene verlangsamen.\n%%\nHier hilft Neugier mehr als Kritik.\n%%\nDein zukünftiges Ich mag diese ruhigere Version von dir.\n%%\nDer erste Impuls ist nicht die endgültige Wahrheit.\n%%\nSchütze die nächsten zehn Minuten, nicht das ganze Jahr.\n%%\nEin stabilerer Körper macht klügere Versprechen.\n%%\nDieses Gefühl kann vorbeiziehen, ohne zur Handlung zu werden.\n%%\nLangsam ist manchmal die mutigste Geschwindigkeit.\n%%\nDu kannst dich unwohl fühlen und trotzdem sicher sein.\n%%\nGib dem Drang weniger Aufmerksamkeit und mehr Abstand.\n%%\nEin besseres Ende beginnt oft mit einer Pause.\n%%\nFreundliche Struktur ist stärker als harter Druck.\n%%\nLass den Moment kleiner werden, bevor du ihn bewertest.\n%%\nDer Körper hört zu, wenn der Atem freundlich wird.\n%%\nKurze Verzögerungen bauen langfristiges Vertrauen auf.\n%%\nDu schuldest dem Verlangen jetzt keine Antwort.\n%%\nFrieden wächst in wiederholten kleinen Entscheidungen.\n%%\nDiese Pause ist ein echter Gewinn, kein Platzhalter.\n%%\nAtme tief. Lös dich. Komm langsam zurück.\n%%\nMach zuerst Platz für Ruhe, dann für Handlung.\n%%\nEin sanfter Neustart kann trotzdem kraftvoll sein.\n%%\nWeniger Dringlichkeit, mehr Wahrnehmung.\n%%\nDu übst Freiheit in kleinen Stücken.\n%%\nEine klarere Entscheidung kann den ganzen Tag heller machen.\n%%\nLass die Stille einen Teil der Arbeit übernehmen.\n%%\nEine ruhige Minute ist nie verschwendet.\n%%\nBleib standhaft. Die Welle verändert sich schon.\n%%\nSanfter ist nicht schwächer. Sanfter ist klüger.';
 }

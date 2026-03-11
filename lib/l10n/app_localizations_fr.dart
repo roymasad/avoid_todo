@@ -906,6 +906,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'Donnez autre chose à mâcher à votre cerveau.';
 
   @override
+  String get breakActivityFortuneCookieTitle => 'Biscuit chinois';
+
+  @override
+  String get breakActivityFortuneCookieSubtitle =>
+      'Cassez un biscuit et grattez les miettes pour faire apparaître une pensée plus calme.';
+
+  @override
   String get breakActivityZenRoomTitle => 'Salle Zen';
 
   @override
@@ -1039,6 +1046,24 @@ class AppLocalizationsFr extends AppLocalizations {
   String get breakNext => 'Suivant';
 
   @override
+  String get breakFortuneCookieTapStatus =>
+      'Touchez le biscuit pour le casser.';
+
+  @override
+  String get breakFortuneCookieTapHint => 'Touchez pour casser';
+
+  @override
+  String get breakFortuneCookieScratchStatus =>
+      'Grattez les miettes pour révéler le message dessous.';
+
+  @override
+  String get breakFortuneCookieRevealStatus =>
+      'Bien. Laissez la phrase se poser un instant.';
+
+  @override
+  String get breakFortuneCookieFortuneLabel => 'MESSAGE';
+
+  @override
   String get breakZenTapDrop => 'Touchez une goutte';
 
   @override
@@ -1086,4 +1111,8 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get breakZenFortunesData =>
       'Fais d\'abord une pause. L\'élan n\'est pas un destin.\n%%\nL\'envie est bruyante. Elle ne commande pas.\n%%\nDonne encore 10 respirations à ce moment avant de décider quoi que ce soit.\n%%\nLes petits détours comptent. Tu as déjà interrompu la spirale.\n%%\nSi ton esprit est en tempête, réduis l\'horizon à la minute qui vient.\n%%\nRien de permanent n\'a besoin d\'être décidé au milieu d\'une vague passagère.\n%%\nTu n\'as pas à obéir à la première impulsion qui apparaît.\n%%\nEssaie de rendre cette minute plus petite, plus douce et plus lente.\n%%\nTu peux repousser l\'envie sans avoir à la vaincre pour toujours.\n%%\nLa victoire, ce n\'est pas la perfection. C\'est créer de l\'espace.\n%%\nUn pas suivant plus calme vaut mieux qu\'un geste dramatique.\n%%\nRemarque l\'envie. Nomme-la. Ne lui raconte pas d\'histoire.\n%%\nTon système nerveux demande du soin, pas une punition.\n%%\nUne interruption douce peut réorienter tout le moment.\n%%\nRespire comme si tu aidais un ami, pas comme si tu te grondais.\n%%\nSi cela paraît tranchant, réponds avec douceur et structure.\n%%\nTu peux être mal à l\'aise sans être en danger.\n%%\nLe moment est intense. Il peut encore bouger.\n%%\nDonne moins de scène à l\'envie et plus de distance.\n%%\nUn oui différé devient souvent un non paisible.\n%%\nLe corps se calme plus vite quand tu cesses de discuter avec lui.\n%%\nChoisis la prochaine minute, pas tout l\'avenir.\n%%\nReprends ton souffle avant de suivre tes pensées.\n%%\nTes progrès se construisent avec de petites interruptions comme celle-ci.\n%%\nUne pause n\'est pas une faiblesse. C\'est du pilotage.\n%%\nLaisse passer la vague ; tu n\'as pas à lui construire une maison.\n%%\nL\'envie peut frapper. Elle n\'a pas le droit d\'entrer.\n%%\nFais baisser l\'enjeu de cette minute et elle devient plus facile à porter.\n%%\nTu n\'es pas en retard. Tu pratiques la pause en temps réel.\n%%\nUn système nerveux plus apaisé prend de meilleures décisions.\n%%\nTu peux attendre sans nier ton humanité.\n%%\nL\'envie veut de la vitesse. Réponds par de la stabilité.\n%%\nC\'est un point de contrôle, pas un verdict sur qui tu es.\n%%\nReste avec le corps le temps d\'un souffle avant de suivre l\'histoire.\n%%\nUn peu d\'espace maintenant est déjà une vraie forme de progrès.\n%%\nTu as déjà traversé de fortes envies sans leur obéir.\n%%\nLe prochain geste bienveillant peut être tout petit et compter quand même.\n%%\nLe calme se construit souvent par répétition, pas par révélation.\n%%\nDes interruptions comme celle-ci apprennent à ton cerveau un nouveau chemin.\n%%\nUne minute de distance peut éviter une heure de regret.\n%%\nTu as le droit de vouloir du soulagement et de choisir quand même avec sagesse.\n%%\nFais moins. Ralentis. Laisse d\'abord retomber la chaleur.\n%%\nL\'esprit devient plus silencieux quand le corps se sent plus en sécurité.\n%%\nTu peux honorer ce ressenti sans le mettre en acte.\n%%\nCe moment n\'a pas besoin de drame ; il a besoin d\'espace.\n%%\nEssaie de relâcher ta mâchoire, tes épaules et la pression du temps.\n%%\nC\'est toi qui tiens la barre maintenant, même si le virage est doux.\n%%\nRespire bas et lentement ; laisse l\'urgence rater son entrée.\n%%\nLes envies montent souvent vite et retombent si on ne les alimente pas.\n%%\nCette pause change déjà la fin.\n%%\nTu n\'as pas besoin d\'un plan parfait pour faire un meilleur prochain pas.\n%%\nOffre un peu d\'ennui à l\'impulsion et elle faiblit souvent.\n%%\nIl y a de la force à devenir moins disponible pour l\'envie.\n%%\nUn corps calme peut contenir un esprit bruyant avec plus de sécurité.\n%%\nQue ceci soit une remise à zéro, pas un débat.\n%%\nL\'avenir que tu protèges se construit dans des moments exactement comme celui-ci.\n%%\nMême si tu ne fais que repousser la spirale, cela compte quand même.\n%%\nApaise d\'abord le système nerveux ; le sens peut attendre.\n%%\nUne pause sage paraît souvent ordinaire pendant qu\'elle se produit.\n%%\nTu t\'apprends que l\'urgence n\'est pas une autorité.\n%%\nDe petits choix nets construisent une confiance tranquille.\n%%\nLe soulagement le plus rapide n\'est pas toujours le plus juste.\n%%\nFais du prochain souffle toute ta mission.\n%%\nRéduis le bruit, puis décide.\n%%\nTu peux rencontrer ce moment avec moins de force.\n%%\nL\'envie demande de l\'attention ; offre-lui plutôt de l\'observation.\n%%\nAucune règle ne dit que tu dois poursuivre l\'ancien schéma.\n%%\nMême un ralentissement partiel est une vraie victoire.\n%%\nTu n\'es pas enfermé dans la première émotion.\n%%\nUne meilleure décision commence souvent avec un corps plus lent.\n%%\nLa douceur a sa place ici.\n%%\nTu peux rester curieux plutôt que réactif pendant encore une minute.\n%%\nQue ta respiration donne le rythme.\n%%\nLa tempête dans ta tête n\'a pas à devenir le climat de ta vie.\n%%\nLa stabilité, c\'est souvent quelques secondes plus calmes répétées.';
+
+  @override
+  String get breakFortuneCookieWisdomsData =>
+      'Respirez d\'abord. Le prochain geste peut attendre.\n%%\nUne minute plus lente peut changer toute l\'ambiance.\n%%\nRepoussez l\'envie, pas votre douceur.\n%%\nLes petites pauses restent de vrais choix forts.\n%%\nVous n\'avez pas besoin de résoudre ce moment en force.\n%%\nLaissez tomber vos épaules avant de laisser tomber vos repères.\n%%\nUne envie est une visiteuse, pas une patronne.\n%%\nDonnez de l\'espace à cette vague et elle rétrécira.\n%%\nLa douceur vaut mieux que le spectaculaire quand le but est la paix.\n%%\nUn souffle calme est déjà une nouvelle direction.\n%%\nVous pouvez vouloir du soulagement sans obéir à l\'envie.\n%%\nPrenez la prochaine décision avec un corps plus apaisé.\n%%\nCette minute mérite de la patience, pas de la pression.\n%%\nUn progrès discret reste un progrès.\n%%\nRien d\'important ne gagne à être précipité.\n%%\nRestez avec le souffle plus longtemps qu\'avec l\'histoire.\n%%\nUn peu d\'espace maintenant peut éviter beaucoup plus tard.\n%%\nVous interrompez déjà l\'ancien chemin.\n%%\nL\'envie est réelle. Votre choix aussi.\n%%\nUne pause est une compétence, pas une esquive.\n%%\nLaissez retomber la chaleur avant de lui répondre.\n%%\nLes pensées plus douces arrivent après des souffles plus stables.\n%%\nVous avez le droit de ralentir la scène.\n%%\nIci, la curiosité aide plus que la critique.\n%%\nVotre futur vous aime bien dans cette version plus calme.\n%%\nLa première impulsion n\'est pas la vérité finale.\n%%\nProtégez les dix prochaines minutes, pas toute l\'année.\n%%\nUn corps plus stable fait des promesses plus sages.\n%%\nCe ressenti peut passer sans devenir un acte.\n%%\nLent est parfois la vitesse la plus courageuse.\n%%\nVous pouvez être mal à l\'aise et rester en sécurité.\n%%\nDonnez moins d\'attention à l\'envie et plus de distance.\n%%\nUne meilleure fin commence souvent par une pause.\n%%\nUne structure bienveillante vaut mieux qu\'une pression dure.\n%%\nLaissez le moment rapetisser avant de le juger.\n%%\nLe corps écoute quand le souffle devient gentil.\n%%\nLes petits délais construisent une confiance durable.\n%%\nVous ne devez pas de réponse immédiate à l\'envie.\n%%\nLa paix grandit dans les petits choix répétés.\n%%\nCette pause est une vraie victoire, pas un simple entre-deux.\n%%\nRespirez bas. Desserrez. Revenez doucement.\n%%\nFaites de la place au calme avant de faire de la place à l\'action.\n%%\nUne remise à zéro douce peut quand même être puissante.\n%%\nMoins d\'urgence, plus de présence.\n%%\nVous pratiquez la liberté par petits morceaux.\n%%\nUn choix plus net peut éclairer toute la journée.\n%%\nLaissez l\'immobilité faire une partie du travail.\n%%\nUne minute calme n\'est jamais perdue.\n%%\nTenez bon. La vague est déjà en train de changer.\n%%\nPlus doux ne veut pas dire plus faible. Plus doux veut dire plus sage.';
 }

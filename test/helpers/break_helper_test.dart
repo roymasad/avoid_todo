@@ -1,17 +1,20 @@
 import 'package:avoid_todo/helpers/break_helper.dart';
+import 'package:avoid_todo/l10n/app_localizations.dart';
 import 'package:avoid_todo/model/break_session.dart';
 import 'package:avoid_todo/model/todo.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test(
-      'people pool excludes pair match but keeps defuse, cube, stack sweep, and zen room',
+      'people pool excludes pair match but keeps defuse, cube, stack sweep, fortune cookie, and zen room',
       () {
     final pool = BreakHelper.poolFor(AvoidType.people);
 
     expect(pool, contains(BreakActivityType.defuse));
     expect(pool, contains(BreakActivityType.cubeReset));
     expect(pool, contains(BreakActivityType.stackSweep));
+    expect(pool, contains(BreakActivityType.fortuneCookie));
     expect(pool, contains(BreakActivityType.zenRoom));
     expect(pool, isNot(contains(BreakActivityType.pairMatch)));
   });
@@ -27,10 +30,11 @@ void main() {
         BreakActivityType.cubeReset,
         BreakActivityType.stackSweep,
         BreakActivityType.triviaPivot,
+        BreakActivityType.fortuneCookie,
         BreakActivityType.zenRoom,
       ]),
     );
-    expect(pool, hasLength(6));
+    expect(pool, hasLength(7));
   });
 
   test('picked activity always belongs to the filtered pool', () {
@@ -107,5 +111,29 @@ void main() {
       ),
       isFalse,
     );
+  });
+
+  test('fortune cookie is non-scored and not lower-is-better', () {
+    expect(
+      BreakHelper.supportsPersonalBest(BreakActivityType.fortuneCookie),
+      isFalse,
+    );
+    expect(
+      BreakHelper.prefersLowerPersonalBest(BreakActivityType.fortuneCookie),
+      isFalse,
+    );
+  });
+
+  test('fortune cookie wisdoms parse for localized datasets', () {
+    final englishWisdoms = BreakHelper.fortuneCookieWisdoms(
+      lookupAppLocalizations(const Locale('en')),
+    );
+    final frenchWisdoms = BreakHelper.fortuneCookieWisdoms(
+      lookupAppLocalizations(const Locale('fr')),
+    );
+
+    expect(englishWisdoms, hasLength(greaterThanOrEqualTo(50)));
+    expect(frenchWisdoms, hasLength(greaterThanOrEqualTo(50)));
+    expect(frenchWisdoms.first, isNotEmpty);
   });
 }

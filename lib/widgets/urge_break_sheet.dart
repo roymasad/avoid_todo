@@ -131,6 +131,9 @@ class UrgeBreakSheet extends StatefulWidget {
 
 class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     with TickerProviderStateMixin {
+  static const int _fortuneScratchColumns = 12;
+  static const int _fortuneScratchRows = 8;
+  static const double _fortuneScratchRevealThreshold = 0.72;
   static const List<double> _defuseHintedSuccessWindows = [
     0.12,
     0.10,
@@ -198,6 +201,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   late final AnimationController _cubeHintPulseController;
   late final AnimationController _cubeMoveController;
   late final AnimationController _defuseDialController;
+  late final AnimationController _fortuneCrackController;
   late final ConfettiController _confettiController;
   late final DateTime _startedAt;
   late DateTime _attemptStartedAt;
@@ -253,6 +257,12 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   int _triviaCorrectCount = 0;
   String? _zenFortune;
   List<String> _zenFortunes = const [];
+  String? _fortuneWisdom;
+  List<String> _fortuneWisdoms = const [];
+  final Set<int> _fortuneRevealedCells = <int>{};
+  final List<Offset> _fortuneScratchPoints = <Offset>[];
+  bool _fortuneCookieCracked = false;
+  bool _fortuneRevealQueued = false;
   List<double> _zenDropXSeeds = const [];
   List<double> _zenDropOffsets = const [];
   List<double> _zenDropSpeeds = const [];
@@ -282,6 +292,10 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     _defuseDialController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
+    );
+    _fortuneCrackController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
     );
     _confettiController = ConfettiController(
       duration: const Duration(milliseconds: 900),
@@ -313,6 +327,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     _localizedLocaleName = l10n.localeName;
     _triviaPrompts = BreakHelper.triviaPrompts(l10n);
     _zenFortunes = BreakHelper.zenFortunes(l10n);
+    _fortuneWisdoms = BreakHelper.fortuneCookieWisdoms(l10n);
     _randomizeActivityState();
   }
 
@@ -343,6 +358,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     _cubeHintPulseController.dispose();
     _cubeMoveController.dispose();
     _defuseDialController.dispose();
+    _fortuneCrackController.dispose();
     _confettiController.dispose();
     super.dispose();
   }
@@ -409,6 +425,30 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     _handleActivityCompleted();
   }
 
+  void debugCrackFortuneCookie() {
+    if (_fortuneCookieCracked) return;
+    setState(() {
+      _fortuneCookieCracked = true;
+    });
+    _fortuneCrackController.value = 1;
+  }
+
+  void debugRevealFortuneCookie() {
+    if (!_fortuneCookieCracked) {
+      debugCrackFortuneCookie();
+    }
+    const totalCells = _fortuneScratchColumns * _fortuneScratchRows;
+    final revealedCount = (totalCells * _fortuneScratchRevealThreshold).ceil();
+    setState(() {
+      _fortuneRevealedCells.addAll(
+        List<int>.generate(revealedCount, (index) => index),
+      );
+    });
+    _markFortuneRevealed();
+  }
+
+  String? debugCurrentFortuneWisdom() => _fortuneWisdom;
+
   void _togglePause() {
     HapticFeedback.selectionClick();
     if (_isPaused) {
@@ -449,6 +489,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
         return completedAt.difference(_attemptStartedAt).inMilliseconds;
       case BreakActivityType.triviaPivot:
         return _triviaCorrectCount;
+      case BreakActivityType.fortuneCookie:
       case BreakActivityType.zenRoom:
         return null;
     }
@@ -597,7 +638,17 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     return stackOrder;
   }
 
+  String? _pickFortuneWisdom({String? excluding}) {
+    if (_fortuneWisdoms.isEmpty) return null;
+    final pool = List<String>.from(_fortuneWisdoms);
+    if (excluding != null && pool.length > 1) {
+      pool.remove(excluding);
+    }
+    return pool[_random.nextInt(pool.length)];
+  }
+
   void _randomizeActivityState() {
+    final previousFortune = _fortuneWisdom;
     final emojiSelection = List<String>.from(_pairMatchEmojiPool)
       ..shuffle(_random);
     _pairMatchEmojis = emojiSelection.take(10).toList();
@@ -636,6 +687,12 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     );
     _triviaIndex = 0;
     _triviaHintsEnabled = false;
+    _fortuneWisdom = _pickFortuneWisdom(excluding: previousFortune);
+    _fortuneRevealedCells.clear();
+    _fortuneScratchPoints.clear();
+    _fortuneCookieCracked = false;
+    _fortuneRevealQueued = false;
+    _fortuneCrackController.value = 0;
     _zenFortune = _zenFortunes.isEmpty
         ? null
         : _zenFortunes[_random.nextInt(_zenFortunes.length)];
@@ -763,6 +820,76 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
       _startDefuseDial();
     }
     _startTicker();
+  }
+
+  double _fortuneRevealProgress() {
+    const totalCells = _fortuneScratchColumns * _fortuneScratchRows;
+    if (totalCells == 0) return 0;
+    return _fortuneRevealedCells.length / totalCells;
+  }
+
+  void _markFortuneRevealed() {
+    if (_fortuneRevealQueued) return;
+    setState(() {
+      _fortuneRevealQueued = true;
+    });
+  }
+
+  void _completeFortuneCookie() {
+    if (!_fortuneRevealQueued) return;
+    HapticFeedback.lightImpact();
+    _handleActivityCompleted();
+  }
+
+  Future<void> _onFortuneCookieTap() async {
+    if (_fortuneCookieCracked || _fortuneCrackController.isAnimating) {
+      return;
+    }
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _fortuneCookieCracked = true;
+    });
+    await _fortuneCrackController.forward(from: 0);
+  }
+
+  void _revealFortuneAt(Offset localPosition, Size size) {
+    if (!_fortuneCookieCracked || _fortuneRevealQueued) {
+      return;
+    }
+    final cellWidth = size.width / _fortuneScratchColumns;
+    final cellHeight = size.height / _fortuneScratchRows;
+    final revealRadius = max(cellWidth, cellHeight) * 1.35;
+    var changed = false;
+    final nextPoints = <Offset>[
+      if (_fortuneScratchPoints.isEmpty ||
+          (_fortuneScratchPoints.last - localPosition).distance > 6)
+        localPosition,
+    ];
+
+    for (var row = 0; row < _fortuneScratchRows; row++) {
+      for (var col = 0; col < _fortuneScratchColumns; col++) {
+        final center = Offset(
+          (col + 0.5) * cellWidth,
+          (row + 0.5) * cellHeight,
+        );
+        if ((center - localPosition).distance > revealRadius) {
+          continue;
+        }
+        changed = _fortuneRevealedCells.add(
+              (row * _fortuneScratchColumns) + col,
+            ) ||
+            changed;
+      }
+    }
+
+    if (!changed && nextPoints.isEmpty) return;
+
+    setState(() {
+      _fortuneScratchPoints.addAll(nextPoints);
+      if (_fortuneRevealProgress() >= _fortuneScratchRevealThreshold) {
+        _fortuneRevealQueued = true;
+      }
+    });
   }
 
   String _formatCountdown() {
@@ -1581,6 +1708,470 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: child,
+      ),
+    );
+  }
+
+  Widget _buildFortuneCookieActivity(
+    BreakActivityDefinition definition,
+    AppLocalizations l10n,
+  ) {
+    final revealProgress = _fortuneRevealProgress().clamp(0.0, 1.0).toDouble();
+    final status = !_fortuneCookieCracked
+        ? l10n.breakFortuneCookieTapStatus
+        : _fortuneRevealQueued
+            ? l10n.breakFortuneCookieRevealStatus
+            : l10n.breakFortuneCookieScratchStatus;
+
+    return Column(
+      key: const Key('break_activity_fortune_cookie'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          status,
+          key: const Key('fortune_cookie_status'),
+          style: TextStyle(
+            height: 1.35,
+            color: definition.color.withValues(alpha: 0.92),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final noteWidth = min(constraints.maxWidth - 16, 304.0);
+              final noteHeight = min(constraints.maxHeight * 0.48, 188.0);
+              final cookieSize = min(constraints.maxWidth * 0.52, 186.0);
+              return DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(28),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFFFFF3E1),
+                      Color(0xFFFFE6C5),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: definition.color.withValues(alpha: 0.18),
+                  ),
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Positioned(
+                      top: 16,
+                      left: 20,
+                      child: _buildFortuneBlob(
+                        size: 48,
+                        color: const Color(0xFFFFD7A8),
+                      ),
+                    ),
+                    Positioned(
+                      right: 26,
+                      top: 28,
+                      child: _buildFortuneBlob(
+                        size: 28,
+                        color: const Color(0xFFFFF1D4),
+                      ),
+                    ),
+                    Positioned(
+                      left: 26,
+                      bottom: 26,
+                      child: _buildFortuneBlob(
+                        size: 34,
+                        color: const Color(0xFFFFE3BF),
+                      ),
+                    ),
+                    Positioned(
+                      right: 18,
+                      bottom: 24,
+                      child: _buildFortuneBlob(
+                        size: 54,
+                        color: const Color(0xFFFFD9AF),
+                      ),
+                    ),
+                    AnimatedBuilder(
+                      animation: _fortuneCrackController,
+                      builder: (context, _) {
+                        final crackValue = Curves.easeOutBack.transform(
+                          _fortuneCrackController.value,
+                        );
+                        final cookieOpacity = (1 -
+                                Curves.easeIn.transform(
+                                  _fortuneCrackController.value,
+                                ))
+                            .clamp(0.0, 1.0)
+                            .toDouble();
+                        final noteOpacity = _fortuneCookieCracked
+                            ? (0.18 + (_fortuneCrackController.value * 0.82))
+                                .clamp(0.0, 1.0)
+                                .toDouble()
+                            : 0.0;
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Transform.translate(
+                              offset: Offset(0, cookieSize * 0.22),
+                              child: AnimatedOpacity(
+                                duration: const Duration(milliseconds: 220),
+                                opacity: noteOpacity,
+                                child: _buildFortuneNoteCard(
+                                  definition,
+                                  l10n,
+                                  noteWidth: noteWidth,
+                                  noteHeight: noteHeight,
+                                ),
+                              ),
+                            ),
+                            if (_fortuneRevealQueued)
+                              Positioned(
+                                top: max(18, (constraints.maxHeight * 0.08)),
+                                child: const AnimatedScale(
+                                  duration: Duration(milliseconds: 260),
+                                  scale: 1.0,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.auto_awesome_rounded,
+                                        color: Color(0xFFFFC857),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Icon(
+                                        Icons.auto_awesome_rounded,
+                                        color: Color(0xFFFFE08C),
+                                        size: 18,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Icon(
+                                        Icons.auto_awesome_rounded,
+                                        color: Color(0xFFFFC857),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            IgnorePointer(
+                              ignoring: _fortuneCookieCracked ||
+                                  _fortuneCrackController.isAnimating,
+                              child: GestureDetector(
+                                key: const Key('fortune_cookie_shell'),
+                                behavior: HitTestBehavior.opaque,
+                                onTap: _onFortuneCookieTap,
+                                child: SizedBox(
+                                  width: cookieSize * 1.4,
+                                  height: cookieSize * 1.25,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      if (!_fortuneCookieCracked &&
+                                          _fortuneCrackController.value == 0)
+                                        _buildFortuneCookieDisc(
+                                          cookieSize,
+                                          crackVisible: false,
+                                        )
+                                      else
+                                        Opacity(
+                                          opacity: cookieOpacity,
+                                          child: Stack(
+                                            alignment: Alignment.center,
+                                            children: [
+                                              Transform.translate(
+                                                offset: Offset(
+                                                  -cookieSize *
+                                                      0.26 *
+                                                      crackValue,
+                                                  -cookieSize *
+                                                      0.10 *
+                                                      crackValue,
+                                                ),
+                                                child: Transform.rotate(
+                                                  angle: -0.24 * crackValue,
+                                                  child: ClipRect(
+                                                    child: Align(
+                                                      alignment:
+                                                          Alignment.centerLeft,
+                                                      widthFactor: 0.5,
+                                                      child:
+                                                          _buildFortuneCookieDisc(
+                                                        cookieSize,
+                                                        crackVisible: true,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              Transform.translate(
+                                                offset: Offset(
+                                                  cookieSize *
+                                                      0.26 *
+                                                      crackValue,
+                                                  cookieSize *
+                                                      0.10 *
+                                                      crackValue,
+                                                ),
+                                                child: Transform.rotate(
+                                                  angle: 0.24 * crackValue,
+                                                  child: ClipRect(
+                                                    child: Align(
+                                                      alignment:
+                                                          Alignment.centerRight,
+                                                      widthFactor: 0.5,
+                                                      child:
+                                                          _buildFortuneCookieDisc(
+                                                        cookieSize,
+                                                        crackVisible: true,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      if (!_fortuneCookieCracked)
+                                        Positioned(
+                                          bottom: 8,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.84,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                            ),
+                                            child: Text(
+                                              l10n.breakFortuneCookieTapHint,
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                color: definition.color,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        if (_fortuneRevealQueued) ...[
+          const SizedBox(height: 14),
+          Align(
+            alignment: Alignment.center,
+            child: FilledButton.icon(
+              key: const Key('fortune_cookie_continue'),
+              onPressed: _completeFortuneCookie,
+              icon: const Icon(Icons.arrow_forward_rounded),
+              label: Text(l10n.breakNext),
+              style: FilledButton.styleFrom(
+                backgroundColor: definition.color,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 14),
+        AnimatedOpacity(
+          duration: const Duration(milliseconds: 220),
+          opacity: _fortuneCookieCracked ? 1 : 0.45,
+          child: LinearProgressIndicator(
+            value: _fortuneCookieCracked ? revealProgress : 0,
+            minHeight: 10,
+            borderRadius: BorderRadius.circular(999),
+            backgroundColor: definition.color.withValues(alpha: 0.14),
+            color: definition.color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFortuneNoteCard(
+    BreakActivityDefinition definition,
+    AppLocalizations l10n, {
+    required double noteWidth,
+    required double noteHeight,
+  }) {
+    return AnimatedScale(
+      duration: const Duration(milliseconds: 240),
+      scale: _fortuneRevealQueued ? 1.04 : 1.0,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 240),
+        opacity: _fortuneCookieCracked ? 1 : 0,
+        child: Container(
+          width: noteWidth,
+          height: noteHeight,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFFFFFCF5),
+                Color(0xFFFFF0D8),
+              ],
+            ),
+            border: Border.all(
+              color: definition.color.withValues(alpha: 0.20),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final noteSize =
+                    Size(constraints.maxWidth, constraints.maxHeight);
+                return GestureDetector(
+                  key: const Key('fortune_cookie_note'),
+                  behavior: HitTestBehavior.opaque,
+                  onPanStart: (details) =>
+                      _revealFortuneAt(details.localPosition, noteSize),
+                  onPanUpdate: (details) =>
+                      _revealFortuneAt(details.localPosition, noteSize),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: definition.color.withValues(alpha: 0.12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 18,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (constraints.maxHeight >= 72) ...[
+                                Text(
+                                  l10n.breakFortuneCookieFortuneLabel,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 1.1,
+                                    color: definition.color.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                              ],
+                              Expanded(
+                                child: Center(
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: SizedBox(
+                                      width: constraints.maxWidth,
+                                      child: Text(
+                                        _fortuneWisdom ?? '',
+                                        key: const Key(
+                                          'fortune_cookie_wisdom_text',
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          height: 1.28,
+                                          fontWeight: _fortuneRevealQueued
+                                              ? FontWeight.w700
+                                              : FontWeight.w600,
+                                          color: const Color(0xFF6E4A2B),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 260),
+                            opacity: _fortuneRevealQueued ? 0 : 1,
+                            child: CustomPaint(
+                              key: const Key('fortune_cookie_scratch_layer'),
+                              painter: _FortuneCookieCrumbPainter(
+                                rows: _fortuneScratchRows,
+                                columns: _fortuneScratchColumns,
+                                revealedCells: _fortuneRevealedCells,
+                                scratchPoints: _fortuneScratchPoints,
+                                accentColor: definition.color,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFortuneCookieDisc(
+    double size, {
+    required bool crackVisible,
+  }) {
+    return SizedBox(
+      width: size * 1.08,
+      height: size * 0.82,
+      child: CustomPaint(
+        painter: _FortuneCookiePainter(
+          crackVisible: crackVisible,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFortuneBlob({
+    required double size,
+    required Color color,
+  }) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.55),
+        shape: BoxShape.circle,
       ),
     );
   }
@@ -2829,6 +3420,8 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
             ),
           ],
         );
+      case BreakActivityType.fortuneCookie:
+        return _buildFortuneCookieActivity(definition, l10n);
       case BreakActivityType.zenRoom:
         return Column(
           key: const Key('break_activity_zen'),
@@ -3313,6 +3906,225 @@ class _SafeCrackDialPainter extends CustomPainter {
         oldDelegate.successWindows != successWindows ||
         oldDelegate.activeStep != activeStep ||
         oldDelegate.unlockedCount != unlockedCount;
+  }
+}
+
+class _FortuneCookiePainter extends CustomPainter {
+  final bool crackVisible;
+
+  const _FortuneCookiePainter({
+    required this.crackVisible,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width * 0.5, size.height * 0.48);
+    final radius = min(size.width, size.height) * 0.38;
+    final outerRect = Rect.fromCircle(center: center, radius: radius);
+    final notchRect = Rect.fromCenter(
+      center: Offset(center.dx, center.dy + (radius * 0.92)),
+      width: radius * 1.04,
+      height: radius * 0.86,
+    );
+    final outerPath = Path()..addOval(outerRect);
+    final notchPath = Path()..addOval(notchRect);
+    final shellPath = Path.combine(
+      PathOperation.difference,
+      outerPath,
+      notchPath,
+    );
+    final innerArcRect = outerRect.deflate(radius * 0.11);
+    final fillPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xFFE6A75B),
+          Color(0xFFC97A3D),
+          Color(0xFFB8642B),
+        ],
+      ).createShader(outerRect);
+
+    canvas.drawShadow(
+      shellPath,
+      Colors.black.withValues(alpha: 0.24),
+      14,
+      false,
+    );
+    canvas.drawPath(shellPath, fillPaint);
+    canvas.drawPath(
+      shellPath,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = max(2.0, size.shortestSide * 0.03)
+        ..color = const Color(0xFF9A5728),
+    );
+    canvas.drawArc(
+      innerArcRect,
+      pi * 1.03,
+      pi * 0.94,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = max(1.2, size.shortestSide * 0.015)
+        ..color = Colors.white.withValues(alpha: 0.24),
+    );
+    final foldPath = Path()
+      ..moveTo(center.dx - (radius * 0.02), center.dy - (radius * 0.76))
+      ..quadraticBezierTo(
+        center.dx + (radius * 0.05),
+        center.dy - (radius * 0.10),
+        center.dx - (radius * 0.02),
+        center.dy + (radius * 0.84),
+      );
+    canvas.drawPath(
+      foldPath,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = max(2.0, size.shortestSide * 0.022)
+        ..color = const Color(0xFFF4D3A8).withValues(alpha: 0.78),
+    );
+    canvas.drawArc(
+      Rect.fromCenter(
+        center: Offset(center.dx, center.dy + (radius * 0.06)),
+        width: radius * 1.28,
+        height: radius * 0.78,
+      ),
+      pi * 0.16,
+      pi * 0.68,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = max(2.0, size.shortestSide * 0.02)
+        ..color = const Color(0xFF9A5728).withValues(alpha: 0.85),
+    );
+
+    final chipPaints = [
+      Paint()..color = const Color(0xFF9E5A2B),
+      Paint()..color = const Color(0xFFB56A32),
+      Paint()..color = const Color(0xFFD88B3A),
+    ];
+    final chipOffsets = <Offset>[
+      Offset(center.dx - (radius * 0.56), center.dy - (radius * 0.70)),
+      Offset(center.dx + (radius * 0.56), center.dy - (radius * 0.62)),
+      Offset(center.dx - (radius * 0.34), center.dy + (radius * 0.14)),
+      Offset(center.dx + (radius * 0.40), center.dy + (radius * 0.28)),
+      Offset(center.dx, center.dy + (radius * 0.60)),
+    ];
+    for (var i = 0; i < chipOffsets.length; i++) {
+      canvas.drawCircle(
+        chipOffsets[i],
+        size.shortestSide * (0.035 + ((i % 3) * 0.006)),
+        chipPaints[i % chipPaints.length],
+      );
+    }
+
+    if (crackVisible) {
+      final crackPath = Path()
+        ..moveTo(center.dx - 4, center.dy - (radius * 0.72))
+        ..lineTo(center.dx + 5, center.dy - (radius * 0.12))
+        ..lineTo(center.dx - 7, center.dy + (radius * 0.18))
+        ..lineTo(center.dx + 6, center.dy + (radius * 0.70));
+      canvas.drawPath(
+        crackPath,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round
+          ..strokeWidth = max(2.4, size.shortestSide * 0.028)
+          ..color = const Color(0xFFFDF1D5).withValues(alpha: 0.96),
+      );
+      canvas.drawPath(
+        crackPath,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round
+          ..strokeWidth = max(1.2, size.shortestSide * 0.014)
+          ..color = const Color(0xFF8E4B24),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _FortuneCookiePainter oldDelegate) {
+    return oldDelegate.crackVisible != crackVisible;
+  }
+}
+
+class _FortuneCookieCrumbPainter extends CustomPainter {
+  final int rows;
+  final int columns;
+  final Set<int> revealedCells;
+  final List<Offset> scratchPoints;
+  final Color accentColor;
+
+  const _FortuneCookieCrumbPainter({
+    required this.rows,
+    required this.columns,
+    required this.revealedCells,
+    required this.scratchPoints,
+    required this.accentColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final crumbRect = Offset.zero & size;
+    final crumbPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          const Color(0xFFE6B77A),
+          const Color(0xFFD99B54),
+          accentColor.withValues(alpha: 0.86),
+        ],
+      ).createShader(crumbRect);
+    final speckPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = const Color(0xFFFFF1D4).withValues(alpha: 0.40);
+    final shinePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4
+      ..color = Colors.white.withValues(alpha: 0.18);
+    final clearPaint = Paint()..blendMode = BlendMode.clear;
+    final baseRRect = RRect.fromRectAndRadius(
+      crumbRect,
+      const Radius.circular(20),
+    );
+
+    canvas.saveLayer(crumbRect, Paint());
+    canvas.drawRRect(baseRRect, crumbPaint);
+    canvas.drawRRect(baseRRect.deflate(8), shinePaint);
+
+    for (var i = 0; i < 64; i++) {
+      final x = ((i * 37) % 100) / 100;
+      final y = ((i * 19) % 100) / 100;
+      final radius = size.shortestSide * (0.008 + ((i % 5) * 0.002));
+      canvas.drawCircle(
+        Offset(size.width * x, size.height * y),
+        radius,
+        speckPaint,
+      );
+    }
+
+    final scratchRadius = max(size.width / columns, size.height / rows) * 1.12;
+    for (final point in scratchPoints) {
+      canvas.drawCircle(point, scratchRadius, clearPaint);
+      canvas.drawCircle(
+        point.translate(scratchRadius * 0.24, -scratchRadius * 0.12),
+        scratchRadius * 0.46,
+        clearPaint,
+      );
+    }
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _FortuneCookieCrumbPainter oldDelegate) {
+    return true;
   }
 }
 

@@ -47,6 +47,8 @@ class BreakHelper {
       <String, List<BreakTriviaPrompt>>{};
   static final Map<String, List<String>> _zenFortunesCache =
       <String, List<String>>{};
+  static final Map<String, List<String>> _fortuneCookieWisdomsCache =
+      <String, List<String>>{};
   static final AppLocalizations _fallbackL10n =
       lookupAppLocalizations(const Locale('en'));
 
@@ -58,6 +60,7 @@ class BreakHelper {
       case BreakActivityType.stackSweep:
       case BreakActivityType.triviaPivot:
         return true;
+      case BreakActivityType.fortuneCookie:
       case BreakActivityType.zenRoom:
         return false;
     }
@@ -71,6 +74,7 @@ class BreakHelper {
       case BreakActivityType.stackSweep:
         return true;
       case BreakActivityType.triviaPivot:
+      case BreakActivityType.fortuneCookie:
       case BreakActivityType.zenRoom:
         return false;
     }
@@ -100,6 +104,7 @@ class BreakHelper {
         );
       case BreakActivityType.triviaPivot:
         return l10n.breakPersonalBestCorrect(score);
+      case BreakActivityType.fortuneCookie:
       case BreakActivityType.zenRoom:
         return l10n.breakPersonalBestTime(score.toString());
     }
@@ -157,6 +162,14 @@ class BreakHelper {
           icon: Icons.lightbulb_outline_rounded,
           color: const Color(0xFF6A4C93),
         );
+      case BreakActivityType.fortuneCookie:
+        return BreakActivityDefinition(
+          type: type,
+          title: l10n.breakActivityFortuneCookieTitle,
+          subtitle: l10n.breakActivityFortuneCookieSubtitle,
+          icon: Icons.bakery_dining_rounded,
+          color: const Color(0xFFC97A3D),
+        );
       case BreakActivityType.zenRoom:
         return BreakActivityDefinition(
           type: type,
@@ -185,6 +198,16 @@ class BreakHelper {
         return fortunes;
       }
       return _parseRecords(_fallbackL10n.breakZenFortunesData);
+    });
+  }
+
+  static List<String> fortuneCookieWisdoms(AppLocalizations l10n) {
+    return _fortuneCookieWisdomsCache.putIfAbsent(l10n.localeName, () {
+      final wisdoms = _parseRecords(l10n.breakFortuneCookieWisdomsData);
+      if (wisdoms.isNotEmpty) {
+        return wisdoms;
+      }
+      return _parseRecords(_fallbackL10n.breakFortuneCookieWisdomsData);
     });
   }
 
@@ -228,6 +251,7 @@ class BreakHelper {
           BreakActivityType.defuse,
           BreakActivityType.cubeReset,
           BreakActivityType.stackSweep,
+          BreakActivityType.fortuneCookie,
           BreakActivityType.zenRoom,
           BreakActivityType.triviaPivot,
         ];
@@ -236,6 +260,7 @@ class BreakHelper {
           BreakActivityType.cubeReset,
           BreakActivityType.triviaPivot,
           BreakActivityType.stackSweep,
+          BreakActivityType.fortuneCookie,
           BreakActivityType.zenRoom,
           BreakActivityType.pairMatch,
         ];
@@ -246,6 +271,7 @@ class BreakHelper {
           BreakActivityType.cubeReset,
           BreakActivityType.stackSweep,
           BreakActivityType.triviaPivot,
+          BreakActivityType.fortuneCookie,
           BreakActivityType.zenRoom,
         ];
     }

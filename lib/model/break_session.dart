@@ -4,6 +4,7 @@ enum BreakActivityType {
   cubeReset,
   stackSweep,
   triviaPivot,
+  fortuneCookie,
   zenRoom,
 }
 

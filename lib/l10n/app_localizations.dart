@@ -1762,6 +1762,18 @@ abstract class AppLocalizations {
   /// **'Give your brain something else to chew on.'**
   String get breakActivityTriviaPivotSubtitle;
 
+  /// No description provided for @breakActivityFortuneCookieTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fortune Cookie'**
+  String get breakActivityFortuneCookieTitle;
+
+  /// No description provided for @breakActivityFortuneCookieSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Crack a cookie open and scratch out a calmer next thought.'**
+  String get breakActivityFortuneCookieSubtitle;
+
   /// Title for the Zen Room break activity.
   ///
   /// In en, this message translates to:
@@ -1973,6 +1985,36 @@ abstract class AppLocalizations {
   /// **'Next'**
   String get breakNext;
 
+  /// No description provided for @breakFortuneCookieTapStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the cookie to crack it open.'**
+  String get breakFortuneCookieTapStatus;
+
+  /// No description provided for @breakFortuneCookieTapHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to crack'**
+  String get breakFortuneCookieTapHint;
+
+  /// No description provided for @breakFortuneCookieScratchStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Scratch the crumbs away to reveal the wisdom underneath.'**
+  String get breakFortuneCookieScratchStatus;
+
+  /// No description provided for @breakFortuneCookieRevealStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Nice. Let the line land for a second.'**
+  String get breakFortuneCookieRevealStatus;
+
+  /// No description provided for @breakFortuneCookieFortuneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'FORTUNE'**
+  String get breakFortuneCookieFortuneLabel;
+
   /// Prompt badge shown in the Zen Room activity.
   ///
   /// In en, this message translates to:
@@ -2062,6 +2104,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pause first. Momentum is not destiny.\n%%\nThe urge is loud. It is not in charge.\n%%\nGive this moment 10 more breaths before you decide anything.\n%%\nSmall detours count. You already interrupted the spiral.\n%%\nIf your mind is storming, shrink the horizon to the next minute.\n%%\nNothing permanent needs to be decided inside a temporary wave.\n%%\nYou do not need to obey the first impulse that shows up.\n%%\nTry making this minute smaller, softer, and slower.\n%%\nYou are allowed to delay the urge without defeating it forever.\n%%\nThe win is not perfection. The win is creating space.\n%%\nA calmer next step beats a dramatic one.\n%%\nNotice the urge. Name it. Do not feed it a story.\n%%\nYour nervous system is asking for care, not punishment.\n%%\nOne gentle interruption can reroute the whole moment.\n%%\nBreathe like you are helping a friend, not scolding yourself.\n%%\nIf this feels sharp, answer with softness and structure.\n%%\nYou can be uncomfortable without being in danger.\n%%\nThe moment is intense. It is still movable.\n%%\nGive the craving less theater and more distance.\n%%\nA delayed yes often turns into a peaceful no.\n%%\nThe body settles faster when you stop arguing with it.\n%%\nChoose the next minute, not the whole future.\n%%\nCatch your breath before you catch your thoughts.\n%%\nYour progress is built out of tiny interruptions like this.\n%%\nA pause is not weakness. It is steering.\n%%\nLet the wave pass through; you do not have to build it a home.\n%%\nThe urge can knock. It does not get to move in.\n%%\nLower the stakes of this minute and it becomes easier to carry.\n%%\nYou are not behind. You are practicing the pause in real time.\n%%\nA softer nervous system makes wiser decisions.\n%%\nYou can delay without denying your humanity.\n%%\nThe craving wants speed. Answer with steadiness.\n%%\nThis is a checkpoint, not a verdict on your character.\n%%\nStay with the body for a breath before following the story.\n%%\nA little space right now is a real form of progress.\n%%\nYou have survived strong urges before without obeying them.\n%%\nThe next kind action can be very small and still count.\n%%\nCalm is often built by repetition, not revelation.\n%%\nInterruptions like this teach your brain a new route.\n%%\nA minute of distance can save an hour of regret.\n%%\nYou are allowed to want relief and still choose wisely.\n%%\nDo less. Slow down. Let the heat drop first.\n%%\nThe mind gets quieter when the body feels safer.\n%%\nYou can honor the feeling without acting it out.\n%%\nThis moment does not need drama; it needs room.\n%%\nTry loosening your jaw, your shoulders, and the timeline.\n%%\nYou are steering now, even if the turn is gentle.\n%%\nBreathe low and slow; let the urgency miss its cue.\n%%\nCravings often peak quickly and fade when not fed.\n%%\nThis pause is already changing the ending.\n%%\nYou do not need a perfect plan to take a better next step.\n%%\nGive the impulse a little boredom and it often weakens.\n%%\nThere is strength in becoming less available to the urge.\n%%\nA calm body can hold a loud mind more safely.\n%%\nLet this be a reset, not a debate.\n%%\nThe future you are protecting is built in moments exactly like this.\n%%\nIf all you do is postpone the spiral, that still matters.\n%%\nSettle the nervous system first; meaning can wait.\n%%\nA wise pause often feels ordinary while it is happening.\n%%\nYou are teaching yourself that urgency is not authority.\n%%\nSmall clean choices build quiet confidence.\n%%\nThe fastest relief is not always the truest relief.\n%%\nMake the next breath your whole assignment.\n%%\nReduce the noise, then decide.\n%%\nYou can meet this moment with less force.\n%%\nThe urge is asking for attention; give it observation instead.\n%%\nThere is no rule that says you must continue the old pattern.\n%%\nEven a partial slowdown is a meaningful win.\n%%\nYou are not trapped inside the first feeling.\n%%\nA better decision often starts with a slower body.\n%%\nGentleness is allowed here.\n%%\nYou can stay curious instead of reactive for one more minute.\n%%\nLet your breathing become the pace setter.\n%%\nThe storm in your head does not have to become weather in your life.\n%%\nStability is often just a few quieter seconds repeated.'**
   String get breakZenFortunesData;
+
+  /// No description provided for @breakFortuneCookieWisdomsData.
+  ///
+  /// In en, this message translates to:
+  /// **'Breathe first. The next move can wait.\n%%\nA slower minute can change the whole mood.\n%%\nDelay the urge, not your kindness.\n%%\nSmall pauses still count as strong choices.\n%%\nYou do not need to solve this moment loudly.\n%%\nLet your shoulders drop before your standards do.\n%%\nA craving is a visitor, not a boss.\n%%\nGive this wave room and it will shrink.\n%%\nGentle beats dramatic when the goal is peace.\n%%\nOne calm breath is already a new direction.\n%%\nYou can want relief without obeying the urge.\n%%\nMake the next decision from a softer body.\n%%\nThis minute deserves patience, not pressure.\n%%\nQuiet progress is still progress.\n%%\nNothing important is improved by rushing.\n%%\nStay with the breath longer than the story.\n%%\nA little space now can save a lot later.\n%%\nYou are interrupting the old route right now.\n%%\nThe urge is real. So is your choice.\n%%\nA pause is a skill, not a delay tactic.\n%%\nLet the heat cool before you answer it.\n%%\nSofter thoughts arrive after steadier breaths.\n%%\nYou are allowed to slow the scene down.\n%%\nCuriosity helps more than criticism here.\n%%\nYour future self likes this quieter version of you.\n%%\nThe first impulse is not the final truth.\n%%\nProtect the next ten minutes, not the whole year.\n%%\nA steadier body makes wiser promises.\n%%\nThis feeling can pass without becoming action.\n%%\nSlow is sometimes the bravest speed.\n%%\nYou can be uncomfortable and still be safe.\n%%\nGive the urge less attention and more distance.\n%%\nA better ending often begins with a pause.\n%%\nKind structure beats harsh pressure.\n%%\nLet the moment get smaller before you judge it.\n%%\nThe body listens when the breath gets kind.\n%%\nShort delays build long-term trust.\n%%\nYou do not owe the craving an answer now.\n%%\nPeace grows in repeated tiny choices.\n%%\nThis pause is a real win, not a placeholder.\n%%\nBreathe low. Unclench. Re-enter slowly.\n%%\nMake room for calm before making room for action.\n%%\nA gentle reset can still be powerful.\n%%\nLess urgency, more awareness.\n%%\nYou are practicing freedom in small pieces.\n%%\nOne cleaner choice can brighten the whole day.\n%%\nLet stillness do some of the work.\n%%\nA calm minute is never wasted.\n%%\nHold steady. The wave is already changing.\n%%\nSofter is not weaker. Softer is wiser.'**
+  String get breakFortuneCookieWisdomsData;
 }
 
 class _AppLocalizationsDelegate

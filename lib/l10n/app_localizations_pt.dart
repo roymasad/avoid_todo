@@ -896,6 +896,13 @@ class AppLocalizationsPt extends AppLocalizations {
       'Dê ao seu cérebro outra coisa para mastigar.';
 
   @override
+  String get breakActivityFortuneCookieTitle => 'Biscoito da sorte';
+
+  @override
+  String get breakActivityFortuneCookieSubtitle =>
+      'Quebre o biscoito e raspe as migalhas para revelar um pensamento mais calmo.';
+
+  @override
   String get breakActivityZenRoomTitle => 'Sala Zen';
 
   @override
@@ -1029,6 +1036,23 @@ class AppLocalizationsPt extends AppLocalizations {
   String get breakNext => 'Próxima';
 
   @override
+  String get breakFortuneCookieTapStatus => 'Toque no biscoito para quebrá-lo.';
+
+  @override
+  String get breakFortuneCookieTapHint => 'Toque para quebrar';
+
+  @override
+  String get breakFortuneCookieScratchStatus =>
+      'Raspe as migalhas para revelar a mensagem abaixo.';
+
+  @override
+  String get breakFortuneCookieRevealStatus =>
+      'Boa. Deixe a frase assentar por um instante.';
+
+  @override
+  String get breakFortuneCookieFortuneLabel => 'SORTE';
+
+  @override
   String get breakZenTapDrop => 'Toque em uma gota';
 
   @override
@@ -1076,4 +1100,8 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get breakZenFortunesData =>
       'Faça uma pausa primeiro. Impulso não é destino.\n%%\nA vontade faz barulho. Ela não manda.\n%%\nDê a este momento mais 10 respirações antes de decidir qualquer coisa.\n%%\nPequenos desvios contam. Você já interrompeu a espiral.\n%%\nSe sua mente estiver em tempestade, reduza o horizonte ao próximo minuto.\n%%\nNada permanente precisa ser decidido dentro de uma onda passageira.\n%%\nVocê não precisa obedecer ao primeiro impulso que aparecer.\n%%\nTente tornar este minuto menor, mais gentil e mais lento.\n%%\nVocê pode adiar a vontade sem precisar vencê-la para sempre.\n%%\nA vitória não é perfeição. A vitória é criar espaço.\n%%\nUm próximo passo mais calmo vale mais do que um dramático.\n%%\nNote a vontade. Dê um nome a ela. Não alimente uma história.\n%%\nSeu sistema nervoso está pedindo cuidado, não punição.\n%%\nUma interrupção gentil pode redirecionar todo o momento.\n%%\nRespire como se estivesse ajudando um amigo, não se repreendendo.\n%%\nSe isso parecer agudo, responda com suavidade e estrutura.\n%%\nVocê pode se sentir desconfortável sem estar em perigo.\n%%\nO momento é intenso. Ainda assim, ele pode mudar.\n%%\nDê menos palco ao desejo e mais distância.\n%%\nUm sim adiado muitas vezes vira um não tranquilo.\n%%\nO corpo se acalma mais rápido quando você para de discutir com ele.\n%%\nEscolha o próximo minuto, não o futuro inteiro.\n%%\nRecupere o fôlego antes de seguir seus pensamentos.\n%%\nSeu progresso é feito de pequenas interrupções como esta.\n%%\nUma pausa não é fraqueza. É direção.\n%%\nDeixe a onda passar; você não precisa construir uma casa para ela.\n%%\nA vontade pode bater à porta. Ela não pode se mudar para dentro.\n%%\nDiminua o peso deste minuto e ele fica mais fácil de carregar.\n%%\nVocê não está atrasado. Está praticando a pausa em tempo real.\n%%\nUm sistema nervoso mais calmo toma decisões mais sábias.\n%%\nVocê pode adiar sem negar sua humanidade.\n%%\nO desejo quer velocidade. Responda com firmeza.\n%%\nIsto é um ponto de checagem, não um veredito sobre seu caráter.\n%%\nFique no corpo por uma respiração antes de seguir a história.\n%%\nUm pouco de espaço agora já é progresso real.\n%%\nVocê já sobreviveu a vontades fortes sem obedecê-las.\n%%\nA próxima ação gentil pode ser bem pequena e ainda assim contar.\n%%\nA calma costuma ser construída pela repetição, não pela revelação.\n%%\nInterrupções como esta ensinam ao seu cérebro um novo caminho.\n%%\nUm minuto de distância pode poupar uma hora de arrependimento.\n%%\nVocê pode querer alívio e ainda assim escolher com sabedoria.\n%%\nFaça menos. Desacelere. Deixe o calor baixar primeiro.\n%%\nA mente fica mais quieta quando o corpo se sente mais seguro.\n%%\nVocê pode honrar o que sente sem colocar isso em ação.\n%%\nEste momento não precisa de drama; precisa de espaço.\n%%\nTente soltar a mandíbula, os ombros e a pressão do tempo.\n%%\nVocê está no comando agora, mesmo que a curva seja suave.\n%%\nRespire baixo e devagar; deixe a urgência perder a deixa.\n%%\nDesejos costumam subir rápido e cair quando não são alimentados.\n%%\nEsta pausa já está mudando o final.\n%%\nVocê não precisa de um plano perfeito para dar um próximo passo melhor.\n%%\nDê um pouco de tédio ao impulso e ele costuma enfraquecer.\n%%\nHá força em ficar menos disponível para a vontade.\n%%\nUm corpo calmo pode segurar uma mente barulhenta com mais segurança.\n%%\nQue isto seja um recomeço, não um debate.\n%%\nO futuro que você está protegendo é construído em momentos exatamente como este.\n%%\nMesmo que tudo o que você faça seja adiar a espiral, isso importa.\n%%\nAcalme primeiro o sistema nervoso; o significado pode esperar.\n%%\nUma pausa sábia muitas vezes parece comum enquanto acontece.\n%%\nVocê está ensinando a si mesmo que urgência não é autoridade.\n%%\nPequenas escolhas limpas constroem uma confiança silenciosa.\n%%\nO alívio mais rápido nem sempre é o mais verdadeiro.\n%%\nFaça da próxima respiração sua tarefa inteira.\n%%\nReduza o ruído e depois decida.\n%%\nVocê pode encontrar este momento com menos força.\n%%\nA vontade pede atenção; ofereça observação no lugar.\n%%\nNão existe regra dizendo que você precisa continuar o velho padrão.\n%%\nAté uma desaceleração parcial já é uma vitória real.\n%%\nVocê não está preso à primeira emoção.\n%%\nUma decisão melhor muitas vezes começa com um corpo mais lento.\n%%\nA gentileza é permitida aqui.\n%%\nVocê pode continuar curioso em vez de reativo por mais um minuto.\n%%\nDeixe sua respiração marcar o ritmo.\n%%\nA tempestade na sua cabeça não precisa virar o clima da sua vida.\n%%\nEstabilidade muitas vezes é só alguns segundos mais calmos repetidos.';
+
+  @override
+  String get breakFortuneCookieWisdomsData =>
+      'Respire primeiro. O próximo passo pode esperar.\n%%\nUm minuto mais lento pode mudar todo o clima.\n%%\nAdie o impulso, não a sua gentileza.\n%%\nPequenas pausas também contam como escolhas fortes.\n%%\nVocê não precisa resolver este momento fazendo barulho.\n%%\nRelaxe os ombros antes de abaixar seus padrões.\n%%\nUm desejo é um visitante, não um chefe.\n%%\nDê espaço a esta onda e ela vai encolher.\n%%\nO gentil vence o dramático quando o objetivo é paz.\n%%\nUma respiração calma já é uma nova direção.\n%%\nVocê pode querer alívio sem obedecer ao impulso.\n%%\nTome a próxima decisão com um corpo mais macio.\n%%\nEste minuto merece paciência, não pressão.\n%%\nProgresso silencioso ainda é progresso.\n%%\nNada importante melhora com pressa.\n%%\nFique com a respiração por mais tempo do que com a história.\n%%\nUm pouco de espaço agora pode poupar muito depois.\n%%\nVocê está interrompendo a rota antiga agora mesmo.\n%%\nO impulso é real. Sua escolha também.\n%%\nUma pausa é uma habilidade, não uma desculpa.\n%%\nDeixe o calor baixar antes de responder.\n%%\nPensamentos mais suaves chegam depois de respirações mais firmes.\n%%\nVocê tem permissão para desacelerar a cena.\n%%\nAqui, curiosidade ajuda mais do que crítica.\n%%\nSeu eu do futuro gosta desta versão mais calma de você.\n%%\nO primeiro impulso não é a verdade final.\n%%\nProteja os próximos dez minutos, não o ano inteiro.\n%%\nUm corpo mais estável faz promessas mais sábias.\n%%\nEsta sensação pode passar sem virar ação.\n%%\nDevagar às vezes é a velocidade mais corajosa.\n%%\nVocê pode se sentir desconfortável e ainda assim estar seguro.\n%%\nDê menos atenção ao impulso e mais distância.\n%%\nUm final melhor muitas vezes começa com uma pausa.\n%%\nEstrutura gentil vence pressão dura.\n%%\nDeixe o momento ficar menor antes de julgá-lo.\n%%\nO corpo escuta quando a respiração fica gentil.\n%%\nAtrasos curtos constroem confiança de longo prazo.\n%%\nVocê não deve uma resposta ao craving agora.\n%%\nA paz cresce em pequenas escolhas repetidas.\n%%\nEsta pausa é uma vitória real, não um marcador provisório.\n%%\nRespire baixo. Solte. Volte devagar.\n%%\nAbra espaço para a calma antes de abrir espaço para a ação.\n%%\nUm reinício gentil ainda pode ser poderoso.\n%%\nMenos urgência, mais consciência.\n%%\nVocê está praticando liberdade em pequenas partes.\n%%\nUma escolha mais limpa pode iluminar o dia inteiro.\n%%\nDeixe a quietude fazer parte do trabalho.\n%%\nUm minuto calmo nunca é desperdiçado.\n%%\nPermaneça firme. A onda já está mudando.\n%%\nMais suave não é mais fraco. Mais suave é mais sábio.';
 }

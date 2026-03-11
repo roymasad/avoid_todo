@@ -544,6 +544,121 @@ void main() {
     );
   });
 
+  testWidgets(
+      'fortune cookie renders without a personal best and cracks on tap',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.fortuneCookie,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(
+        find.byKey(const Key('break_activity_fortune_cookie')), findsOneWidget);
+    expect(find.byKey(const Key('break_personal_best')), findsNothing);
+    expect(find.text('Tap the cookie to crack it open.'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('fortune_cookie_shell')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(
+      find.text('Scratch the crumbs away to reveal the wisdom underneath.'),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('fortune_cookie_note')), findsOneWidget);
+  });
+
+  testWidgets('fortune cookie shows a continue button after enough scratching',
+      (WidgetTester tester) async {
+    final sheetKey = GlobalKey();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 30),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.fortuneCookie,
+          onResult: (_) {},
+          sheetKey: sheetKey,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('fortune_cookie_shell')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    (sheetKey.currentState as dynamic).debugRevealFortuneCookie();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('Nice. Let the line land for a second.'), findsOneWidget);
+    expect(find.byKey(const Key('fortune_cookie_continue')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('fortune_cookie_continue')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const Key('break_outcome_view')), findsOneWidget);
+  });
+
+  testWidgets('fortune cookie replay resets the game and loads a new wisdom',
+      (WidgetTester tester) async {
+    final sheetKey = GlobalKey();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 30),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.fortuneCookie,
+          onResult: (_) {},
+          sheetKey: sheetKey,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    final initialWisdom = (sheetKey.currentState as dynamic)
+        .debugCurrentFortuneWisdom() as String?;
+
+    (sheetKey.currentState as dynamic).debugRevealFortuneCookie();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await tester.tap(find.byKey(const Key('fortune_cookie_continue')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.byKey(const Key('break_replay_activity')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final replayedWisdom = (sheetKey.currentState as dynamic)
+        .debugCurrentFortuneWisdom() as String?;
+
+    expect(
+        find.byKey(const Key('break_activity_fortune_cookie')), findsOneWidget);
+    expect(find.byKey(const Key('break_outcome_view')), findsNothing);
+    expect(find.text('Tap the cookie to crack it open.'), findsOneWidget);
+    expect(replayedWisdom, isNotNull);
+    expect(replayedWisdom, isNot(equals(initialWisdom)));
+  });
+
   testWidgets('stack sweep activity renders its board',
       (WidgetTester tester) async {
     await tester.pumpWidget(
