@@ -5,11 +5,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test(
-      'people pool excludes pair match but keeps defuse, stack sweep, and zen room',
+      'people pool excludes pair match but keeps defuse, cube, stack sweep, and zen room',
       () {
     final pool = BreakHelper.poolFor(AvoidType.people);
 
     expect(pool, contains(BreakActivityType.defuse));
+    expect(pool, contains(BreakActivityType.cubeReset));
     expect(pool, contains(BreakActivityType.stackSweep));
     expect(pool, contains(BreakActivityType.zenRoom));
     expect(pool, isNot(contains(BreakActivityType.pairMatch)));
@@ -23,12 +24,13 @@ void main() {
       containsAll([
         BreakActivityType.defuse,
         BreakActivityType.pairMatch,
+        BreakActivityType.cubeReset,
         BreakActivityType.stackSweep,
         BreakActivityType.triviaPivot,
         BreakActivityType.zenRoom,
       ]),
     );
-    expect(pool, hasLength(5));
+    expect(pool, hasLength(6));
   });
 
   test('picked activity always belongs to the filtered pool', () {

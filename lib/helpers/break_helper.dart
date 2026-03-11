@@ -57,6 +57,13 @@ class BreakHelper {
       color: Color(0xFF2A9D8F),
     ),
     BreakActivityDefinition(
+      type: BreakActivityType.cubeReset,
+      title: 'Cube Reset',
+      subtitle: 'Twist a tiny cube back into order.',
+      icon: Icons.view_in_ar_rounded,
+      color: Color(0xFF577590),
+    ),
+    BreakActivityDefinition(
       type: BreakActivityType.stackSweep,
       title: 'Stack Sweep',
       subtitle: 'Peel away the exposed tiles until the pile is gone.',
@@ -787,12 +794,14 @@ class BreakHelper {
       case AvoidType.people:
         return const [
           BreakActivityType.defuse,
+          BreakActivityType.cubeReset,
           BreakActivityType.stackSweep,
           BreakActivityType.zenRoom,
           BreakActivityType.triviaPivot,
         ];
       case AvoidType.event:
         return const [
+          BreakActivityType.cubeReset,
           BreakActivityType.triviaPivot,
           BreakActivityType.stackSweep,
           BreakActivityType.zenRoom,
@@ -802,6 +811,7 @@ class BreakHelper {
         return const [
           BreakActivityType.defuse,
           BreakActivityType.pairMatch,
+          BreakActivityType.cubeReset,
           BreakActivityType.stackSweep,
           BreakActivityType.triviaPivot,
           BreakActivityType.zenRoom,

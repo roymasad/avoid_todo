@@ -81,11 +81,13 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     [Color(0xFF9D4EDD), Color(0xFF2A9D8F)],
     [Color(0xFFF77F00), Color(0xFF4D908E)],
   ];
-  static const List<String> _defusePrompts = [
-    'Tap',
-    'Cool',
-    'Disarm',
-    'Steady',
+  static const List<Color> _cubeFaceColors = [
+    Color(0xFFF7F7F7),
+    Color(0xFFE63946),
+    Color(0xFF2A9D8F),
+    Color(0xFFF4D35E),
+    Color(0xFFF77F00),
+    Color(0xFF457B9D),
   ];
 
   final Random _random = Random();
@@ -104,9 +106,19 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   int _defuseTargetTapCount = 4;
   int _defuseBaseDialPeriodMs = 2400;
   List<Color> _defusePalette = _defusePalettes.first;
-  String _defusePrompt = _defusePrompts.first;
   List<double> _defuseTargets = const [];
   bool _defuseLastAttemptAccurate = false;
+  List<_CubeStickerState> _cubeStickers = const [];
+  _CubeFace? _cubeActiveFace;
+  _CubeProjectedSticker? _cubeTouchedSticker;
+  Offset? _cubeDragStart;
+  Offset? _cubeDragCurrent;
+  Offset? _cubeOrbitPoint;
+  bool _cubeOrbiting = false;
+  double _cubeYaw = -0.72;
+  double _cubePitch = -0.46;
+  int _cubeMoveCount = 0;
+  int _cubeScrambleLength = 0;
   List<int> _pairDeck = [];
   List<String> _pairMatchEmojis = const [];
   List<_StackSweepTile> _stackTiles = const [];
@@ -324,11 +336,11 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     _defuseCount = 0;
     _defuseBaseDialPeriodMs = 2150 + _random.nextInt(900);
     _defusePalette = _defusePalettes[_random.nextInt(_defusePalettes.length)];
-    _defusePrompt = _defusePrompts[_random.nextInt(_defusePrompts.length)];
     _defuseTargets = List<double>.generate(
       _defuseTargetTapCount,
       (_) => _random.nextDouble(),
     );
+    _resetCubePuzzle();
     _defuseLastAttemptAccurate = false;
     _defuseDialController
       ..duration = Duration(milliseconds: _defuseBaseDialPeriodMs)
@@ -604,6 +616,298 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     setState(() => _triviaSelectedAnswer = index);
   }
 
+  List<_CubeStickerState> _buildSolvedCubeStickers() {
+    final stickers = <_CubeStickerState>[];
+    for (var x = -1; x <= 1; x++) {
+      for (var y = -1; y <= 1; y++) {
+        for (var z = -1; z <= 1; z++) {
+          if (y == 1) {
+            stickers.add(
+              _CubeStickerState(
+                position: _CubeInt3(x, y, z),
+                normal: const _CubeInt3(0, 1, 0),
+                colorIndex: _CubeFaceIndex.up,
+              ),
+            );
+          }
+          if (x == 1) {
+            stickers.add(
+              _CubeStickerState(
+                position: _CubeInt3(x, y, z),
+                normal: const _CubeInt3(1, 0, 0),
+                colorIndex: _CubeFaceIndex.right,
+              ),
+            );
+          }
+          if (z == 1) {
+            stickers.add(
+              _CubeStickerState(
+                position: _CubeInt3(x, y, z),
+                normal: const _CubeInt3(0, 0, 1),
+                colorIndex: _CubeFaceIndex.front,
+              ),
+            );
+          }
+          if (y == -1) {
+            stickers.add(
+              _CubeStickerState(
+                position: _CubeInt3(x, y, z),
+                normal: const _CubeInt3(0, -1, 0),
+                colorIndex: _CubeFaceIndex.down,
+              ),
+            );
+          }
+          if (x == -1) {
+            stickers.add(
+              _CubeStickerState(
+                position: _CubeInt3(x, y, z),
+                normal: const _CubeInt3(-1, 0, 0),
+                colorIndex: _CubeFaceIndex.left,
+              ),
+            );
+          }
+          if (z == -1) {
+            stickers.add(
+              _CubeStickerState(
+                position: _CubeInt3(x, y, z),
+                normal: const _CubeInt3(0, 0, -1),
+                colorIndex: _CubeFaceIndex.back,
+              ),
+            );
+          }
+        }
+      }
+    }
+    return stickers;
+  }
+
+  int _cubeCoordOnAxis(_CubeInt3 vector, _CubeAxis axis) {
+    switch (axis) {
+      case _CubeAxis.x:
+        return vector.x;
+      case _CubeAxis.y:
+        return vector.y;
+      case _CubeAxis.z:
+        return vector.z;
+    }
+  }
+
+  _CubeInt3 _rotateCubeVectorPositive(_CubeInt3 vector, _CubeAxis axis) {
+    switch (axis) {
+      case _CubeAxis.x:
+        return _CubeInt3(vector.x, -vector.z, vector.y);
+      case _CubeAxis.y:
+        return _CubeInt3(vector.z, vector.y, -vector.x);
+      case _CubeAxis.z:
+        return _CubeInt3(-vector.y, vector.x, vector.z);
+    }
+  }
+
+  void _mutateCubeLayer(_CubeSliceMove move) {
+    final turns = ((move.quarterTurns % 4) + 4) % 4;
+    if (turns == 0) return;
+
+    for (var turn = 0; turn < turns; turn++) {
+      for (final sticker in _cubeStickers) {
+        if (_cubeCoordOnAxis(sticker.position, move.axis) != move.layer) {
+          continue;
+        }
+        sticker.position =
+            _rotateCubeVectorPositive(sticker.position, move.axis);
+        sticker.normal = _rotateCubeVectorPositive(sticker.normal, move.axis);
+      }
+    }
+  }
+
+  bool _isCubeSolved() => _cubeSolvedFaceCount() == 6;
+
+  int _cubeSolvedFaceCount() {
+    var solvedFaces = 0;
+    for (final face in _CubeFace.values) {
+      final normal = face.normal;
+      final faceStickers =
+          _cubeStickers.where((sticker) => sticker.normal == normal).toList();
+      if (faceStickers.length != 9) {
+        continue;
+      }
+      final firstColor = faceStickers.first.colorIndex;
+      if (faceStickers.every((sticker) => sticker.colorIndex == firstColor)) {
+        solvedFaces += 1;
+      }
+    }
+    return solvedFaces;
+  }
+
+  void _resetCubePuzzle() {
+    _cubeStickers = _buildSolvedCubeStickers();
+    _cubeMoveCount = 0;
+    _cubeScrambleLength = 5 + _random.nextInt(3);
+    _cubeYaw = -0.72;
+    _cubePitch = -0.46;
+    _cubeActiveFace = null;
+    _cubeTouchedSticker = null;
+    _cubeDragStart = null;
+    _cubeDragCurrent = null;
+    _cubeOrbitPoint = null;
+    _cubeOrbiting = false;
+
+    _CubeSliceMove? previous;
+    for (var i = 0; i < _cubeScrambleLength; i++) {
+      final choices = _CubeSliceMove.outerFaceMoves
+          .where(
+            (move) =>
+                previous == null ||
+                move.axis != previous.axis ||
+                move.layer != previous.layer,
+          )
+          .toList();
+      final move = choices[_random.nextInt(choices.length)];
+      _mutateCubeLayer(move);
+      previous = move;
+    }
+
+    if (_isCubeSolved()) {
+      _resetCubePuzzle();
+    }
+  }
+
+  void _applyCubeMove(_CubeSliceMove move) {
+    if (_activityCompleted) return;
+
+    HapticFeedback.selectionClick();
+    setState(() {
+      _cubeMoveCount += 1;
+      _mutateCubeLayer(move);
+    });
+
+    if (_isCubeSolved()) {
+      _handleActivityCompleted();
+    }
+  }
+
+  _CubeProjectedSticker? _cubeStickerAt(Offset point, Size size) {
+    final projected = _CubeProjection.buildProjectedStickers(
+      stickers: _cubeStickers,
+      size: size,
+      yaw: _cubeYaw,
+      pitch: _cubePitch,
+    )..sort((a, b) => b.depth.compareTo(a.depth));
+
+    for (final sticker in projected) {
+      if (sticker.path.contains(point)) {
+        return sticker;
+      }
+    }
+    return null;
+  }
+
+  void _onCubePanStart(DragStartDetails details, Size size) {
+    final sticker = _cubeStickerAt(details.localPosition, size);
+    setState(() {
+      _cubeDragStart = details.localPosition;
+      _cubeDragCurrent = details.localPosition;
+      _cubeTouchedSticker = sticker;
+      _cubeActiveFace = sticker?.face;
+      _cubeOrbiting = sticker == null;
+      _cubeOrbitPoint = sticker == null ? details.localPosition : null;
+    });
+  }
+
+  void _onCubePanUpdate(DragUpdateDetails details) {
+    if (_cubeOrbiting && _cubeOrbitPoint != null) {
+      final delta = details.localPosition - _cubeOrbitPoint!;
+      setState(() {
+        _cubeYaw += delta.dx * 0.012;
+        _cubePitch = (_cubePitch + (delta.dy * 0.012)).clamp(-1.15, 1.15);
+        _cubeOrbitPoint = details.localPosition;
+      });
+      return;
+    }
+
+    if (_cubeDragStart == null) return;
+    setState(() {
+      _cubeDragCurrent = details.localPosition;
+    });
+  }
+
+  void _resetCubeDrag() {
+    if (_cubeActiveFace == null &&
+        _cubeTouchedSticker == null &&
+        _cubeDragStart == null &&
+        _cubeDragCurrent == null &&
+        !_cubeOrbiting &&
+        _cubeOrbitPoint == null) {
+      return;
+    }
+    setState(() {
+      _cubeActiveFace = null;
+      _cubeTouchedSticker = null;
+      _cubeDragStart = null;
+      _cubeDragCurrent = null;
+      _cubeOrbiting = false;
+      _cubeOrbitPoint = null;
+    });
+  }
+
+  _CubeSliceMove? _cubeMoveForSwipe(
+    _CubeProjectedSticker sticker,
+    Offset delta,
+    Size size,
+  ) {
+    if (delta.distance < 18) return null;
+
+    final primary = _CubeProjection.primarySwipeAxis(
+      sticker: sticker,
+      size: size,
+      yaw: _cubeYaw,
+      pitch: _cubePitch,
+      dragDelta: delta,
+    );
+    final swipeVector =
+        primary == _CubeSwipePrimary.horizontal ? sticker.u : sticker.v;
+    final axisVector = sticker.face.normal.cross(swipeVector);
+    final axisInt = _CubeInt3(
+      axisVector.x.round(),
+      axisVector.y.round(),
+      axisVector.z.round(),
+    );
+    final axis = axisInt.principalAxis;
+    final axisSign = axisInt.axisSign;
+    final layer = _cubeCoordOnAxis(sticker.position, axis);
+    final tangent = axisVector.cross(sticker.center);
+    final tangentScreen = _CubeProjection.projectVectorToScreen(
+      origin: sticker.center,
+      vector: tangent,
+      size: size,
+      yaw: _cubeYaw,
+      pitch: _cubePitch,
+    );
+    final desiredTurn =
+        tangentScreen.dx * delta.dx + tangentScreen.dy * delta.dy >= 0 ? 1 : -1;
+
+    return _CubeSliceMove(
+      axis: axis,
+      layer: layer,
+      quarterTurns: desiredTurn * axisSign,
+    );
+  }
+
+  void _onCubePanEnd(Size size) {
+    final start = _cubeDragStart;
+    final current = _cubeDragCurrent;
+    final sticker = _cubeTouchedSticker;
+    final orbiting = _cubeOrbiting;
+    _resetCubeDrag();
+    if (orbiting || start == null || current == null || sticker == null) {
+      return;
+    }
+
+    final move = _cubeMoveForSwipe(sticker, current - start, size);
+    if (move != null) {
+      _applyCubeMove(move);
+    }
+  }
+
   void _nextTrivia() {
     HapticFeedback.lightImpact();
     setState(() {
@@ -810,6 +1114,33 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  Widget _buildCubeScene(BreakActivityDefinition definition) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final sceneSize = Size(constraints.maxWidth, constraints.maxHeight);
+        return GestureDetector(
+          key: const Key('cube_scene'),
+          behavior: HitTestBehavior.opaque,
+          onPanStart: (details) => _onCubePanStart(details, sceneSize),
+          onPanUpdate: _onCubePanUpdate,
+          onPanCancel: _resetCubeDrag,
+          onPanEnd: (_) => _onCubePanEnd(sceneSize),
+          child: CustomPaint(
+            size: sceneSize,
+            painter: _CubePainter(
+              faceColors: _cubeFaceColors,
+              stickers: _cubeStickers,
+              yaw: _cubeYaw,
+              pitch: _cubePitch,
+              accentColor: definition.color,
+              activeFace: _cubeActiveFace,
+            ),
+          ),
         );
       },
     );
@@ -1151,6 +1482,73 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
               ),
             ),
             Text('Matched ${_matchedCards.length ~/ 2} of 10 pairs'),
+          ],
+        );
+      case BreakActivityType.cubeReset:
+        return Column(
+          key: const Key('break_activity_cube'),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Drag to rotate the cube. Swipe visible stickers to turn layers.',
+              style: TextStyle(
+                height: 1.35,
+                color: definition.color.withValues(alpha: 0.88),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      definition.color.withValues(alpha: 0.10),
+                      definition.color.withValues(alpha: 0.03),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: definition.color.withValues(alpha: 0.14),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: _buildCubeScene(definition),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _cubeActiveFace == null
+                  ? 'Drag empty space to rotate the cube. Swipe a visible sticker row or column to turn that layer.'
+                  : switch (_cubeActiveFace!) {
+                      _CubeFace.up => 'Swipe on the top face to turn a layer.',
+                      _CubeFace.front =>
+                        'Swipe on the front face to turn a layer.',
+                      _CubeFace.right =>
+                        'Swipe on the right face to turn a layer.',
+                      _CubeFace.down =>
+                        'Rotate the cube to reach the bottom face.',
+                      _CubeFace.left =>
+                        'Rotate the cube to reach the left face.',
+                      _CubeFace.back =>
+                        'Rotate the cube to reach the back face.',
+                    },
+              style: TextStyle(
+                color: definition.color.withValues(alpha: 0.78),
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Solved ${_cubeSolvedFaceCount()} of 6 faces in $_cubeMoveCount twists',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: definition.color,
+              ),
+            ),
           ],
         );
       case BreakActivityType.stackSweep:
@@ -1901,6 +2299,472 @@ class _SafeCrackDialPainter extends CustomPainter {
         oldDelegate.successWindows != successWindows ||
         oldDelegate.activeStep != activeStep ||
         oldDelegate.unlockedCount != unlockedCount;
+  }
+}
+
+class _CubePainter extends CustomPainter {
+  final List<Color> faceColors;
+  final List<_CubeStickerState> stickers;
+  final double yaw;
+  final double pitch;
+  final Color accentColor;
+  final _CubeFace? activeFace;
+
+  const _CubePainter({
+    required this.faceColors,
+    required this.stickers,
+    required this.yaw,
+    required this.pitch,
+    required this.accentColor,
+    required this.activeFace,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final projectedFaces = _CubeProjection.buildProjectedFaces(
+      size: size,
+      yaw: yaw,
+      pitch: pitch,
+    )..sort((a, b) => a.depth.compareTo(b.depth));
+    final projectedStickers = _CubeProjection.buildProjectedStickers(
+      stickers: stickers,
+      size: size,
+      yaw: yaw,
+      pitch: pitch,
+    )..sort((a, b) => a.depth.compareTo(b.depth));
+
+    final shadowPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = Colors.black.withValues(alpha: 0.08)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
+
+    final cubeBounds = projectedFaces
+        .expand((face) => face.points)
+        .fold<Rect?>(null, (rect, point) {
+      final next = Rect.fromLTWH(point.dx, point.dy, 0, 0);
+      return rect == null ? next : rect.expandToInclude(next);
+    });
+
+    if (cubeBounds != null) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(cubeBounds.center.dx, cubeBounds.bottom + 22),
+          width: cubeBounds.width * 0.76,
+          height: cubeBounds.height * 0.12,
+        ),
+        shadowPaint,
+      );
+    }
+
+    for (final face in projectedFaces) {
+      final bodyColor = activeFace == face.face
+          ? accentColor.withValues(alpha: 0.22)
+          : const Color(0xFF1C2634);
+      final seamPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.2
+        ..strokeJoin = StrokeJoin.round
+        ..color = bodyColor;
+      canvas.drawPath(
+        face.path,
+        Paint()
+          ..style = PaintingStyle.fill
+          ..color = bodyColor,
+      );
+      canvas.drawPath(face.path, seamPaint);
+      canvas.save();
+      canvas.clipPath(face.path);
+      for (final sticker
+          in projectedStickers.where((sticker) => sticker.face == face.face)) {
+        canvas.drawPath(
+          sticker.path,
+          Paint()
+            ..style = PaintingStyle.fill
+            ..color = faceColors[sticker.colorIndex],
+        );
+        canvas.drawPath(
+          sticker.path,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = sticker.face == activeFace ? 2 : 1
+            ..color = sticker.face == activeFace
+                ? accentColor.withValues(alpha: 0.7)
+                : Colors.black.withValues(alpha: 0.15),
+        );
+      }
+      canvas.restore();
+      canvas.drawPath(
+        face.path,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..color = Colors.white.withValues(alpha: 0.08),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CubePainter oldDelegate) {
+    return true;
+  }
+}
+
+class _CubeFaceIndex {
+  static const int up = 0;
+  static const int right = 1;
+  static const int front = 2;
+  static const int down = 3;
+  static const int left = 4;
+  static const int back = 5;
+}
+
+enum _CubeAxis { x, y, z }
+
+enum _CubeSwipePrimary { horizontal, vertical }
+
+enum _CubeFace {
+  up(_CubeInt3(0, 1, 0)),
+  right(_CubeInt3(1, 0, 0)),
+  front(_CubeInt3(0, 0, 1)),
+  down(_CubeInt3(0, -1, 0)),
+  left(_CubeInt3(-1, 0, 0)),
+  back(_CubeInt3(0, 0, -1));
+
+  final _CubeInt3 normal;
+
+  const _CubeFace(this.normal);
+}
+
+class _CubeInt3 {
+  final int x;
+  final int y;
+  final int z;
+
+  const _CubeInt3(this.x, this.y, this.z);
+
+  _CubeDouble3 toDouble() =>
+      _CubeDouble3(x.toDouble(), y.toDouble(), z.toDouble());
+
+  _CubeDouble3 cross(_CubeDouble3 other) {
+    return _CubeDouble3(
+      (y * other.z) - (z * other.y),
+      (z * other.x) - (x * other.z),
+      (x * other.y) - (y * other.x),
+    );
+  }
+
+  _CubeAxis get principalAxis {
+    if (x != 0) return _CubeAxis.x;
+    if (y != 0) return _CubeAxis.y;
+    return _CubeAxis.z;
+  }
+
+  int get axisSign {
+    if (x != 0) return x.sign;
+    if (y != 0) return y.sign;
+    return z.sign;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is _CubeInt3 && other.x == x && other.y == y && other.z == z;
+
+  @override
+  int get hashCode => Object.hash(x, y, z);
+}
+
+class _CubeDouble3 {
+  final double x;
+  final double y;
+  final double z;
+
+  const _CubeDouble3(this.x, this.y, this.z);
+
+  _CubeDouble3 operator +(_CubeDouble3 other) =>
+      _CubeDouble3(x + other.x, y + other.y, z + other.z);
+
+  _CubeDouble3 operator -(_CubeDouble3 other) =>
+      _CubeDouble3(x - other.x, y - other.y, z - other.z);
+
+  _CubeDouble3 scale(double factor) =>
+      _CubeDouble3(x * factor, y * factor, z * factor);
+
+  _CubeDouble3 cross(_CubeDouble3 other) {
+    return _CubeDouble3(
+      (y * other.z) - (z * other.y),
+      (z * other.x) - (x * other.z),
+      (x * other.y) - (y * other.x),
+    );
+  }
+}
+
+class _CubeStickerState {
+  _CubeInt3 position;
+  _CubeInt3 normal;
+  final int colorIndex;
+
+  _CubeStickerState({
+    required this.position,
+    required this.normal,
+    required this.colorIndex,
+  });
+}
+
+class _CubeSliceMove {
+  final _CubeAxis axis;
+  final int layer;
+  final int quarterTurns;
+
+  const _CubeSliceMove({
+    required this.axis,
+    required this.layer,
+    required this.quarterTurns,
+  });
+
+  static const List<_CubeSliceMove> outerFaceMoves = [
+    _CubeSliceMove(axis: _CubeAxis.x, layer: 1, quarterTurns: 1),
+    _CubeSliceMove(axis: _CubeAxis.x, layer: 1, quarterTurns: -1),
+    _CubeSliceMove(axis: _CubeAxis.x, layer: -1, quarterTurns: 1),
+    _CubeSliceMove(axis: _CubeAxis.x, layer: -1, quarterTurns: -1),
+    _CubeSliceMove(axis: _CubeAxis.y, layer: 1, quarterTurns: 1),
+    _CubeSliceMove(axis: _CubeAxis.y, layer: 1, quarterTurns: -1),
+    _CubeSliceMove(axis: _CubeAxis.y, layer: -1, quarterTurns: 1),
+    _CubeSliceMove(axis: _CubeAxis.y, layer: -1, quarterTurns: -1),
+    _CubeSliceMove(axis: _CubeAxis.z, layer: 1, quarterTurns: 1),
+    _CubeSliceMove(axis: _CubeAxis.z, layer: 1, quarterTurns: -1),
+    _CubeSliceMove(axis: _CubeAxis.z, layer: -1, quarterTurns: 1),
+    _CubeSliceMove(axis: _CubeAxis.z, layer: -1, quarterTurns: -1),
+  ];
+}
+
+class _CubeProjectedFace {
+  final _CubeFace face;
+  final List<Offset> points;
+  final Path path;
+  final double depth;
+
+  const _CubeProjectedFace({
+    required this.face,
+    required this.points,
+    required this.path,
+    required this.depth,
+  });
+}
+
+class _CubeProjectedSticker {
+  final _CubeFace face;
+  final _CubeInt3 position;
+  final _CubeDouble3 normal;
+  final _CubeDouble3 center;
+  final _CubeDouble3 u;
+  final _CubeDouble3 v;
+  final int colorIndex;
+  final Path path;
+  final double depth;
+
+  const _CubeProjectedSticker({
+    required this.face,
+    required this.position,
+    required this.normal,
+    required this.center,
+    required this.u,
+    required this.v,
+    required this.colorIndex,
+    required this.path,
+    required this.depth,
+  });
+}
+
+class _CubeProjection {
+  static const double _stickerHalfSize = 0.42;
+
+  static List<_CubeProjectedFace> buildProjectedFaces({
+    required Size size,
+    required double yaw,
+    required double pitch,
+  }) {
+    final faces = <_CubeProjectedFace>[];
+    for (final face in _CubeFace.values) {
+      final basis = _basisFor(face);
+      final center = face.normal.toDouble().scale(1.5);
+      final quad = _quadFrom(center, basis.$1, basis.$2, 1.5);
+      final rotatedNormal =
+          rotate(face.normal.toDouble(), yaw: yaw, pitch: pitch);
+      if (rotatedNormal.z <= 0.02) continue;
+      final points =
+          quad.map((point) => projectPoint(point, size, yaw, pitch)).toList();
+      faces.add(
+        _CubeProjectedFace(
+          face: face,
+          points: points,
+          path: _pathFrom(points),
+          depth: quad
+                  .map((point) => rotate(point, yaw: yaw, pitch: pitch).z)
+                  .reduce((a, b) => a + b) /
+              quad.length,
+        ),
+      );
+    }
+    return faces;
+  }
+
+  static List<_CubeProjectedSticker> buildProjectedStickers({
+    required List<_CubeStickerState> stickers,
+    required Size size,
+    required double yaw,
+    required double pitch,
+  }) {
+    final projected = <_CubeProjectedSticker>[];
+    for (final sticker in stickers) {
+      final face = _faceForNormal(sticker.normal);
+      final basis = _basisFor(face);
+      final center =
+          sticker.position.toDouble() + sticker.normal.toDouble().scale(0.5);
+      final rotatedNormal =
+          rotate(sticker.normal.toDouble(), yaw: yaw, pitch: pitch);
+      if (rotatedNormal.z <= 0.02) continue;
+      final quad = _quadFrom(center, basis.$1, basis.$2, _stickerHalfSize);
+      final points =
+          quad.map((point) => projectPoint(point, size, yaw, pitch)).toList();
+      projected.add(
+        _CubeProjectedSticker(
+          face: face,
+          position: sticker.position,
+          normal: sticker.normal.toDouble(),
+          center: center,
+          u: basis.$1,
+          v: basis.$2,
+          colorIndex: sticker.colorIndex,
+          path: _pathFrom(points),
+          depth: quad
+                  .map((point) => rotate(point, yaw: yaw, pitch: pitch).z)
+                  .reduce((a, b) => a + b) /
+              quad.length,
+        ),
+      );
+    }
+    return projected;
+  }
+
+  static _CubeSwipePrimary primarySwipeAxis({
+    required _CubeProjectedSticker sticker,
+    required Size size,
+    required double yaw,
+    required double pitch,
+    required Offset dragDelta,
+  }) {
+    final u = projectVectorToScreen(
+      origin: sticker.center,
+      vector: sticker.u,
+      size: size,
+      yaw: yaw,
+      pitch: pitch,
+    );
+    final v = projectVectorToScreen(
+      origin: sticker.center,
+      vector: sticker.v,
+      size: size,
+      yaw: yaw,
+      pitch: pitch,
+    );
+    final horizontalScore =
+        ((dragDelta.dx * u.dx) + (dragDelta.dy * u.dy)).abs() /
+            max(0.001, u.distance);
+    final verticalScore =
+        ((dragDelta.dx * v.dx) + (dragDelta.dy * v.dy)).abs() /
+            max(0.001, v.distance);
+    return horizontalScore >= verticalScore
+        ? _CubeSwipePrimary.horizontal
+        : _CubeSwipePrimary.vertical;
+  }
+
+  static Offset projectVectorToScreen({
+    required _CubeDouble3 origin,
+    required _CubeDouble3 vector,
+    required Size size,
+    required double yaw,
+    required double pitch,
+  }) {
+    final from = projectPoint(origin, size, yaw, pitch);
+    final to = projectPoint(origin + vector.scale(0.4), size, yaw, pitch);
+    return to - from;
+  }
+
+  static _CubeDouble3 rotate(
+    _CubeDouble3 point, {
+    required double yaw,
+    required double pitch,
+  }) {
+    final cy = cos(yaw);
+    final sy = sin(yaw);
+    final cp = cos(pitch);
+    final sp = sin(pitch);
+
+    final x1 = (point.x * cy) + (point.z * sy);
+    final z1 = (-point.x * sy) + (point.z * cy);
+    final y2 = (point.y * cp) - (z1 * sp);
+    final z2 = (point.y * sp) + (z1 * cp);
+    return _CubeDouble3(x1, y2, z2);
+  }
+
+  static Offset projectPoint(
+    _CubeDouble3 point,
+    Size size,
+    double yaw,
+    double pitch,
+  ) {
+    final rotated = rotate(point, yaw: yaw, pitch: pitch);
+    const cameraDistance = 8.0;
+    final perspective = cameraDistance / (cameraDistance - rotated.z);
+    final scale = min(size.width, size.height) * 0.19;
+    return Offset(
+      (size.width / 2) + (rotated.x * scale * perspective),
+      (size.height / 2) - (rotated.y * scale * perspective),
+    );
+  }
+
+  static (_CubeDouble3, _CubeDouble3) _basisFor(_CubeFace face) {
+    switch (face) {
+      case _CubeFace.up:
+        return (const _CubeDouble3(1, 0, 0), const _CubeDouble3(0, 0, 1));
+      case _CubeFace.right:
+        return (const _CubeDouble3(0, 0, -1), const _CubeDouble3(0, -1, 0));
+      case _CubeFace.front:
+        return (const _CubeDouble3(1, 0, 0), const _CubeDouble3(0, -1, 0));
+      case _CubeFace.down:
+        return (const _CubeDouble3(1, 0, 0), const _CubeDouble3(0, 0, -1));
+      case _CubeFace.left:
+        return (const _CubeDouble3(0, 0, 1), const _CubeDouble3(0, -1, 0));
+      case _CubeFace.back:
+        return (const _CubeDouble3(-1, 0, 0), const _CubeDouble3(0, -1, 0));
+    }
+  }
+
+  static _CubeFace _faceForNormal(_CubeInt3 normal) {
+    return _CubeFace.values.firstWhere((face) => face.normal == normal);
+  }
+
+  static List<_CubeDouble3> _quadFrom(
+    _CubeDouble3 center,
+    _CubeDouble3 u,
+    _CubeDouble3 v,
+    double half,
+  ) {
+    return [
+      center - u.scale(half) - v.scale(half),
+      center + u.scale(half) - v.scale(half),
+      center + u.scale(half) + v.scale(half),
+      center - u.scale(half) + v.scale(half),
+    ];
+  }
+
+  static Path _pathFrom(List<Offset> points) {
+    return Path()
+      ..moveTo(points[0].dx, points[0].dy)
+      ..lineTo(points[1].dx, points[1].dy)
+      ..lineTo(points[2].dx, points[2].dy)
+      ..lineTo(points[3].dx, points[3].dy)
+      ..close();
   }
 }
 

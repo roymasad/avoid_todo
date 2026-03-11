@@ -245,4 +245,25 @@ void main() {
     expect(find.byKey(const Key('stack_sweep_board')), findsOneWidget);
     expect(find.byKey(const Key('stack_tile_0')), findsOneWidget);
   });
+
+  testWidgets('cube reset activity renders the cube and controls',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.cubeReset,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('break_activity_cube')), findsOneWidget);
+    expect(find.byKey(const Key('cube_scene')), findsOneWidget);
+    expect(find.textContaining('Solved '), findsOneWidget);
+  });
 }

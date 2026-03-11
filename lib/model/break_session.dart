@@ -1,6 +1,7 @@
 enum BreakActivityType {
   defuse,
   pairMatch,
+  cubeReset,
   stackSweep,
   triviaPivot,
   zenRoom,
