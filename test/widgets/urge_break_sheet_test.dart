@@ -68,7 +68,8 @@ void main() {
     );
 
     await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(find.byKey(const Key('break_timer')), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 1));
@@ -91,13 +92,15 @@ void main() {
     );
 
     await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('break_outcome_view')), findsOneWidget);
     await tester.tap(find.byKey(const Key('break_continue_playing')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.byKey(const Key('break_outcome_view')), findsNothing);
     expect(find.byKey(const Key('break_activity_defuse')), findsOneWidget);
@@ -109,7 +112,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: _BreakHost(
-          duration: const Duration(seconds: 5),
+          duration: const Duration(seconds: 12),
           showTrustedSupport: false,
           onResult: (_) {},
         ),
@@ -117,11 +120,12 @@ void main() {
     );
 
     await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
-    for (var i = 0; i < 20; i++) {
-      await tester.tap(find.byKey(const Key('defuse_sphere')));
-      await tester.pump(const Duration(milliseconds: 40));
+    for (var i = 0; i < 180; i++) {
+      await tester.tap(find.byKey(const Key('defuse_safe_crack')));
+      await tester.pump(const Duration(milliseconds: 90));
       if (find.byKey(const Key('break_outcome_view')).evaluate().isNotEmpty) {
         break;
       }
@@ -148,7 +152,8 @@ void main() {
     );
 
     await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.tap(find.byKey(const Key('break_sheet_close')));
     await tester.pumpAndSettle();
 
@@ -174,7 +179,8 @@ void main() {
     );
 
     await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
 

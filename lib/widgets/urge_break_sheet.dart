@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:ui' show lerpDouble;
 
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +29,12 @@ class UrgeBreakSheet extends StatefulWidget {
 
 class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     with TickerProviderStateMixin {
+  static const List<double> _defuseSuccessWindows = [
+    0.12,
+    0.10,
+    0.08,
+    0.06,
+  ];
   static const List<Color> _triviaOptionColors = [
     Color(0xFFE76F51),
     Color(0xFF2A9D8F),
@@ -85,6 +90,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
 
   final Random _random = Random();
   late final AnimationController _ambientController;
+  late final AnimationController _defuseDialController;
   late final ConfettiController _confettiController;
   late final DateTime _startedAt;
   Timer? _ticker;
@@ -95,9 +101,12 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   bool _finished = false;
 
   int _defuseCount = 0;
-  int _defuseTargetTapCount = 12;
+  int _defuseTargetTapCount = 4;
+  int _defuseBaseDialPeriodMs = 2400;
   List<Color> _defusePalette = _defusePalettes.first;
   String _defusePrompt = _defusePrompts.first;
+  List<double> _defuseTargets = const [];
+  bool _defuseLastAttemptAccurate = false;
   List<int> _pairDeck = [];
   List<String> _pairMatchEmojis = const [];
   List<_StackSweepTile> _stackTiles = const [];
@@ -124,6 +133,10 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
       vsync: this,
       duration: const Duration(seconds: 24),
     );
+    _defuseDialController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    );
     _confettiController = ConfettiController(
       duration: const Duration(milliseconds: 900),
     );
@@ -132,6 +145,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     _randomizeActivityState();
     if (widget.activityType == BreakActivityType.zenRoom) {
       _ambientController.repeat();
+    }
+    if (widget.activityType == BreakActivityType.defuse) {
+      _startDefuseDial();
     }
     _startTicker();
   }
@@ -143,6 +159,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
       timer.cancel();
     }
     _ambientController.dispose();
+    _defuseDialController.dispose();
     _confettiController.dispose();
     super.dispose();
   }
@@ -303,9 +320,19 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     _pairMatchEmojis = emojiSelection.take(10).toList();
     _pairDeck = _buildPairDeck();
     _stackTiles = _buildStackTiles();
-    _defuseTargetTapCount = 10 + _random.nextInt(5);
+    _defuseTargetTapCount = 4;
+    _defuseCount = 0;
+    _defuseBaseDialPeriodMs = 2150 + _random.nextInt(900);
     _defusePalette = _defusePalettes[_random.nextInt(_defusePalettes.length)];
     _defusePrompt = _defusePrompts[_random.nextInt(_defusePrompts.length)];
+    _defuseTargets = List<double>.generate(
+      _defuseTargetTapCount,
+      (_) => _random.nextDouble(),
+    );
+    _defuseLastAttemptAccurate = false;
+    _defuseDialController
+      ..duration = Duration(milliseconds: _defuseBaseDialPeriodMs)
+      ..value = _random.nextDouble();
     _triviaOrder =
         List<int>.generate(BreakHelper.triviaPrompts.length, (i) => i)
           ..shuffle(_random);
@@ -335,6 +362,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
       final next = _secondsRemaining - 1;
       if (next <= 0) {
         _ticker?.cancel();
+        if (widget.activityType == BreakActivityType.defuse) {
+          _stopDefuseDial();
+        }
         HapticFeedback.mediumImpact();
         setState(() {
           _secondsRemaining = 0;
@@ -353,6 +383,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   Future<void> _handleActivityCompleted() async {
     if (_activityCompleted || !mounted) return;
     _ticker?.cancel();
+    if (widget.activityType == BreakActivityType.defuse) {
+      _stopDefuseDial();
+    }
     HapticFeedback.mediumImpact();
     _confettiController.play();
     setState(() {
@@ -369,6 +402,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
       _showOutcome = false;
       _showStillStrongOptions = false;
     });
+    if (widget.activityType == BreakActivityType.defuse) {
+      _startDefuseDial();
+    }
     _startTicker();
   }
 
@@ -379,7 +415,6 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
       _showOutcome = false;
       _showStillStrongOptions = false;
       _activityCompleted = false;
-      _defuseCount = 0;
       _matchedCards.clear();
       _revealedCards.clear();
       _removedStackTileIds.clear();
@@ -388,6 +423,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
       _triviaSelectedAnswer = null;
       _randomizeActivityState();
     });
+    if (widget.activityType == BreakActivityType.defuse) {
+      _startDefuseDial();
+    }
     _startTicker();
   }
 
@@ -397,14 +435,70 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     return '$minutes:$seconds';
   }
 
+  int _defuseDialPeriodForStep(int step) {
+    final clamped = step.clamp(0, _defuseTargetTapCount - 1);
+    final factor = pow(0.82, clamped).toDouble();
+    return max(950, (_defuseBaseDialPeriodMs * factor).round());
+  }
+
+  void _startDefuseDial({bool restart = false}) {
+    if (_defuseDialController.isAnimating && !restart) {
+      return;
+    }
+    _defuseDialController.repeat(
+      period: Duration(
+        milliseconds: _defuseDialPeriodForStep(
+          _defuseCount.clamp(0, _defuseTargetTapCount - 1),
+        ),
+      ),
+    );
+  }
+
+  void _stopDefuseDial() {
+    _defuseDialController.stop();
+  }
+
+  double _circularDistance(double a, double b) {
+    final distance = (a - b).abs();
+    return min(distance, 1 - distance);
+  }
+
+  double _defuseWindowForStep(int step) {
+    final clamped = step.clamp(0, _defuseSuccessWindows.length - 1);
+    return _defuseSuccessWindows[clamped];
+  }
+
+  List<Color> _defuseRingColors() {
+    return List<Color>.generate(_defuseTargetTapCount, (index) {
+      if (_defuseTargetTapCount <= 1) return _defusePalette.first;
+      final t = index / (_defuseTargetTapCount - 1);
+      return Color.lerp(_defusePalette.first, _defusePalette.last, t) ??
+          _defusePalette.first;
+    });
+  }
+
   void _onDefuseTap() {
-    HapticFeedback.selectionClick();
+    if (_defuseCount >= _defuseTargetTapCount) return;
+
+    final target = _defuseTargets[_defuseCount];
+    final aligned = _circularDistance(_defuseDialController.value, target) <=
+        _defuseWindowForStep(_defuseCount);
+    if (!aligned) {
+      HapticFeedback.selectionClick();
+      setState(() => _defuseLastAttemptAccurate = false);
+      return;
+    }
+
+    HapticFeedback.mediumImpact();
     setState(() {
       _defuseCount = (_defuseCount + 1).clamp(0, _defuseTargetTapCount);
+      _defuseLastAttemptAccurate = true;
     });
     if (_defuseCount >= _defuseTargetTapCount) {
       _handleActivityCompleted();
+      return;
     }
+    _startDefuseDial(restart: true);
   }
 
   Future<void> _onPairCardTap(int index) async {
@@ -887,117 +981,149 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
         final progress = _defuseTargetTapCount == 0
             ? 0.0
             : _defuseCount / _defuseTargetTapCount;
-        final sphereColor = Color.lerp(
+        final crackColor = Color.lerp(
               _defusePalette.first,
               _defusePalette.last,
               progress,
             ) ??
             definition.color;
-        final sphereSize = lerpDouble(210, 156, progress) ?? 180;
-        final outerSize = sphereSize + 34;
         return Column(
           key: const Key('break_activity_defuse'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Tap to bleed off the charge. Imagine the urge losing power every time you hit the core.',
+              'Steady the dial. Tap lock when the moving needle slips into the calm window.',
               style: TextStyle(height: 1.35),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            Row(
+              children: List<Widget>.generate(_defuseTargetTapCount, (index) {
+                final locked = index < _defuseCount;
+                return Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      right: index == _defuseTargetTapCount - 1 ? 0 : 8,
+                    ),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      height: 10,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(999),
+                        color: locked
+                            ? crackColor
+                            : crackColor.withValues(alpha: 0.14),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 18),
             Expanded(
-              child: Center(
-                child: GestureDetector(
-                  key: const Key('defuse_sphere'),
-                  onTap: _onDefuseTap,
-                  child: TweenAnimationBuilder<double>(
-                    key: ValueKey(_defuseCount),
-                    tween: Tween<double>(begin: 0.88, end: 1),
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOutBack,
-                    builder: (context, tapScale, child) {
-                      return Transform.scale(
-                        scale: tapScale,
-                        child: Stack(
-                          alignment: Alignment.center,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final dialSize = min(
+                    constraints.maxWidth * 0.62,
+                    max(64.0, constraints.maxHeight - 68),
+                  );
+                  final coreSize = dialSize * 0.36;
+                  final labelFontSize = dialSize < 150 ? 18.0 : 22.0;
+                  final ringColors = _defuseRingColors();
+
+                  return Center(
+                    child: AnimatedBuilder(
+                      animation: _defuseDialController,
+                      builder: (context, _) {
+                        final activeStep = _defuseCount.clamp(
+                          0,
+                          _defuseTargetTapCount - 1,
+                        );
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 220),
-                              width: outerSize,
-                              height: outerSize,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: sphereColor.withValues(alpha: 0.08),
-                                border: Border.all(
-                                  color: sphereColor.withValues(alpha: 0.22),
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 220),
-                              width: sphereSize,
-                              height: sphereSize,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: RadialGradient(
-                                  colors: [
-                                    Colors.white,
-                                    sphereColor.withValues(alpha: 0.96),
+                            GestureDetector(
+                              key: const Key('defuse_safe_crack'),
+                              onTap: _onDefuseTap,
+                              child: SizedBox(
+                                width: dialSize,
+                                height: dialSize,
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    CustomPaint(
+                                      size: Size.square(dialSize),
+                                      painter: _SafeCrackDialPainter(
+                                        color: crackColor,
+                                        ringColors: ringColors,
+                                        targetTurns: _defuseTargets,
+                                        needleTurn: _defuseDialController.value,
+                                        successWindows: _defuseSuccessWindows,
+                                        activeStep: activeStep,
+                                        unlockedCount: _defuseCount,
+                                      ),
+                                    ),
+                                    Container(
+                                      width: coreSize,
+                                      height: coreSize,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Colors.white,
+                                            crackColor.withValues(alpha: 0.18),
+                                          ],
+                                        ),
+                                        border: Border.all(
+                                          color: crackColor.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          'Tap',
+                                          style: TextStyle(
+                                            fontSize: labelFontSize,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: sphereColor.withValues(alpha: 0.34),
-                                    blurRadius: 30 - (progress * 10),
-                                    spreadRadius: 5 - (progress * 2),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    _defuseCount >= _defuseTargetTapCount
-                                        ? 'Stable'
-                                        : _defusePrompt,
-                                    style: const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    '${(_defuseCount.clamp(0, 12) * 100 / 12).round()}%',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color:
-                                          Colors.black.withValues(alpha: 0.6),
-                                    ),
-                                  ),
-                                ],
                               ),
                             ),
                           ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
             ),
-            Text(
-              _defuseCount >= _defuseTargetTapCount
-                  ? 'Nice. Keep breathing while the minute finishes.'
-                  : '${_defuseTargetTapCount - _defuseCount} taps left to stabilize it',
-              style: TextStyle(color: sphereColor),
+            SizedBox(
+              height: 52,
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Text(
+                  _defuseCount >= _defuseTargetTapCount
+                      ? 'Nice. The mechanism is calm now. Keep breathing while the minute finishes.'
+                      : _defuseLastAttemptAccurate
+                          ? '${_defuseTargetTapCount - _defuseCount} rings left. Stay with the rhythm.'
+                          : 'Wait for the needle to cross the glowing window, then tap it.',
+                  style: TextStyle(color: crackColor),
+                ),
+              ),
             ),
             const SizedBox(height: 10),
             LinearProgressIndicator(
               value: progress,
               minHeight: 10,
               borderRadius: BorderRadius.circular(999),
-              color: sphereColor,
+              color: crackColor,
             ),
           ],
         );
@@ -1637,6 +1763,144 @@ class _ZenRainPainter extends CustomPainter {
     return oldDelegate.centers != centers ||
         oldDelegate.sizes != sizes ||
         oldDelegate.caughtProgress != caughtProgress;
+  }
+}
+
+class _SafeCrackDialPainter extends CustomPainter {
+  final Color color;
+  final List<Color> ringColors;
+  final List<double> targetTurns;
+  final double needleTurn;
+  final List<double> successWindows;
+  final int activeStep;
+  final int unlockedCount;
+
+  const _SafeCrackDialPainter({
+    required this.color,
+    required this.ringColors,
+    required this.targetTurns,
+    required this.needleTurn,
+    required this.successWindows,
+    required this.activeStep,
+    required this.unlockedCount,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = min(size.width, size.height) / 2;
+    final strokeWidth = max(8.0, radius * 0.08);
+    final emptyGap = max(8.0, radius * 0.08);
+    final innerGap = emptyGap;
+    final ringStep = strokeWidth + emptyGap;
+    final targetPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = strokeWidth;
+    final needlePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = max(4.0, strokeWidth * 0.7)
+      ..color = const Color(0xFF3B2F2F);
+
+    const startOffset = -pi / 2;
+    final coreRadius = radius * 0.18;
+    final innerRingRadius = coreRadius + innerGap + (strokeWidth / 2);
+    final ringRadii = List<double>.generate(
+      targetTurns.length,
+      (index) =>
+          innerRingRadius + ((targetTurns.length - 1 - index) * ringStep),
+    );
+    final outerRingRadius = ringRadii.first;
+
+    for (var index = 0; index < ringRadii.length; index++) {
+      final ringRect =
+          Rect.fromCircle(center: center, radius: ringRadii[index]);
+      final ringColor = ringColors[index % ringColors.length];
+
+      if (index >= unlockedCount) {
+        canvas.drawArc(
+          ringRect,
+          0,
+          pi * 2,
+          false,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = strokeWidth
+            ..color = ringColor.withValues(alpha: 0.17),
+        );
+      }
+
+      if (index < unlockedCount) {
+        continue;
+      }
+
+      if (index == activeStep) {
+        final windowSweep = successWindows[index] * pi * 4;
+        final aligned = min(
+              (needleTurn - targetTurns[index]).abs(),
+              1 - (needleTurn - targetTurns[index]).abs(),
+            ) <=
+            successWindows[index];
+        targetPaint.color = ringColor.withValues(alpha: aligned ? 0.98 : 0.78);
+        canvas.drawArc(
+          ringRect,
+          startOffset + (targetTurns[index] * pi * 2) - (windowSweep / 2),
+          windowSweep,
+          false,
+          targetPaint,
+        );
+      }
+    }
+
+    final needleAngle = startOffset + (needleTurn * pi * 2);
+    final activeRingRadius = ringRadii[activeStep];
+    final innerPoint = Offset(
+      center.dx + cos(needleAngle) * max(coreRadius + 8, activeRingRadius - 18),
+      center.dy + sin(needleAngle) * max(coreRadius + 8, activeRingRadius - 18),
+    );
+    final outerPoint = Offset(
+      center.dx + cos(needleAngle) * (activeRingRadius - (strokeWidth / 2)),
+      center.dy + sin(needleAngle) * (activeRingRadius - (strokeWidth / 2)),
+    );
+    canvas.drawLine(innerPoint, outerPoint, needlePaint);
+    canvas.drawCircle(
+      outerPoint,
+      7,
+      Paint()
+        ..style = PaintingStyle.fill
+        ..color = ringColors[activeStep % ringColors.length],
+    );
+
+    for (var tick = 0; tick < 12; tick++) {
+      final angle = startOffset + (tick / 12) * pi * 2;
+      final tickStart = Offset(
+        center.dx + cos(angle) * (outerRingRadius + emptyGap * 0.2),
+        center.dy + sin(angle) * (outerRingRadius + emptyGap * 0.2),
+      );
+      final tickEnd = Offset(
+        center.dx + cos(angle) * (outerRingRadius + emptyGap * 0.95),
+        center.dy + sin(angle) * (outerRingRadius + emptyGap * 0.95),
+      );
+      canvas.drawLine(
+        tickStart,
+        tickEnd,
+        Paint()
+          ..strokeWidth = 2
+          ..color = color.withValues(alpha: 0.28),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SafeCrackDialPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.ringColors != ringColors ||
+        oldDelegate.targetTurns != targetTurns ||
+        oldDelegate.needleTurn != needleTurn ||
+        oldDelegate.successWindows != successWindows ||
+        oldDelegate.activeStep != activeStep ||
+        oldDelegate.unlockedCount != unlockedCount;
   }
 }
 
