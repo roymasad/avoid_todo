@@ -1,5 +1,6 @@
 import 'package:avoid_todo/model/break_session.dart';
 import 'package:avoid_todo/model/todo.dart';
+import 'package:avoid_todo/l10n/app_localizations.dart';
 import 'package:avoid_todo/widgets/urge_break_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -64,6 +65,26 @@ Future<void> _completeCurrentActivity(
 }
 
 void main() {
+  test('stack blocker overlap ignores separated tiles', () {
+    expect(
+      UrgeBreakSheet.debugStackRectsCountAsBlocking(
+        blockerRect: const Rect.fromLTWH(68, 24, 40, 22),
+        blockedRect: const Rect.fromLTWH(24, 10, 40, 22),
+      ),
+      isFalse,
+    );
+  });
+
+  test('stack blocker overlap still catches meaningful coverage', () {
+    expect(
+      UrgeBreakSheet.debugStackRectsCountAsBlocking(
+        blockerRect: const Rect.fromLTWH(46, 18, 40, 22),
+        blockedRect: const Rect.fromLTWH(24, 10, 40, 22),
+      ),
+      isTrue,
+    );
+  });
+
   testWidgets('timer completion shows the outcome view',
       (WidgetTester tester) async {
     BreakSessionResult? result;
@@ -243,6 +264,69 @@ void main() {
     expect(find.text('Hints on'), findsOneWidget);
   });
 
+  testWidgets('defuse center label stays as Tap in other locales',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('fr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.defuse,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('defuse_safe_crack')),
+        matching: find.text('Tap'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('defuse needle keeps moving while the activity is active',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.defuse,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    final paintFinder = find.descendant(
+      of: find.byKey(const Key('defuse_safe_crack')),
+      matching: find.byType(CustomPaint),
+    );
+    final firstPainter =
+        tester.widget<CustomPaint>(paintFinder).painter as dynamic;
+    final firstNeedleTurn = firstPainter.needleTurn as double;
+
+    await tester.pump(const Duration(milliseconds: 200));
+
+    final secondPainter =
+        tester.widget<CustomPaint>(paintFinder).painter as dynamic;
+    final secondNeedleTurn = secondPainter.needleTurn as double;
+
+    expect(secondNeedleTurn, isNot(equals(firstNeedleTurn)));
+  });
+
   testWidgets('pause button freezes and resumes the break timer',
       (WidgetTester tester) async {
     await tester.pumpWidget(
@@ -418,6 +502,46 @@ void main() {
     await tester.pump();
 
     expect(find.text('Hints on'), findsOneWidget);
+  });
+
+  testWidgets('pair match cards flip when revealed',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.pairMatch,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('pair_card_0')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final midFlip = tester.widget<Transform>(
+      find.byKey(const Key('pair_card_flip_0')),
+    );
+    expect(midFlip.transform.storage[0], isNot(closeTo(1, 0.001)));
+
+    await tester.pumpAndSettle();
+
+    final settled = tester.widget<Transform>(
+      find.byKey(const Key('pair_card_flip_0')),
+    );
+    expect(settled.transform.storage[0], closeTo(1, 0.001));
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('pair_card_0')),
+        matching: find.text('?'),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('stack sweep activity renders its board',

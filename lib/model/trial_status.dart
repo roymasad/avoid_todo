@@ -1,6 +1,7 @@
 enum TrialSource {
   iCloudKvStore,
   googleDriveAppData,
+  debugOverride,
 }
 
 enum TrialStartOutcome {

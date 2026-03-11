@@ -9,10 +9,14 @@ class _FakeTrialRepository implements TrialRepository {
     this.status,
     this.startResult =
         const TrialStartResult(outcome: TrialStartOutcome.unavailable),
+    this.clearResult = true,
+    this.expireResult = true,
   });
 
   final TrialStatus? status;
   final TrialStartResult startResult;
+  final bool clearResult;
+  final bool expireResult;
 
   @override
   Future<bool> isAvailableForTrial() async => true;
@@ -24,10 +28,10 @@ class _FakeTrialRepository implements TrialRepository {
   Future<TrialStartResult> startTrial() async => startResult;
 
   @override
-  Future<bool> clearStatus() async => true;
+  Future<bool> clearStatus() async => clearResult;
 
   @override
-  Future<bool> expireStatus() async => true;
+  Future<bool> expireStatus() async => expireResult;
 
   @override
   Future<TrialDebugState> debugState() async => TrialDebugState(
@@ -78,6 +82,39 @@ void main() {
       expect(result.outcome, TrialStartOutcome.started);
       expect(provider.hasActiveTrial, isTrue);
       expect(provider.trialStatus?.accountKey, 'account-2');
+    });
+
+    test('debug override grants trial access without storage', () async {
+      final provider = PurchaseProvider(
+        trialRepository: _FakeTrialRepository(
+          clearResult: false,
+          expireResult: false,
+        ),
+      );
+
+      final status = await provider.grantDebugTrialAccess();
+
+      expect(provider.hasActiveTrial, isTrue);
+      expect(provider.hasPlusAccess, isTrue);
+      expect(provider.hasDebugTrialOverride, isTrue);
+      expect(provider.trialStatus?.source, TrialSource.debugOverride);
+      expect(provider.trialStatus?.accountKey, 'debug_override');
+      expect(status.isActive, isTrue);
+    });
+
+    test('reset clears debug override even when repository clear fails',
+        () async {
+      final provider = PurchaseProvider(
+        trialRepository: _FakeTrialRepository(clearResult: false),
+      );
+
+      await provider.grantDebugTrialAccess();
+      final cleared = await provider.resetTrialDebugState();
+
+      expect(cleared, isTrue);
+      expect(provider.hasDebugTrialOverride, isFalse);
+      expect(provider.hasActiveTrial, isFalse);
+      expect(provider.trialStatus, isNull);
     });
   });
 }

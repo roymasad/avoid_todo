@@ -14,13 +14,15 @@ class PurchaseProvider extends ChangeNotifier {
   bool _isAccessStateResolved = false;
   String? _plusPriceString;
   TrialStatus? _trialStatus;
+  TrialStatus? _debugTrialOverride;
 
   bool get isPlus => hasPlusAccess;
   bool get hasPurchasedPlus => _hasPurchasedPlus;
-  bool get hasActiveTrial => _trialStatus?.isActive ?? false;
+  bool get hasActiveTrial => trialStatus?.isActive ?? false;
   bool get hasPlusAccess => _hasPurchasedPlus || hasActiveTrial;
   bool get isAccessStateResolved => _isAccessStateResolved;
-  TrialStatus? get trialStatus => _trialStatus;
+  bool get hasDebugTrialOverride => _debugTrialOverride != null;
+  TrialStatus? get trialStatus => _debugTrialOverride ?? _trialStatus;
 
   /// Localized price string for the Plus product, e.g. "$2.99".
   /// Null until the first [refresh] completes or if the fetch fails.
@@ -76,9 +78,24 @@ class PurchaseProvider extends ChangeNotifier {
     return await _trialRepository?.debugState();
   }
 
+  Future<TrialStatus> grantDebugTrialAccess() async {
+    final now = DateTime.now().toUtc();
+    final status = TrialStatus.start(
+      nowUtc: now,
+      accountKey: 'debug_override',
+      source: TrialSource.debugOverride,
+    );
+    _debugTrialOverride = status;
+    _isAccessStateResolved = true;
+    notifyListeners();
+    return status;
+  }
+
   Future<bool> resetTrialDebugState() async {
+    final hadOverride = _debugTrialOverride != null;
     final cleared = await _trialRepository?.clearStatus() ?? false;
-    if (!cleared) return false;
+    if (!cleared && !hadOverride) return false;
+    _debugTrialOverride = null;
     _trialStatus = null;
     _isAccessStateResolved = true;
     notifyListeners();
@@ -86,9 +103,18 @@ class PurchaseProvider extends ChangeNotifier {
   }
 
   Future<bool> expireTrialDebugState() async {
+    final now = DateTime.now().toUtc();
+    final hadOverride = _debugTrialOverride != null;
+    if (_debugTrialOverride != null) {
+      _debugTrialOverride = _debugTrialOverride!.copyWith(
+        expiresAtUtc: now.subtract(const Duration(seconds: 1)),
+        lastSeenAtUtc: now,
+      );
+    }
     final expired = await _trialRepository?.expireStatus() ?? false;
-    if (!expired) return false;
-    _trialStatus = await _trialRepository?.loadStatus();
+    if (!expired && !hadOverride) return false;
+    _trialStatus =
+        expired ? await _trialRepository?.loadStatus() : _trialStatus;
     _isAccessStateResolved = true;
     notifyListeners();
     return true;

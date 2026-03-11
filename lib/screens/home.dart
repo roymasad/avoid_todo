@@ -4966,21 +4966,28 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       return;
     }
 
-    final status = debugState.status;
+    final storedStatus = debugState.status;
+    final status = purchase.trialStatus;
     final diagnostics = <String>[
       'Storage: ${debugState.storageLabel}',
       'Storage available: ${debugState.isStorageAvailable}',
       'Local cache present: ${debugState.hasCachedStatus}',
+      'Debug override active: ${purchase.hasDebugTrialOverride}',
       'Active trial: ${purchase.hasActiveTrial}',
       'Paid Plus: ${purchase.hasPurchasedPlus}',
+      if (storedStatus != null) ...[
+        'Stored source: ${storedStatus.source.name}',
+        'Stored account key: ${storedStatus.accountKey}',
+      ] else
+        'Stored status: none found',
       if (status != null) ...[
-        'Source: ${status.source.name}',
-        'Account key: ${status.accountKey}',
+        'Effective source: ${status.source.name}',
+        'Effective account key: ${status.accountKey}',
         'Started UTC: ${status.startedAtUtc.toIso8601String()}',
         'Expires UTC: ${status.expiresAtUtc.toIso8601String()}',
         'Last seen UTC: ${status.lastSeenAtUtc.toIso8601String()}',
       ] else
-        'Remote status: none found',
+        'Effective status: none found',
     ].join('\n');
 
     await showDialog<void>(
@@ -4997,6 +5004,24 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Close'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final status = await purchase.grantDebugTrialAccess();
+              if (!mounted) return;
+              final expiresAt = DateFormat.yMMMd()
+                  .add_jm()
+                  .format(status.expiresAtUtc.toLocal());
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Debug trial access granted until $expiresAt. This override is session-only and works without device storage.',
+                  ),
+                ),
+              );
+            },
+            child: const Text('Grant Trial Access'),
           ),
           TextButton(
             onPressed: () async {

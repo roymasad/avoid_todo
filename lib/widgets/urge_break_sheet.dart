@@ -28,6 +28,103 @@ class UrgeBreakSheet extends StatefulWidget {
     this.duration = const Duration(seconds: 60),
   });
 
+  static bool debugStackRectsCountAsBlocking({
+    required Rect blockerRect,
+    required Rect blockedRect,
+    double blockerRotation = 0,
+    double blockedRotation = 0,
+  }) {
+    final blockerPoints = _rotatedRectPoints(
+      _insetRect(blockerRect),
+      blockerRotation,
+    );
+    final blockedPoints = _rotatedRectPoints(
+      _insetRect(blockedRect),
+      blockedRotation,
+    );
+    return _convexPolygonsOverlap(blockerPoints, blockedPoints);
+  }
+
+  static Rect _insetRect(Rect rect) {
+    final horizontalInset = min(rect.width * 0.06, 2.0);
+    final verticalInset = min(rect.height * 0.08, 2.0);
+    return Rect.fromLTWH(
+      rect.left + horizontalInset,
+      rect.top + verticalInset,
+      max(0, rect.width - (horizontalInset * 2)),
+      max(0, rect.height - (verticalInset * 2)),
+    );
+  }
+
+  static List<Offset> _rotatedRectPoints(Rect rect, double rotation) {
+    final center = rect.center;
+    final cosTheta = cos(rotation);
+    final sinTheta = sin(rotation);
+    final corners = <Offset>[
+      rect.topLeft,
+      rect.topRight,
+      rect.bottomRight,
+      rect.bottomLeft,
+    ];
+
+    return corners.map((point) {
+      final translatedX = point.dx - center.dx;
+      final translatedY = point.dy - center.dy;
+      return Offset(
+        center.dx + (translatedX * cosTheta) - (translatedY * sinTheta),
+        center.dy + (translatedX * sinTheta) + (translatedY * cosTheta),
+      );
+    }).toList();
+  }
+
+  static bool _convexPolygonsOverlap(
+    List<Offset> first,
+    List<Offset> second,
+  ) {
+    final axes = <Offset>[
+      ..._polygonAxes(first),
+      ..._polygonAxes(second),
+    ];
+
+    for (final axis in axes) {
+      final firstProjection = _projectPolygon(first, axis);
+      final secondProjection = _projectPolygon(second, axis);
+      if (firstProjection.$2 <= secondProjection.$1 ||
+          secondProjection.$2 <= firstProjection.$1) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static List<Offset> _polygonAxes(List<Offset> points) {
+    final axes = <Offset>[];
+    for (var index = 0; index < points.length; index++) {
+      final next = points[(index + 1) % points.length];
+      final edge = next - points[index];
+      final normal = Offset(-edge.dy, edge.dx);
+      final length = normal.distance;
+      if (length == 0) continue;
+      axes.add(Offset(normal.dx / length, normal.dy / length));
+    }
+    return axes;
+  }
+
+  static (double, double) _projectPolygon(List<Offset> points, Offset axis) {
+    var minProjection = points.first.dx * axis.dx + points.first.dy * axis.dy;
+    var maxProjection = minProjection;
+    for (final point in points.skip(1)) {
+      final projection = point.dx * axis.dx + point.dy * axis.dy;
+      if (projection < minProjection) {
+        minProjection = projection;
+      }
+      if (projection > maxProjection) {
+        maxProjection = projection;
+      }
+    }
+    return (minProjection, maxProjection);
+  }
+
   @override
   State<UrgeBreakSheet> createState() => _UrgeBreakSheetState();
 }
@@ -522,6 +619,12 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     _defuseDialController
       ..duration = Duration(milliseconds: _defuseBaseDialPeriodMs)
       ..value = _random.nextDouble();
+    if (widget.activityType == BreakActivityType.defuse &&
+        !_isPaused &&
+        !_showOutcome &&
+        !_activityCompleted) {
+      _startDefuseDial(restart: true);
+    }
     _triviaOrder = List<int>.generate(_triviaPrompts.length, (i) => i)
       ..shuffle(_random);
     _triviaOptionOrders = List<List<int>>.generate(
@@ -781,12 +884,6 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     return Rect.fromLTWH(left, top, tileWidth, tileHeight);
   }
 
-  Rect _stackCoverageRectFor(_StackSweepTile tile, Size size) {
-    final baseRect = _stackTileRectFor(tile, size);
-    final rotationPadding = 4 + (tile.slot.rotation.abs() * 50);
-    return baseRect.inflate(rotationPadding);
-  }
-
   bool _isStackTileAbove(_StackSweepTile candidate, _StackSweepTile tile) {
     if (candidate.slot.layer != tile.slot.layer) {
       return candidate.slot.layer > tile.slot.layer;
@@ -803,7 +900,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
       return false;
     }
 
-    final rect = _stackCoverageRectFor(tile, size);
+    final rect = _stackTileRectFor(tile, size);
     for (final other in _stackTiles) {
       if (other.id == tile.id ||
           !_isStackTileAbove(other, tile) ||
@@ -812,7 +909,12 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
         continue;
       }
 
-      if (_stackCoverageRectFor(other, size).overlaps(rect)) {
+      if (UrgeBreakSheet.debugStackRectsCountAsBlocking(
+        blockerRect: _stackTileRectFor(other, size),
+        blockedRect: rect,
+        blockerRotation: other.slot.rotation,
+        blockedRotation: tile.slot.rotation,
+      )) {
         return false;
       }
     }
@@ -1483,6 +1585,109 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     );
   }
 
+  Widget _buildPairCardFace(
+    BuildContext context,
+    BreakActivityDefinition definition, {
+    required bool visible,
+    required bool matched,
+    required bool hinted,
+    required String label,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: visible
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  definition.color.withValues(alpha: 0.24),
+                  definition.color.withValues(alpha: 0.12),
+                ],
+              )
+            : null,
+        color: visible ? null : colorScheme.surfaceContainerHighest,
+        border: Border.all(
+          color: visible
+              ? definition.color.withValues(
+                  alpha: matched ? 0.8 : 0.45,
+                )
+              : hinted
+                  ? definition.color.withValues(alpha: 0.72)
+                  : colorScheme.outlineVariant.withValues(alpha: 0.7),
+          width: hinted ? 2.1 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: hinted
+                ? definition.color.withValues(alpha: 0.16)
+                : Colors.black.withValues(alpha: 0.03),
+            blurRadius: hinted ? 10 : 6,
+            offset: Offset(0, hinted ? 5 : 3),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.bold,
+            color:
+                visible ? null : colorScheme.onSurface.withValues(alpha: 0.45),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPairCardTile(
+    BuildContext context,
+    BreakActivityDefinition definition,
+    int index, {
+    required bool visible,
+    required bool matched,
+    required bool hinted,
+  }) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(end: visible ? 1 : 0),
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeInOutCubic,
+      builder: (context, progress, _) {
+        final angle = pi * progress;
+        final showFront = angle >= (pi / 2);
+        final displayAngle = showFront ? angle - pi : angle;
+        final face = showFront
+            ? _buildPairCardFace(
+                context,
+                definition,
+                visible: true,
+                matched: matched,
+                hinted: false,
+                label: _pairMatchEmojis[_pairDeck[index]],
+              )
+            : _buildPairCardFace(
+                context,
+                definition,
+                visible: false,
+                matched: false,
+                hinted: hinted,
+                label: '?',
+              );
+
+        return Transform(
+          key: Key('pair_card_flip_$index'),
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.0012)
+            ..rotateY(displayAngle),
+          child: face,
+        );
+      },
+    );
+  }
+
   Widget _buildPairGrid(BreakActivityDefinition definition) {
     const spacing = 10.0;
     const columns = 4;
@@ -1516,61 +1721,13 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
               key: Key('pair_card_$index'),
               borderRadius: BorderRadius.circular(18),
               onTap: () => _onPairCardTap(index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  gradient: visible
-                      ? LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            definition.color.withValues(alpha: 0.24),
-                            definition.color.withValues(alpha: 0.12),
-                          ],
-                        )
-                      : null,
-                  color: visible
-                      ? null
-                      : Theme.of(context).colorScheme.surfaceContainerHighest,
-                  border: Border.all(
-                    color: visible
-                        ? definition.color.withValues(
-                            alpha: matched ? 0.8 : 0.45,
-                          )
-                        : hinted
-                            ? definition.color.withValues(alpha: 0.72)
-                            : Theme.of(context)
-                                .colorScheme
-                                .outlineVariant
-                                .withValues(alpha: 0.7),
-                    width: hinted ? 2.1 : 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: hinted
-                          ? definition.color.withValues(alpha: 0.16)
-                          : Colors.black.withValues(alpha: 0.03),
-                      blurRadius: hinted ? 10 : 6,
-                      offset: Offset(0, hinted ? 5 : 3),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    visible ? _pairMatchEmojis[_pairDeck[index]] : '?',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                      color: visible
-                          ? null
-                          : Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.45),
-                    ),
-                  ),
-                ),
+              child: _buildPairCardTile(
+                context,
+                definition,
+                index,
+                visible: visible,
+                matched: matched,
+                hinted: hinted,
               ),
             );
           },
@@ -1914,7 +2071,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                                   ),
                                   child: Center(
                                     child: Text(
-                                      l10n.breakDefuseTap,
+                                      'Tap',
                                       style: TextStyle(
                                         fontSize: labelFontSize,
                                         fontWeight: FontWeight.bold,
