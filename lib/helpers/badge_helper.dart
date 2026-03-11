@@ -30,6 +30,7 @@ class BadgeCheckStats {
   final int activeCount;
   final int totalAvoided;
   final int totalRelapses;
+  final int helpfulBreaks;
   final DateTime? firstHabitCreatedAt;
 
   const BadgeCheckStats({
@@ -38,6 +39,7 @@ class BadgeCheckStats {
     required this.activeCount,
     required this.totalAvoided,
     required this.totalRelapses,
+    required this.helpfulBreaks,
     this.firstHabitCreatedAt,
   });
 }
@@ -100,6 +102,22 @@ class BadgeHelper {
       description: '25 successful avoidances',
       icon: Icons.local_fire_department_rounded,
       color: Colors.deepOrange,
+      tier: BadgeTier.free,
+    ),
+    BadgeDefinition(
+      id: 'badge_breakthrough',
+      title: 'Breakthrough',
+      description: 'Used one helpful break',
+      icon: Icons.play_circle_fill_rounded,
+      color: Colors.teal,
+      tier: BadgeTier.free,
+    ),
+    BadgeDefinition(
+      id: 'badge_storm_tamer',
+      title: 'Storm Tamer',
+      description: 'Used 25 helpful breaks',
+      icon: Icons.shield_moon_outlined,
+      color: Colors.cyan,
       tier: BadgeTier.free,
     ),
     // ── Plus badges ──────────────────────────────────────────────────────────
@@ -229,6 +247,8 @@ class BadgeHelper {
     if (stats.totalSavedMoney >= 50) earned.add('badge_budget');
     if (stats.activeCount >= 5) earned.add('badge_consistency');
     if (stats.totalAvoided >= 25) earned.add('badge_25_avoids');
+    if (stats.helpfulBreaks >= 1) earned.add('badge_breakthrough');
+    if (stats.helpfulBreaks >= 25) earned.add('badge_storm_tamer');
 
     // Plus badges (persisted for all; shown/celebrated only for Plus users)
     if (stats.longestStreak.inDays >= 30) earned.add('badge_iron_month');

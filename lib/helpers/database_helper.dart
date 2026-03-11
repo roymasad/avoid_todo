@@ -5,6 +5,7 @@ import '../model/tag.dart';
 import '../model/relapse_log.dart';
 import '../model/goal.dart';
 import '../model/trusted_support_contact.dart';
+import '../model/break_session.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -34,7 +35,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 14,
+      version: 15,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -152,6 +153,19 @@ class DatabaseHelper {
       isEnabled INTEGER NOT NULL DEFAULT 1,
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL
+    )
+    ''');
+
+    await db.execute('''
+    CREATE TABLE break_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      todoId TEXT NOT NULL,
+      activityType TEXT NOT NULL,
+      startedAt TEXT NOT NULL,
+      endedAt TEXT NOT NULL,
+      status TEXT NOT NULL,
+      outcome TEXT,
+      FOREIGN KEY (todoId) REFERENCES todo (id) ON DELETE CASCADE
     )
     ''');
 
@@ -349,6 +363,20 @@ class DatabaseHelper {
       } catch (_) {
         // Column may already exist.
       }
+    }
+    if (oldVersion < 15) {
+      await db.execute('''
+      CREATE TABLE IF NOT EXISTS break_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        todoId TEXT NOT NULL,
+        activityType TEXT NOT NULL,
+        startedAt TEXT NOT NULL,
+        endedAt TEXT NOT NULL,
+        status TEXT NOT NULL,
+        outcome TEXT,
+        FOREIGN KEY (todoId) REFERENCES todo (id) ON DELETE CASCADE
+      )
+      ''');
     }
   }
 
@@ -575,6 +603,114 @@ class DatabaseHelper {
   Future<void> deleteTrustedSupportContact() async {
     final db = await instance.database;
     await db.delete('trusted_support_contact');
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Break sessions
+  // ─────────────────────────────────────────────────────────────
+
+  Future<int> addBreakSession({
+    required String todoId,
+    required BreakActivityType activityType,
+    required DateTime startedAt,
+    required DateTime endedAt,
+    required BreakSessionStatus status,
+    BreakOutcome? outcome,
+  }) async {
+    final db = await instance.database;
+    return db.insert('break_sessions', {
+      'todoId': todoId,
+      'activityType': activityType.name,
+      'startedAt': startedAt.toIso8601String(),
+      'endedAt': endedAt.toIso8601String(),
+      'status': status.name,
+      'outcome': outcome?.name,
+    });
+  }
+
+  Future<BreakSessionSummary> getBreakSummaryForTodo(String todoId) async {
+    final db = await instance.database;
+    final result = await db.rawQuery('''
+      SELECT
+        COUNT(*) AS totalStarted,
+        SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) AS totalCompleted,
+        SUM(CASE WHEN outcome IN (?, ?) THEN 1 ELSE 0 END) AS helpfulCount,
+        MAX(endedAt) AS lastUsedAt
+      FROM break_sessions
+      WHERE todoId = ?
+    ''', [
+      BreakSessionStatus.completed.name,
+      BreakOutcome.passed.name,
+      BreakOutcome.weaker.name,
+      todoId,
+    ]);
+
+    final row = result.first;
+    return BreakSessionSummary(
+      totalStarted: (row['totalStarted'] as num?)?.toInt() ?? 0,
+      totalCompleted: (row['totalCompleted'] as num?)?.toInt() ?? 0,
+      helpfulCount: (row['helpfulCount'] as num?)?.toInt() ?? 0,
+      lastUsedAt: (row['lastUsedAt'] as String?) == null
+          ? null
+          : DateTime.tryParse(row['lastUsedAt'] as String),
+    );
+  }
+
+  Future<BreakSessionSummary> getBreakStatsOverview() async {
+    final db = await instance.database;
+    final result = await db.rawQuery('''
+      SELECT
+        COUNT(*) AS totalStarted,
+        SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) AS totalCompleted,
+        SUM(CASE WHEN outcome IN (?, ?) THEN 1 ELSE 0 END) AS helpfulCount,
+        MAX(endedAt) AS lastUsedAt
+      FROM break_sessions
+    ''', [
+      BreakSessionStatus.completed.name,
+      BreakOutcome.passed.name,
+      BreakOutcome.weaker.name,
+    ]);
+
+    final topHelpful = await db.rawQuery('''
+      SELECT
+        t.todoText AS todoText,
+        COUNT(*) AS helpfulCount,
+        MAX(b.endedAt) AS lastHelpfulAt
+      FROM break_sessions b
+      JOIN todo t ON t.id = b.todoId
+      WHERE b.outcome IN (?, ?)
+      GROUP BY b.todoId, t.todoText
+      ORDER BY helpfulCount DESC, lastHelpfulAt DESC
+      LIMIT 1
+    ''', [
+      BreakOutcome.passed.name,
+      BreakOutcome.weaker.name,
+    ]);
+
+    final row = result.first;
+    return BreakSessionSummary(
+      totalStarted: (row['totalStarted'] as num?)?.toInt() ?? 0,
+      totalCompleted: (row['totalCompleted'] as num?)?.toInt() ?? 0,
+      helpfulCount: (row['helpfulCount'] as num?)?.toInt() ?? 0,
+      lastUsedAt: (row['lastUsedAt'] as String?) == null
+          ? null
+          : DateTime.tryParse(row['lastUsedAt'] as String),
+      mostHelpedTodoText:
+          topHelpful.isEmpty ? null : topHelpful.first['todoText'] as String?,
+    );
+  }
+
+  Future<int> getHelpfulBreakCount() async {
+    final db = await instance.database;
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) AS count
+      FROM break_sessions
+      WHERE outcome IN (?, ?)
+    ''', [
+      BreakOutcome.passed.name,
+      BreakOutcome.weaker.name,
+    ]);
+    return Sqflite.firstIntValue(result) ?? 0;
   }
 
   // ─────────────────────────────────────────────────────────────

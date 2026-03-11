@@ -32,6 +32,7 @@ import '../helpers/home_widget_helper.dart';
 import '../helpers/sync_helper.dart';
 import '../helpers/app_analytics.dart';
 import '../helpers/app_crash_reporter.dart';
+import '../helpers/break_helper.dart';
 import 'help_screen.dart';
 import 'map_picker_screen.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
@@ -41,6 +42,8 @@ import '../helpers/rating_helper.dart';
 import '../widgets/rating_dialog.dart';
 import '../widgets/language_settings_tile.dart';
 import '../widgets/plus_upgrade_dialog.dart';
+import '../widgets/urge_break_sheet.dart';
+import '../model/break_session.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../helpers/trusted_support_helper.dart';
 // Note: Map implementation uses simple location names for now.
@@ -127,6 +130,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   // Phase 6: Cloud sync
   bool _syncEnabled = false;
   TrustedSupportContact? _trustedSupportContact;
+  final Map<String, BreakActivityType> _lastBreakActivityByTodo = {};
 
   // Phase 1 New Fields
   bool _isRecurring = true;
@@ -2203,6 +2207,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                         child: ToDoItem(
                                           todo: _foundToDo[i],
                                           onEditItem: _editTodo,
+                                          onBreakItem: _openBreakForTodo,
                                         ),
                                       );
 
@@ -2383,6 +2388,280 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildBreakStatsSection(
+    BreakSessionSummary summary, {
+    required bool isExpanded,
+    required VoidCallback onToggle,
+  }) {
+    String percent(double value) => '${(value * 100).round()}%';
+    final lastUsed = summary.lastUsedAt == null
+        ? 'Never'
+        : DateFormat.yMMMd().add_Hm().format(summary.lastUsedAt!.toLocal());
+
+    Widget metric(String label, String value) {
+      return Container(
+        width: 140,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: tdAvoidRed.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: tdAvoidRed.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: onToggle,
+            borderRadius: BorderRadius.circular(14),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Break insights',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Text(
+                    summary.totalStarted == 0
+                        ? 'No data yet'
+                        : '${summary.totalStarted} breaks',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.7),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    isExpanded
+                        ? Icons.expand_less_rounded
+                        : Icons.expand_more_rounded,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.75),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: summary.totalStarted == 0
+                  ? const Text(
+                      'No break data yet. Use Break on the todo card when the urge hits.',
+                      style: TextStyle(height: 1.35),
+                    )
+                  : Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        metric(
+                            'Breaks started', summary.totalStarted.toString()),
+                        metric(
+                          'Completion rate',
+                          percent(summary.completionRate),
+                        ),
+                        metric(
+                          'Helpful rate',
+                          percent(summary.helpfulRate),
+                        ),
+                        metric('Last used', lastUsed),
+                      ],
+                    ),
+            ),
+            crossFadeState: isExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 180),
+            sizeCurve: Curves.easeOutCubic,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openBreakForTodo(
+    ToDo todo, {
+    BreakActivityType? forcedActivity,
+  }) async {
+    if (todo.id == null) return;
+
+    final previous =
+        todo.id == null ? null : _lastBreakActivityByTodo[todo.id!];
+    final activityType = forcedActivity ??
+        BreakHelper.pickActivity(
+          todo.avoidType,
+          previous: previous,
+        );
+    _lastBreakActivityByTodo[todo.id!] = activityType;
+
+    await AppAnalytics.instance.trackEvent(
+      'break_started',
+      parameters: {
+        'source_screen': 'home_tab',
+        'todo_id': todo.id,
+        'avoid_type': todo.avoidType.name,
+        'activity_type': activityType.name,
+      },
+    );
+
+    if (!mounted) return;
+
+    final result = await showModalBottomSheet<BreakSessionResult>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (_) => UrgeBreakSheet(
+        todo: todo,
+        activityType: activityType,
+        showTrustedSupport: _trustedSupportContact?.isEnabled == true,
+      ),
+    );
+
+    if (result == null || todo.id == null) return;
+
+    await DatabaseHelper.instance.addBreakSession(
+      todoId: todo.id!,
+      activityType: result.activityType,
+      startedAt: result.startedAt,
+      endedAt: result.endedAt,
+      status: result.status,
+      outcome: result.outcome,
+    );
+
+    if (result.status == BreakSessionStatus.aborted) {
+      await AppAnalytics.instance.trackEvent(
+        'break_aborted',
+        parameters: {
+          'source_screen': 'home_tab',
+          'todo_id': todo.id,
+          'avoid_type': todo.avoidType.name,
+          'activity_type': result.activityType.name,
+        },
+      );
+      return;
+    }
+
+    await AppAnalytics.instance.trackEvent(
+      'break_completed',
+      parameters: {
+        'source_screen': 'home_tab',
+        'todo_id': todo.id,
+        'avoid_type': todo.avoidType.name,
+        'activity_type': result.activityType.name,
+        'helpful': result.isHelpful,
+      },
+    );
+
+    if (result.outcome != null) {
+      await AppAnalytics.instance.trackEvent(
+        'break_outcome_selected',
+        parameters: {
+          'source_screen': 'home_tab',
+          'todo_id': todo.id,
+          'activity_type': result.activityType.name,
+          'outcome': result.outcome!.name,
+        },
+      );
+    }
+
+    if (result.isHelpful && mounted) {
+      final sourceKey = BreakHelper.xpSourceFor(todo.id!, result.endedAt);
+      final alreadyAwarded =
+          await DatabaseHelper.instance.hasXpSourceKey(sourceKey);
+      if (!alreadyAwarded && mounted) {
+        await context
+            .read<XpProvider>()
+            .award(sourceKey, BreakHelper.xpHelpfulBreak);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('+5 XP - Helpful break'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    }
+
+    if (result.followUpAction != null) {
+      await AppAnalytics.instance.trackEvent(
+        'break_followup_selected',
+        parameters: {
+          'source_screen': 'home_tab',
+          'todo_id': todo.id,
+          'activity_type': result.activityType.name,
+          'follow_up': result.followUpAction!.name,
+        },
+      );
+    }
+
+    if (!mounted) return;
+
+    switch (result.followUpAction) {
+      case BreakFollowUpAction.retry:
+        await _openBreakForTodo(todo);
+        break;
+      case BreakFollowUpAction.zenRoom:
+        await _openBreakForTodo(
+          todo,
+          forcedActivity: BreakActivityType.zenRoom,
+        );
+        break;
+      case BreakFollowUpAction.trustedSupport:
+        final contact = _trustedSupportContact;
+        if (contact != null && contact.isEnabled) {
+          await _showTrustedSupportPrompt(contact);
+        }
+        break;
+      case null:
+        break;
+    }
+  }
+
   Future<void> _editTodo(ToDo todo) async {
     final textController = TextEditingController(text: todo.todoText);
     final costController =
@@ -2401,6 +2680,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     DateTime? editReminderDateTime = todo.reminderDateTime;
     CostType editCostType = todo.costType;
     final localTags = List<Tag>.from(_allTags);
+    bool editShowBreakInsights = false;
+    final breakSummaryFuture = todo.id == null
+        ? null
+        : DatabaseHelper.instance.getBreakSummaryForTodo(todo.id!);
 
     await showModalBottomSheet(
       context: context,
@@ -2426,7 +2709,28 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   style: const TextStyle(
                       fontSize: 20, fontWeight: FontWeight.bold),
                 ),
+                if (breakSummaryFuture != null) ...[
+                  const SizedBox(height: 12),
+                  FutureBuilder<BreakSessionSummary>(
+                    future: breakSummaryFuture,
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return const SizedBox.shrink();
+                      return _buildBreakStatsSection(
+                        snapshot.data!,
+                        isExpanded: editShowBreakInsights,
+                        onToggle: () => setModalState(() {
+                          editShowBreakInsights = !editShowBreakInsights;
+                        }),
+                      );
+                    },
+                  ),
+                ],
                 const SizedBox(height: 16),
+                const Text(
+                  'Title / Description',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
                 TextField(
                   controller: textController,
                   decoration: const InputDecoration(

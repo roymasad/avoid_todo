@@ -12,11 +12,13 @@ import 'package:url_launcher/url_launcher.dart';
 class ToDoItem extends StatefulWidget {
   final ToDo todo;
   final Function(ToDo) onEditItem;
+  final Function(ToDo)? onBreakItem;
 
   const ToDoItem({
     super.key,
     required this.todo,
     required this.onEditItem,
+    this.onBreakItem,
   });
 
   @override
@@ -252,13 +254,23 @@ class _ToDoItemState extends State<ToDoItem> {
                   ),
                 ),
               ),
-            IconButton(
-              icon: const Icon(Icons.edit, size: 20),
-              onPressed: () => widget.onEditItem(widget.todo),
-              color: isDark
-                  ? AppThemes.darkTextSecondary
-                  : AppThemes.lightTextSecondary,
-            ),
+            if (!widget.todo.isArchived && widget.onBreakItem != null)
+              IconButton(
+                key: const Key('todo_break_button'),
+                icon: const Icon(Icons.play_circle_fill_rounded, size: 24),
+                tooltip: 'Break',
+                onPressed: () => widget.onBreakItem!(widget.todo),
+                color: tdAvoidRed,
+              )
+            else
+              IconButton(
+                key: const Key('todo_edit_button'),
+                icon: const Icon(Icons.edit, size: 20),
+                onPressed: () => widget.onEditItem(widget.todo),
+                color: isDark
+                    ? AppThemes.darkTextSecondary
+                    : AppThemes.lightTextSecondary,
+              ),
           ],
         ),
       ),

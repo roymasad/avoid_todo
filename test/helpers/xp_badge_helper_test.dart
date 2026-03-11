@@ -1,4 +1,5 @@
 import 'package:avoid_todo/helpers/badge_helper.dart';
+import 'package:avoid_todo/helpers/break_helper.dart';
 import 'package:avoid_todo/helpers/xp_helper.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -20,6 +21,7 @@ void main() {
         activeCount: 6,
         totalAvoided: 250,
         totalRelapses: 30,
+        helpfulBreaks: 30,
         firstHabitCreatedAt: DateTime.now().subtract(const Duration(days: 800)),
       ),
     );
@@ -29,5 +31,12 @@ void main() {
     expect(earned, contains('badge_double_century'));
     expect(earned, contains('badge_tycoon'));
     expect(earned, contains('badge_legacy'));
+    expect(earned, contains('badge_breakthrough'));
+    expect(earned, contains('badge_storm_tamer'));
+  });
+
+  test('helpful break XP is lightweight', () {
+    expect(BreakHelper.xpHelpfulBreak, XpHelper.xpHelpfulBreak);
+    expect(BreakHelper.xpHelpfulBreak, 5);
   });
 }

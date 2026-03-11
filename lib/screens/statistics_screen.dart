@@ -11,6 +11,7 @@ import '../helpers/app_analytics.dart';
 import '../helpers/app_crash_reporter.dart';
 import '../model/todo.dart';
 import '../model/tag.dart';
+import '../model/break_session.dart';
 import '../constants/themes.dart';
 import '../constants/colors.dart';
 import '../l10n/app_localizations.dart';
@@ -42,6 +43,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   List<Map<String, dynamic>> weeklyStats = [];
   List<Map<String, dynamic>> mostAvoided = [];
   List<Map<String, dynamic>> recentRelapses = [];
+  BreakSessionSummary _breakOverview = const BreakSessionSummary(
+    totalStarted: 0,
+    totalCompleted: 0,
+    helpfulCount: 0,
+  );
 
   // Relapse pattern data
   List<int> relapsesByDay = List.filled(7, 0); // index 0=Mon...6=Sun
@@ -103,6 +109,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       final active = await DatabaseHelper.instance.getActiveCount();
       final weekly = await DatabaseHelper.instance.getWeeklyStats();
       final daily7 = await DatabaseHelper.instance.getLast7DaysStats();
+      final breakOverview =
+          await DatabaseHelper.instance.getBreakStatsOverview();
 
       if (!mounted) return;
 
@@ -252,6 +260,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         activeCount: active,
         totalAvoided: avoided,
         totalRelapses: totalRelapses,
+        helpfulBreaks: breakOverview.helpfulCount,
         firstHabitCreatedAt: firstHabitCreatedAt,
       );
       final newlyUnlocked =
@@ -268,6 +277,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         priorityBreakdown = priorities;
         weeklyStats = weekly;
         _dailyStats = daily7;
+        _breakOverview = breakOverview;
         mostAvoided = topAvoided;
         recentRelapses = relapsesResult;
         _unlockedBadges = allUnlocked;
@@ -386,7 +396,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     // FREE: overview cards always visible
                     _buildOverviewCards(l10n),
                     const SizedBox(height: 24),
-                    if (totalAvoided == 0 && recentRelapses.isEmpty)
+                    if (totalAvoided == 0 &&
+                        recentRelapses.isEmpty &&
+                        _breakOverview.totalStarted == 0)
                       _buildZeroState()
                     else ...[
                       // FREE: badges always visible
@@ -394,6 +406,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       const SizedBox(height: 24),
                       // FREE: weekly chart (7-day window, no history needed)
                       _buildWeeklyChart(isDark, l10n),
+                      const SizedBox(height: 24),
+                      _buildBreakInsightsSection(),
                       const SizedBox(height: 24),
                       // PLUS: tag breakdown
                       if (isPlus)
@@ -766,6 +780,116 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBreakInsightsSection() {
+    String percent(double value) => '${(value * 100).round()}%';
+
+    Widget pill(String label, String value, IconData icon, Color color) {
+      return Container(
+        width: 150,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.18)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(label, style: const TextStyle(fontSize: 12)),
+          ],
+        ),
+      );
+    }
+
+    final summary = _breakOverview;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(
+          'Break Insights',
+          'Tracks how often quick urge breaks are used and how often they helped.',
+        ),
+        const SizedBox(height: 12),
+        if (summary.totalStarted == 0)
+          _buildEmptyState(
+            Icons.play_circle_outline_rounded,
+            'No break sessions yet. Use Break from a todo card to log quick urge interruptions.',
+          )
+        else
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: Theme.of(context)
+                    .colorScheme
+                    .outline
+                    .withValues(alpha: 0.12),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    pill(
+                      'Started',
+                      summary.totalStarted.toString(),
+                      Icons.play_circle_fill_rounded,
+                      const Color(0xFF457B9D),
+                    ),
+                    pill(
+                      'Completed',
+                      summary.totalCompleted.toString(),
+                      Icons.timer_outlined,
+                      const Color(0xFF2A9D8F),
+                    ),
+                    pill(
+                      'Helpful',
+                      summary.helpfulCount.toString(),
+                      Icons.favorite_outline_rounded,
+                      const Color(0xFFE76F51),
+                    ),
+                    pill(
+                      'Helpful rate',
+                      percent(summary.helpfulRate),
+                      Icons.insights_outlined,
+                      const Color(0xFF6A4C93),
+                    ),
+                  ],
+                ),
+                if (summary.mostHelpedTodoText != null) ...[
+                  const SizedBox(height: 14),
+                  Text(
+                    'Most helped item: ${summary.mostHelpedTodoText}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+      ],
     );
   }
 

@@ -16,6 +16,7 @@ class XpHelper {
   static const int xpFollowUpCause = 10; // Plus: relapse cause chip tagged
   static const int xpWhatWorked = 10; // Plus: "What worked" reflection filled
   static const int xpDailyCommit = 20; // Plus: daily commitment per habit
+  static const int xpHelpfulBreak = 5; // once per todo per day
 
   // ─────────────────────────────────────────────────────────────
   // XP event source keys (stored in xp_events.source column)
@@ -31,6 +32,7 @@ class XpHelper {
   static const String sourceFollowUpCause = 'follow_up_cause';
   static const String sourceWhatWorked = 'what_worked_reflection';
   static const String sourceDailyCommit = 'daily_commit';
+  static const String sourceHelpfulBreak = 'helpful_break';
 
   // ─────────────────────────────────────────────────────────────
   // Level definitions

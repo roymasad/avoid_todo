@@ -1,0 +1,242 @@
+import 'package:avoid_todo/model/break_session.dart';
+import 'package:avoid_todo/model/todo.dart';
+import 'package:avoid_todo/widgets/urge_break_sheet.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+class _BreakHost extends StatefulWidget {
+  final Duration duration;
+  final bool showTrustedSupport;
+  final BreakActivityType activityType;
+  final void Function(BreakSessionResult?) onResult;
+
+  const _BreakHost({
+    required this.duration,
+    required this.showTrustedSupport,
+    required this.onResult,
+    this.activityType = BreakActivityType.defuse,
+  });
+
+  @override
+  State<_BreakHost> createState() => _BreakHostState();
+}
+
+class _BreakHostState extends State<_BreakHost> {
+  Future<void> _open() async {
+    final result = await showModalBottomSheet<BreakSessionResult>(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (_) => UrgeBreakSheet(
+        todo: ToDo(id: '1', todoText: 'Avoid midnight snack', tagIds: const []),
+        activityType: widget.activityType,
+        duration: widget.duration,
+        showTrustedSupport: widget.showTrustedSupport,
+      ),
+    );
+    widget.onResult(result);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: ElevatedButton(
+          onPressed: _open,
+          child: const Text('Open'),
+        ),
+      ),
+    );
+  }
+}
+
+void main() {
+  testWidgets('timer completion shows the outcome view',
+      (WidgetTester tester) async {
+    BreakSessionResult? result;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 1),
+          showTrustedSupport: false,
+          onResult: (value) => result = value,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('break_timer')), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('break_outcome_view')), findsOneWidget);
+    expect(result, isNull);
+  });
+
+  testWidgets('timer completion can continue the current activity',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 1),
+          showTrustedSupport: false,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('break_outcome_view')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('break_continue_playing')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('break_outcome_view')), findsNothing);
+    expect(find.byKey(const Key('break_activity_defuse')), findsOneWidget);
+    expect(find.text('00:30'), findsOneWidget);
+  });
+
+  testWidgets('finishing a completable activity opens feelings with replay',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    for (var i = 0; i < 20; i++) {
+      await tester.tap(find.byKey(const Key('defuse_sphere')));
+      await tester.pump(const Duration(milliseconds: 40));
+      if (find.byKey(const Key('break_outcome_view')).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.byKey(const Key('break_outcome_view')), findsOneWidget);
+    expect(find.byKey(const Key('break_replay_activity')), findsOneWidget);
+  });
+
+  testWidgets('early exit requires confirmation and returns aborted status',
+      (WidgetTester tester) async {
+    BreakSessionResult? result;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          onResult: (value) => result = value,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('break_sheet_close')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Leave this break?'), findsOneWidget);
+    await tester.tap(find.text('Exit'));
+    await tester.pumpAndSettle();
+
+    expect(result?.status, BreakSessionStatus.aborted);
+  });
+
+  testWidgets('still strong reveals follow-up actions',
+      (WidgetTester tester) async {
+    BreakSessionResult? result;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 1),
+          showTrustedSupport: true,
+          onResult: (value) => result = value,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.byKey(const Key('break_outcome_strong')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('break_outcome_strong')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('break_followup_retry')), findsOneWidget);
+    expect(find.byKey(const Key('break_followup_zen')), findsOneWidget);
+    expect(find.byKey(const Key('break_followup_support')), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(const Key('break_followup_retry')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('break_followup_retry')));
+    await tester.pumpAndSettle();
+
+    expect(result?.outcome, BreakOutcome.stillStrong);
+    expect(result?.followUpAction, BreakFollowUpAction.retry);
+  });
+
+  testWidgets('zen room uses rain area instead of prompt button',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.zenRoom,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byKey(const Key('break_activity_zen')), findsOneWidget);
+    expect(find.byKey(const Key('zen_room_rain_area')), findsOneWidget);
+    expect(find.byKey(const Key('zen_room_prompt')), findsNothing);
+    expect(find.textContaining('Tap a drop'), findsWidgets);
+  });
+
+  testWidgets('stack sweep activity renders its board',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.stackSweep,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('break_activity_stack')), findsOneWidget);
+    expect(find.byKey(const Key('stack_sweep_board')), findsOneWidget);
+    expect(find.byKey(const Key('stack_tile_0')), findsOneWidget);
+  });
+}
