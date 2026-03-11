@@ -19,6 +19,7 @@ class UrgeBreakSheet extends StatefulWidget {
   final BreakActivityType activityType;
   final Duration duration;
   final bool showTrustedSupport;
+  final bool previewMode;
 
   const UrgeBreakSheet({
     super.key,
@@ -26,6 +27,7 @@ class UrgeBreakSheet extends StatefulWidget {
     required this.activityType,
     required this.showTrustedSupport,
     this.duration = const Duration(seconds: 60),
+    this.previewMode = false,
   });
 
   static bool debugStackRectsCountAsBlocking({
@@ -313,7 +315,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     if (widget.activityType == BreakActivityType.defuse) {
       _startDefuseDial();
     }
-    _startTicker();
+    if (!widget.previewMode) {
+      _startTicker();
+    }
   }
 
   @override
@@ -332,6 +336,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   }
 
   Future<void> _loadPersonalBestScore() async {
+    if (widget.previewMode) {
+      return;
+    }
     if (!BreakHelper.supportsPersonalBest(widget.activityType)) {
       return;
     }
@@ -364,6 +371,13 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   }
 
   Future<bool> _handleExitRequest() async {
+    if (widget.previewMode) {
+      if (!_finished && mounted) {
+        _finished = true;
+        Navigator.pop(context);
+      }
+      return true;
+    }
     if (_finished) return true;
     final l10n = AppLocalizations.of(context) ??
         lookupAppLocalizations(const Locale('en'));
@@ -444,10 +458,16 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
         List<int>.generate(revealedCount, (index) => index),
       );
     });
-    _markFortuneRevealed();
+    if (widget.previewMode) {
+      _handleActivityCompleted();
+    } else {
+      _markFortuneRevealed();
+    }
   }
 
   String? debugCurrentFortuneWisdom() => _fortuneWisdom;
+
+  double debugCubePitch() => _cubePitch;
 
   void _togglePause() {
     HapticFeedback.selectionClick();
@@ -496,6 +516,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   }
 
   int? _scoreToPersist() {
+    if (widget.previewMode) {
+      return null;
+    }
     final current = _currentAttemptScore();
     final best = _bestScoreEarnedThisSheet;
     if (current == null) return best;
@@ -507,6 +530,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   }
 
   String? _personalBestText(AppLocalizations l10n) {
+    if (widget.previewMode) {
+      return null;
+    }
     final currentScore = _scoreToPersist();
     if (!BreakHelper.supportsPersonalBest(widget.activityType)) {
       return null;
@@ -766,11 +792,13 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     final score = completedAt.difference(_attemptStartedAt).inMilliseconds;
     setState(() {
       _activityCompletedAt = completedAt;
-      _bestScoreEarnedThisSheet =
-          _mergeScores(_bestScoreEarnedThisSheet, score);
-      _updatePersonalBestWithScore(score);
+      if (!widget.previewMode) {
+        _bestScoreEarnedThisSheet =
+            _mergeScores(_bestScoreEarnedThisSheet, score);
+        _updatePersonalBestWithScore(score);
+      }
       _activityCompleted = true;
-      _showOutcome = true;
+      _showOutcome = !widget.previewMode;
       _showStillStrongOptions = false;
     });
   }
@@ -785,6 +813,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   }
 
   void _continueCurrentActivity() {
+    if (widget.previewMode) {
+      return;
+    }
     HapticFeedback.lightImpact();
     setState(() {
       _isPaused = false;
@@ -819,7 +850,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     if (widget.activityType == BreakActivityType.defuse) {
       _startDefuseDial();
     }
-    _startTicker();
+    if (!widget.previewMode) {
+      _startTicker();
+    }
   }
 
   double _fortuneRevealProgress() {
@@ -890,6 +923,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
         _fortuneRevealQueued = true;
       }
     });
+    if (_fortuneRevealQueued && widget.previewMode) {
+      _handleActivityCompleted();
+    }
   }
 
   String _formatCountdown() {
@@ -1475,34 +1511,34 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     return null;
   }
 
-  void _onCubePanStart(DragStartDetails details, Size size) {
+  void _onCubeDragStart(Offset localPosition, Size size) {
     if (_cubeAnimatingMove != null) return;
-    final sticker = _cubeStickerAt(details.localPosition, size);
+    final sticker = _cubeStickerAt(localPosition, size);
     setState(() {
-      _cubeDragStart = details.localPosition;
-      _cubeDragCurrent = details.localPosition;
+      _cubeDragStart = localPosition;
+      _cubeDragCurrent = localPosition;
       _cubeTouchedSticker = sticker;
       _cubeActiveFace = sticker?.baseFace;
       _cubeOrbiting = sticker == null;
-      _cubeOrbitPoint = sticker == null ? details.localPosition : null;
+      _cubeOrbitPoint = sticker == null ? localPosition : null;
     });
   }
 
-  void _onCubePanUpdate(DragUpdateDetails details) {
+  void _onCubeDragUpdate(Offset localPosition) {
     if (_cubeAnimatingMove != null) return;
     if (_cubeOrbiting && _cubeOrbitPoint != null) {
-      final delta = details.localPosition - _cubeOrbitPoint!;
+      final delta = localPosition - _cubeOrbitPoint!;
       setState(() {
         _cubeYaw += delta.dx * 0.012;
         _cubePitch = (_cubePitch + (delta.dy * 0.012)).clamp(-1.15, 1.15);
-        _cubeOrbitPoint = details.localPosition;
+        _cubeOrbitPoint = localPosition;
       });
       return;
     }
 
     if (_cubeDragStart == null) return;
     setState(() {
-      _cubeDragCurrent = details.localPosition;
+      _cubeDragCurrent = localPosition;
     });
   }
 
@@ -1568,7 +1604,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     );
   }
 
-  void _onCubePanEnd(Size size) {
+  void _onCubeDragEnd(Size size) {
     if (_cubeAnimatingMove != null) {
       _resetCubeDrag();
       return;
@@ -1709,6 +1745,36 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
         padding: const EdgeInsets.all(18),
         child: child,
       ),
+    );
+  }
+
+  Widget _buildPreviewControls(AppLocalizations l10n) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            key: const Key('break_preview_restart'),
+            onPressed: _resetCurrentActivity,
+            icon: const Icon(Icons.autorenew_rounded),
+            label: Text(l10n.breakReplayActivity),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: FilledButton.icon(
+            key: const Key('break_preview_quit'),
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.close_rounded),
+            label: Text(l10n.breakExit),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1969,7 +2035,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
             },
           ),
         ),
-        if (_fortuneRevealQueued) ...[
+        if (_fortuneRevealQueued && !widget.previewMode) ...[
           const SizedBox(height: 14),
           Align(
             alignment: Alignment.center,
@@ -2338,10 +2404,18 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
         return GestureDetector(
           key: const Key('cube_scene'),
           behavior: HitTestBehavior.opaque,
-          onPanStart: (details) => _onCubePanStart(details, sceneSize),
-          onPanUpdate: _onCubePanUpdate,
-          onPanCancel: _resetCubeDrag,
-          onPanEnd: (_) => _onCubePanEnd(sceneSize),
+          onHorizontalDragStart: (details) =>
+              _onCubeDragStart(details.localPosition, sceneSize),
+          onHorizontalDragUpdate: (details) =>
+              _onCubeDragUpdate(details.localPosition),
+          onHorizontalDragCancel: _resetCubeDrag,
+          onHorizontalDragEnd: (_) => _onCubeDragEnd(sceneSize),
+          onVerticalDragStart: (details) =>
+              _onCubeDragStart(details.localPosition, sceneSize),
+          onVerticalDragUpdate: (details) =>
+              _onCubeDragUpdate(details.localPosition),
+          onVerticalDragCancel: _resetCubeDrag,
+          onVerticalDragEnd: (_) => _onCubeDragEnd(sceneSize),
           child: AnimatedBuilder(
             animation: Listenable.merge([
               _cubeMoveController,
@@ -2379,9 +2453,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     final definition = BreakHelper.definitionFor(widget.activityType, l10n);
     final colorScheme = Theme.of(context).colorScheme;
     return PopScope<BreakSessionResult>(
-      canPop: _finished,
+      canPop: widget.previewMode ? true : _finished,
       onPopInvokedWithResult: (didPop, _) async {
-        if (!didPop) {
+        if (!didPop && !widget.previewMode) {
           await _handleExitRequest();
         }
       },
@@ -2419,9 +2493,12 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              l10n.breakSheetTitle(
-                                widget.todo.todoText ?? l10n.breakThisItem,
-                              ),
+                              widget.previewMode
+                                  ? definition.title
+                                  : l10n.breakSheetTitle(
+                                      widget.todo.todoText ??
+                                          l10n.breakThisItem,
+                                    ),
                               key: const Key('break_sheet_title'),
                               style: const TextStyle(
                                 fontSize: 19,
@@ -2442,70 +2519,75 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                       ),
                       IconButton(
                         key: const Key('break_sheet_close'),
-                        onPressed: _handleExitRequest,
+                        onPressed: widget.previewMode
+                            ? () => Navigator.pop(context)
+                            : _handleExitRequest,
                         icon: const Icon(Icons.close_rounded),
                       ),
                     ],
                   ),
                   const SizedBox(height: 18),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: definition.color.withValues(alpha: 0.14),
+                  if (!widget.previewMode) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.timer_outlined, color: definition.color),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: LinearProgressIndicator(
-                            value: widget.duration.inSeconds == 0
-                                ? 1
-                                : 1 -
-                                    (_secondsRemaining /
-                                        widget.duration.inSeconds),
-                            backgroundColor:
-                                definition.color.withValues(alpha: 0.14),
-                            color: definition.color,
-                            minHeight: 8,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: definition.color.withValues(alpha: 0.14),
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          _formatCountdown(),
-                          key: const Key('break_timer'),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: definition.color,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.timer_outlined, color: definition.color),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: LinearProgressIndicator(
+                              value: widget.duration.inSeconds == 0
+                                  ? 1
+                                  : 1 -
+                                      (_secondsRemaining /
+                                          widget.duration.inSeconds),
+                              backgroundColor:
+                                  definition.color.withValues(alpha: 0.14),
+                              color: definition.color,
+                              minHeight: 8,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
                           ),
-                        ),
-                        if (!_showOutcome) ...[
-                          const SizedBox(width: 6),
-                          IconButton(
-                            key: const Key('break_pause_toggle'),
-                            onPressed: _togglePause,
-                            icon: Icon(
-                              _isPaused
-                                  ? Icons.play_arrow_rounded
-                                  : Icons.pause_rounded,
+                          const SizedBox(width: 12),
+                          Text(
+                            _formatCountdown(),
+                            key: const Key('break_timer'),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
                               color: definition.color,
                             ),
-                            tooltip:
-                                _isPaused ? l10n.breakResume : l10n.breakPause,
                           ),
+                          if (!_showOutcome) ...[
+                            const SizedBox(width: 6),
+                            IconButton(
+                              key: const Key('break_pause_toggle'),
+                              onPressed: _togglePause,
+                              icon: Icon(
+                                _isPaused
+                                    ? Icons.play_arrow_rounded
+                                    : Icons.pause_rounded,
+                                color: definition.color,
+                              ),
+                              tooltip: _isPaused
+                                  ? l10n.breakResume
+                                  : l10n.breakPause,
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 18),
+                    const SizedBox(height: 18),
+                  ],
                   Expanded(
                     child: Stack(
                       children: [
@@ -2542,6 +2624,10 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                       ],
                     ),
                   ),
+                  if (widget.previewMode) ...[
+                    const SizedBox(height: 16),
+                    _buildPreviewControls(l10n),
+                  ],
                 ],
               ),
             ),

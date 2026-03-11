@@ -416,99 +416,183 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                         shrinkWrap: true,
                         children: [
                           for (final activity in BreakActivityType.values)
-                            ListTile(
-                              key: Key('break_game_toggle_${activity.name}'),
-                              leading: Icon(
-                                BreakHelper.definitionFor(activity, l10n).icon,
-                                size: 20,
-                                color: hasBreakCustomizationAccess
-                                    ? null
-                                    : colorScheme.onSurfaceVariant
-                                        .withValues(alpha: 0.75),
-                              ),
-                              title: Text(
-                                  BreakHelper.definitionFor(activity, l10n)
-                                      .title),
-                              subtitle: Text(
-                                BreakHelper.definitionFor(activity, l10n)
-                                    .subtitle,
-                                style: TextStyle(
-                                  color: hasBreakCustomizationAccess
-                                      ? null
-                                      : colorScheme.onSurfaceVariant
-                                          .withValues(alpha: 0.75),
-                                ),
-                              ),
-                              onTap: hasBreakCustomizationAccess
-                                  ? null
-                                  : () => onToggle(
-                                        activity,
-                                        !enabledActivities.contains(activity),
+                            Builder(
+                              builder: (tileContext) {
+                                final definition =
+                                    BreakHelper.definitionFor(activity, l10n);
+                                Future<void> openPreview() async {
+                                  await showModalBottomSheet<void>(
+                                    context: tileContext,
+                                    isScrollControlled: true,
+                                    useSafeArea: true,
+                                    isDismissible: false,
+                                    enableDrag: false,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (_) => UrgeBreakSheet(
+                                      todo: ToDo(
+                                        id: 'preview_${activity.name}',
+                                        todoText: definition.title,
+                                        tagIds: const [],
                                       ),
-                              trailing: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  IgnorePointer(
-                                    child: hasBreakCustomizationAccess
-                                        ? Switch.adaptive(
-                                            value: enabledActivities.contains(
-                                              activity,
+                                      activityType: activity,
+                                      showTrustedSupport: false,
+                                      previewMode: true,
+                                    ),
+                                  );
+                                }
+
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 2),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: 12,
+                                          right: 16,
+                                          left: 8,
+                                        ),
+                                        child: Icon(
+                                          definition.icon,
+                                          size: 20,
+                                          color: hasBreakCustomizationAccess
+                                              ? null
+                                              : colorScheme.onSurfaceVariant
+                                                  .withValues(alpha: 0.75),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: InkWell(
+                                          key: Key(
+                                            'break_game_preview_${activity.name}',
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                          onTap: openPreview,
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 10,
+                                              horizontal: 4,
                                             ),
-                                            onChanged: (value) =>
-                                                onToggle(activity, value),
-                                          )
-                                        : Container(
-                                            width: 52,
-                                            height: 32,
-                                            decoration: BoxDecoration(
-                                              color: colorScheme.outlineVariant
-                                                  .withValues(alpha: 0.28),
-                                              borderRadius:
-                                                  BorderRadius.circular(999),
-                                              border: Border.all(
-                                                color: colorScheme
-                                                    .outlineVariant
-                                                    .withValues(alpha: 0.55),
-                                              ),
-                                            ),
-                                            padding: const EdgeInsets.all(2),
-                                            child: Align(
-                                              alignment:
-                                                  enabledActivities.contains(
-                                                activity,
-                                              )
-                                                      ? Alignment.centerRight
-                                                      : Alignment.centerLeft,
-                                              child: Container(
-                                                width: 24,
-                                                height: 24,
-                                                decoration: const BoxDecoration(
-                                                  color: Colors.white,
-                                                  shape: BoxShape.circle,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  definition.title,
+                                                  style: const TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                                 ),
-                                              ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  definition.subtitle,
+                                                  style: TextStyle(
+                                                    color:
+                                                        hasBreakCustomizationAccess
+                                                            ? null
+                                                            : colorScheme
+                                                                .onSurfaceVariant
+                                                                .withValues(
+                                                                alpha: 0.75,
+                                                              ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                  ),
-                                  if (!hasBreakCustomizationAccess)
-                                    Positioned(
-                                      right: -4,
-                                      top: -2,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(2),
-                                        decoration: BoxDecoration(
-                                          color: Colors.amber.shade700,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.lock,
-                                          size: 8,
-                                          color: Colors.white,
                                         ),
                                       ),
-                                    ),
-                                ],
-                              ),
+                                      const SizedBox(width: 12),
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 10),
+                                        child: Stack(
+                                          clipBehavior: Clip.none,
+                                          children: [
+                                            hasBreakCustomizationAccess
+                                                ? Switch.adaptive(
+                                                    value: enabledActivities
+                                                        .contains(
+                                                      activity,
+                                                    ),
+                                                    onChanged: (value) =>
+                                                        onToggle(
+                                                      activity,
+                                                      value,
+                                                    ),
+                                                  )
+                                                : Container(
+                                                    width: 52,
+                                                    height: 32,
+                                                    decoration: BoxDecoration(
+                                                      color: colorScheme
+                                                          .outlineVariant
+                                                          .withValues(
+                                                        alpha: 0.28,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                        999,
+                                                      ),
+                                                      border: Border.all(
+                                                        color: colorScheme
+                                                            .outlineVariant
+                                                            .withValues(
+                                                          alpha: 0.55,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    padding:
+                                                        const EdgeInsets.all(2),
+                                                    child: Align(
+                                                      alignment: enabledActivities
+                                                              .contains(
+                                                                  activity)
+                                                          ? Alignment
+                                                              .centerRight
+                                                          : Alignment
+                                                              .centerLeft,
+                                                      child: Container(
+                                                        width: 24,
+                                                        height: 24,
+                                                        decoration:
+                                                            const BoxDecoration(
+                                                          color: Colors.white,
+                                                          shape:
+                                                              BoxShape.circle,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                            if (!hasBreakCustomizationAccess)
+                                              Positioned(
+                                                right: -4,
+                                                top: -2,
+                                                child: Container(
+                                                  padding:
+                                                      const EdgeInsets.all(2),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        Colors.amber.shade700,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.lock,
+                                                    size: 8,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
                         ],
                       ),

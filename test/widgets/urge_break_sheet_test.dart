@@ -11,6 +11,7 @@ class _BreakHost extends StatefulWidget {
   final BreakActivityType activityType;
   final void Function(BreakSessionResult?) onResult;
   final GlobalKey? sheetKey;
+  final bool previewMode;
 
   const _BreakHost({
     required this.duration,
@@ -18,6 +19,7 @@ class _BreakHost extends StatefulWidget {
     required this.onResult,
     this.activityType = BreakActivityType.defuse,
     this.sheetKey,
+    this.previewMode = false,
   });
 
   @override
@@ -38,6 +40,7 @@ class _BreakHostState extends State<_BreakHost> {
         activityType: widget.activityType,
         duration: widget.duration,
         showTrustedSupport: widget.showTrustedSupport,
+        previewMode: widget.previewMode,
       ),
     );
     widget.onResult(result);
@@ -659,6 +662,52 @@ void main() {
     expect(replayedWisdom, isNot(equals(initialWisdom)));
   });
 
+  testWidgets(
+      'preview mode hides timer and outcome flow and exposes replay and quit',
+      (WidgetTester tester) async {
+    BreakSessionResult? result;
+    final sheetKey = GlobalKey();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 60),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.fortuneCookie,
+          onResult: (value) => result = value,
+          sheetKey: sheetKey,
+          previewMode: true,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('break_timer')), findsNothing);
+    expect(find.byKey(const Key('break_pause_toggle')), findsNothing);
+    expect(find.byKey(const Key('break_preview_restart')), findsOneWidget);
+    expect(find.byKey(const Key('break_preview_quit')), findsOneWidget);
+
+    (sheetKey.currentState as dynamic).debugRevealFortuneCookie();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const Key('break_outcome_view')), findsNothing);
+    expect(find.byKey(const Key('fortune_cookie_continue')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('break_preview_restart')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Tap the cookie to crack it open.'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('break_preview_quit')));
+    await tester.pumpAndSettle();
+
+    expect(result, isNull);
+  });
+
   testWidgets('stack sweep activity renders its board',
       (WidgetTester tester) async {
     await tester.pumpWidget(
@@ -724,5 +773,39 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
 
     expect(find.text('Hints: a bit'), findsOneWidget);
+  });
+
+  testWidgets('cube reset preview accepts vertical drags inside the scene',
+      (WidgetTester tester) async {
+    final sheetKey = GlobalKey();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.cubeReset,
+          onResult: (_) {},
+          sheetKey: sheetKey,
+          previewMode: true,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final initialPitch = (sheetKey.currentState as dynamic).debugCubePitch();
+    final scene = find.byKey(const Key('cube_scene'));
+    final sceneRect = tester.getRect(scene);
+    final dragStart = Offset(sceneRect.left + 18, sceneRect.top + 18);
+
+    await tester.dragFrom(dragStart, const Offset(0, 80));
+    await tester.pump();
+
+    final updatedPitch = (sheetKey.currentState as dynamic).debugCubePitch();
+    expect(find.byKey(const Key('cube_scene')), findsOneWidget);
+    expect(updatedPitch, isNot(initialPitch));
   });
 }
