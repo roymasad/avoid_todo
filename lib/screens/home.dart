@@ -1500,6 +1500,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _todoController,
+                    textCapitalization: TextCapitalization.words,
                     decoration: InputDecoration(
                       hintText: AppLocalizations.of(context)?.whatToAvoid ??
                           'What do you need to avoid?',
@@ -1627,6 +1628,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     const SizedBox(height: 8),
                     TextField(
                       controller: locationController,
+                      textCapitalization: TextCapitalization.words,
                       onChanged: (val) => _locationName = val,
                       decoration: const InputDecoration(
                         hintText: 'Place name or address',
