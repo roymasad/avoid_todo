@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
@@ -76,6 +77,9 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with TickerProviderStateMixin {
+  static const double _coachMarkPaddingFocus = 10.0;
+  static const double _coachMarkEdgeMargin = 12.0;
+
   static final Color _fabBaseColor = Color.alphaBlend(
     Colors.white.withValues(alpha: 0.08),
     tdAvoidRed,
@@ -772,7 +776,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     final prefs = await SharedPreferences.getInstance();
     final bool hasSeenCoachMarks = prefs.getBool('hasSeenCoachMarks') ?? false;
     if (!hasSeenCoachMarks) {
-      _showCoachMarks(); // rating check fires inside onFinish callback
+      await _showCoachMarks(); // rating check fires inside onFinish callback
     } else {
       _checkRatingPrompt(); // coach marks already done, safe to check now
     }
@@ -790,13 +794,15 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     );
   }
 
-  void _showCoachMarks() {
+  Future<void> _showCoachMarks() async {
+    await _waitForStableTargetLayout(_addKey);
+    if (!mounted) return;
     _initTargets();
     TutorialCoachMark(
       targets: targets,
       colorShadow: tdAvoidRed,
       hideSkip: true,
-      paddingFocus: 10,
+      paddingFocus: _coachMarkPaddingFocus,
       opacityShadow: 0.7,
       onFinish: () {
         SharedPreferences.getInstance().then((prefs) {
@@ -807,9 +813,94 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     ).show(context: context);
   }
 
+  Future<void> _waitForStableTargetLayout(
+    GlobalKey targetKey, {
+    int maxFrames = 8,
+  }) async {
+    RenderBox? lastRenderBox;
+    Offset? lastOffset;
+
+    for (var i = 0; i < maxFrames; i++) {
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+
+      final context = targetKey.currentContext;
+      final renderObject = context?.findRenderObject();
+      if (renderObject is! RenderBox || !renderObject.hasSize) {
+        continue;
+      }
+
+      final size = renderObject.size;
+      if (size.isEmpty) continue;
+
+      final offset = renderObject.localToGlobal(Offset.zero);
+      if (lastRenderBox == renderObject && lastOffset == offset) {
+        return;
+      }
+
+      lastRenderBox = renderObject;
+      lastOffset = offset;
+    }
+  }
+
+  TargetPosition? _buildClampedCircularTargetPosition(GlobalKey targetKey) {
+    final targetContext = targetKey.currentContext;
+    final renderObject = targetContext?.findRenderObject();
+    if (renderObject is! RenderBox || !renderObject.hasSize) {
+      return null;
+    }
+
+    final size = renderObject.size;
+    if (size.isEmpty) return null;
+
+    final offset = renderObject.localToGlobal(Offset.zero);
+    final center = Offset(
+      offset.dx + (size.width / 2),
+      offset.dy + (size.height / 2),
+    );
+
+    final mediaQuery = MediaQuery.of(context);
+    final screenSize = mediaQuery.size;
+    final viewPadding = mediaQuery.viewPadding;
+    final maxRadius = math.min(
+      math.min(
+        center.dx - viewPadding.left - _coachMarkEdgeMargin,
+        screenSize.width -
+            center.dx -
+            viewPadding.right -
+            _coachMarkEdgeMargin,
+      ),
+      math.min(
+        center.dy - viewPadding.top - _coachMarkEdgeMargin,
+        screenSize.height -
+            center.dy -
+            viewPadding.bottom -
+            _coachMarkEdgeMargin,
+      ),
+    );
+
+    if (maxRadius <= _coachMarkPaddingFocus) {
+      return null;
+    }
+
+    final desiredRadius =
+        (math.max(size.width, size.height) * 0.6) + _coachMarkPaddingFocus;
+    final radius = math.min(desiredRadius, maxRadius);
+    final targetExtent = (radius - _coachMarkPaddingFocus) / 0.6;
+
+    return TargetPosition(
+      Size.square(targetExtent),
+      Offset(
+        center.dx - (targetExtent / 2),
+        center.dy - (targetExtent / 2),
+      ),
+    );
+  }
+
   void _initTargets() {
     final l10n = AppLocalizations.of(context)!;
     targets.clear();
+    final addTargetPosition = _buildClampedCircularTargetPosition(_addKey);
 
     // Shared helper: tappable content block that advances the coach mark.
     Widget coachContent(
@@ -863,7 +954,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     targets.add(
       TargetFocus(
         identify: "add",
-        keyTarget: _addKey,
+        keyTarget: addTargetPosition == null ? _addKey : null,
+        targetPosition: addTargetPosition,
         enableOverlayTab: true,
         contents: [
           TargetContent(
