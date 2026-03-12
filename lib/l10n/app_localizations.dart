@@ -1723,7 +1723,7 @@ abstract class AppLocalizations {
   /// Subtitle for the Pair Match break activity.
   ///
   /// In en, this message translates to:
-  /// **'Shift your mind into a tiny memory challenge.'**
+  /// **'Quick memory reset.'**
   String get breakActivityPairMatchSubtitle;
 
   /// Title for the Cube Reset break activity.
@@ -1939,7 +1939,7 @@ abstract class AppLocalizations {
   /// Instruction text for the Pair Match break activity.
   ///
   /// In en, this message translates to:
-  /// **'Find the matching emoji pairs. Tiny pattern searches are great at breaking autopilot.'**
+  /// **'Match the emoji pairs.'**
   String get breakPairMatchInstruction;
 
   /// Progress text showing matched emoji pairs in Pair Match.

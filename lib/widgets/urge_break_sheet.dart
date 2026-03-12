@@ -266,7 +266,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   bool _fortuneCookieCracked = false;
   bool _fortuneRevealQueued = false;
   List<double> _zenDropXSeeds = const [];
-  List<double> _zenDropOffsets = const [];
+  List<double> _zenDropYSeeds = const [];
   List<double> _zenDropSpeeds = const [];
   List<double> _zenDropSizes = const [];
   final Map<int, DateTime> _zenCaughtAt = <int, DateTime>{};
@@ -723,11 +723,11 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
         ? null
         : _zenFortunes[_random.nextInt(_zenFortunes.length)];
     _zenDropXSeeds = List<double>.generate(14, (_) => _random.nextDouble());
-    _zenDropOffsets = List<double>.generate(14, (_) => _random.nextDouble());
+    _zenDropYSeeds = List<double>.generate(14, (_) => _random.nextDouble());
     _zenDropSpeeds =
-        List<double>.generate(14, (_) => 0.36 + (_random.nextDouble() * 0.26));
+        List<double>.generate(14, (_) => 4.0 + (_random.nextDouble() * 1.2));
     _zenDropSizes =
-        List<double>.generate(14, (_) => 11 + (_random.nextDouble() * 7));
+        List<double>.generate(14, (_) => 10 + (_random.nextDouble() * 6));
     _removedStackTileIds.clear();
     _removingStackTileIds.clear();
     for (final timer in _zenRespawnTimers.values) {
@@ -736,6 +736,9 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     _zenRespawnTimers.clear();
     _zenCaughtAt.clear();
     _ambientController.value = _random.nextDouble();
+    if (widget.activityType == BreakActivityType.zenRoom) {
+      _ambientController.repeat();
+    }
   }
 
   void _startTicker() {
@@ -1669,15 +1672,48 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     });
   }
 
+  Rect _zenRainRegion(Size size) {
+    const horizontalInset = 14.0;
+    const topInset = 14.0;
+    const bottomInset = 14.0;
+    return Rect.fromLTWH(
+      horizontalInset,
+      topInset,
+      max(0, size.width - (horizontalInset * 2)),
+      max(0, size.height - topInset - bottomInset),
+    );
+  }
+
+  double _zenDropProgressFor(int index) {
+    final raw = _zenDropYSeeds[index] +
+        (_ambientController.value * _zenDropSpeeds[index]);
+    return raw - raw.floorToDouble();
+  }
+
   Offset _zenDropCenterAt(int index, Size size) {
-    final progress = _ambientController.value;
+    final progress = _zenDropProgressFor(index);
     final xBase = 26 + (_zenDropXSeeds[index] * (size.width - 52));
-    final yProgress =
-        (_zenDropOffsets[index] + progress * _zenDropSpeeds[index]) % 1.15;
-    final y = (size.height + 60) * yProgress - 30;
-    final sway = sin((progress + _zenDropOffsets[index]) * 2 * pi * 2) * 8;
-    final x = (xBase + sway).clamp(24.0, size.width - 24.0);
+    final radius = _zenDropSizes[index];
+    final tailLength = radius * 2.7;
+    final startY = -radius - tailLength;
+    final endY = size.height + radius;
+    final baseY = startY + ((endY - startY) * progress);
+    final x = xBase.clamp(24.0, size.width - 24.0);
+    final y = baseY;
     return Offset(x, y);
+  }
+
+  bool _zenDropIsVisible(Offset center, double radius, Size size) {
+    return center.dx + radius >= 0 &&
+        center.dx - radius <= size.width &&
+        center.dy + radius >= 0 &&
+        center.dy - radius <= size.height;
+  }
+
+  void _resetZenDropAboveRegion(int index) {
+    final currentPhase = _ambientController.value * _zenDropSpeeds[index];
+    final wrapped = currentPhase - currentPhase.floorToDouble();
+    _zenDropYSeeds[index] = (1 - wrapped) % 1.0;
   }
 
   double _zenCatchProgressFor(int index) {
@@ -1698,21 +1734,21 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
       if (!mounted) return;
       setState(() {
         _zenCaughtAt.remove(index);
-        _zenDropXSeeds[index] = _random.nextDouble();
-        _zenDropOffsets[index] = -0.18 - (_random.nextDouble() * 0.22);
-        _zenDropSpeeds[index] = 0.36 + (_random.nextDouble() * 0.26);
-        _zenDropSizes[index] = 11 + (_random.nextDouble() * 7);
+        _resetZenDropAboveRegion(index);
       });
       _zenRespawnTimers.remove(index)?.cancel();
     });
   }
 
-  void _onZenTapDown(TapDownDetails details, Size size) {
-    final tapPoint = details.localPosition;
+  void _onZenTapDown(TapDownDetails details, Rect rainRegion) {
+    if (!rainRegion.contains(details.localPosition)) return;
+    final tapPoint = details.localPosition - rainRegion.topLeft;
+    final rainSize = rainRegion.size;
     for (var i = 0; i < _zenDropSizes.length; i++) {
       if (_zenCaughtAt.containsKey(i)) continue;
-      final center = _zenDropCenterAt(i, size);
+      final center = _zenDropCenterAt(i, rainSize);
       final radius = _zenDropSizes[i] + 10;
+      if (!_zenDropIsVisible(center, radius, rainSize)) continue;
       if ((tapPoint - center).distance <= radius) {
         _catchZenDrop(i);
         return;
@@ -1725,6 +1761,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
     BreakActivityDefinition definition,
     Widget child,
   ) {
+    final compact = MediaQuery.of(context).size.height < 760;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -1742,7 +1779,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: EdgeInsets.all(compact ? 14 : 18),
         child: child,
       ),
     );
@@ -1805,9 +1842,24 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final noteWidth = min(constraints.maxWidth - 16, 304.0);
-              final noteHeight = min(constraints.maxHeight * 0.48, 188.0);
-              final cookieSize = min(constraints.maxWidth * 0.52, 186.0);
+              final compact =
+                  constraints.maxHeight < 430 || constraints.maxWidth < 360;
+              final noteWidth = min(
+                constraints.maxWidth - (compact ? 28 : 16),
+                compact ? 284.0 : 304.0,
+              );
+              final noteHeight = min(
+                constraints.maxHeight * (compact ? 0.44 : 0.48),
+                compact ? 176.0 : 188.0,
+              );
+              final cookieSize = min(
+                constraints.maxWidth * (compact ? 0.56 : 0.52),
+                compact ? 174.0 : 186.0,
+              );
+              final contentWidth = min(
+                constraints.maxWidth - 24,
+                max(noteWidth, cookieSize * 1.4) + 12,
+              );
               return DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(28),
@@ -1858,176 +1910,187 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                         color: const Color(0xFFFFD9AF),
                       ),
                     ),
-                    AnimatedBuilder(
-                      animation: _fortuneCrackController,
-                      builder: (context, _) {
-                        final crackValue = Curves.easeOutBack.transform(
-                          _fortuneCrackController.value,
-                        );
-                        final cookieOpacity = (1 -
-                                Curves.easeIn.transform(
-                                  _fortuneCrackController.value,
-                                ))
-                            .clamp(0.0, 1.0)
-                            .toDouble();
-                        final noteOpacity = _fortuneCookieCracked
-                            ? (0.18 + (_fortuneCrackController.value * 0.82))
+                    Center(
+                      child: SizedBox(
+                        width: contentWidth,
+                        child: AnimatedBuilder(
+                          animation: _fortuneCrackController,
+                          builder: (context, _) {
+                            final crackValue = Curves.easeOutBack.transform(
+                              _fortuneCrackController.value,
+                            );
+                            final cookieOpacity = (1 -
+                                    Curves.easeIn.transform(
+                                      _fortuneCrackController.value,
+                                    ))
                                 .clamp(0.0, 1.0)
-                                .toDouble()
-                            : 0.0;
-                        return Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Transform.translate(
-                              offset: Offset(0, cookieSize * 0.22),
-                              child: AnimatedOpacity(
-                                duration: const Duration(milliseconds: 220),
-                                opacity: noteOpacity,
-                                child: _buildFortuneNoteCard(
-                                  definition,
-                                  l10n,
-                                  noteWidth: noteWidth,
-                                  noteHeight: noteHeight,
-                                ),
-                              ),
-                            ),
-                            if (_fortuneRevealQueued)
-                              Positioned(
-                                top: max(18, (constraints.maxHeight * 0.08)),
-                                child: const AnimatedScale(
-                                  duration: Duration(milliseconds: 260),
-                                  scale: 1.0,
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.auto_awesome_rounded,
-                                        color: Color(0xFFFFC857),
-                                      ),
-                                      SizedBox(width: 8),
-                                      Icon(
-                                        Icons.auto_awesome_rounded,
-                                        color: Color(0xFFFFE08C),
-                                        size: 18,
-                                      ),
-                                      SizedBox(width: 8),
-                                      Icon(
-                                        Icons.auto_awesome_rounded,
-                                        color: Color(0xFFFFC857),
-                                      ),
-                                    ],
+                                .toDouble();
+                            final noteOpacity = _fortuneCookieCracked
+                                ? (0.18 +
+                                        (_fortuneCrackController.value * 0.82))
+                                    .clamp(0.0, 1.0)
+                                    .toDouble()
+                                : 0.0;
+                            return Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Transform.translate(
+                                  offset: Offset(0, cookieSize * 0.22),
+                                  child: AnimatedOpacity(
+                                    duration: const Duration(milliseconds: 220),
+                                    opacity: noteOpacity,
+                                    child: _buildFortuneNoteCard(
+                                      definition,
+                                      l10n,
+                                      noteWidth: noteWidth,
+                                      noteHeight: noteHeight,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            IgnorePointer(
-                              ignoring: _fortuneCookieCracked ||
-                                  _fortuneCrackController.isAnimating,
-                              child: GestureDetector(
-                                key: const Key('fortune_cookie_shell'),
-                                behavior: HitTestBehavior.opaque,
-                                onTap: _onFortuneCookieTap,
-                                child: SizedBox(
-                                  width: cookieSize * 1.4,
-                                  height: cookieSize * 1.25,
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      if (!_fortuneCookieCracked &&
-                                          _fortuneCrackController.value == 0)
-                                        _buildFortuneCookieDisc(
-                                          cookieSize,
-                                          crackVisible: false,
-                                        )
-                                      else
-                                        Opacity(
-                                          opacity: cookieOpacity,
-                                          child: Stack(
-                                            alignment: Alignment.center,
-                                            children: [
-                                              Transform.translate(
-                                                offset: Offset(
-                                                  -cookieSize *
-                                                      0.26 *
-                                                      crackValue,
-                                                  -cookieSize *
-                                                      0.10 *
-                                                      crackValue,
-                                                ),
-                                                child: Transform.rotate(
-                                                  angle: -0.24 * crackValue,
-                                                  child: ClipRect(
-                                                    child: Align(
-                                                      alignment:
-                                                          Alignment.centerLeft,
-                                                      widthFactor: 0.5,
-                                                      child:
-                                                          _buildFortuneCookieDisc(
-                                                        cookieSize,
-                                                        crackVisible: true,
+                                if (_fortuneRevealQueued)
+                                  Positioned(
+                                    top:
+                                        max(18, (constraints.maxHeight * 0.08)),
+                                    child: const AnimatedScale(
+                                      duration: Duration(milliseconds: 260),
+                                      scale: 1.0,
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.auto_awesome_rounded,
+                                            color: Color(0xFFFFC857),
+                                          ),
+                                          SizedBox(width: 8),
+                                          Icon(
+                                            Icons.auto_awesome_rounded,
+                                            color: Color(0xFFFFE08C),
+                                            size: 18,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Icon(
+                                            Icons.auto_awesome_rounded,
+                                            color: Color(0xFFFFC857),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                IgnorePointer(
+                                  ignoring: _fortuneCookieCracked ||
+                                      _fortuneCrackController.isAnimating,
+                                  child: GestureDetector(
+                                    key: const Key('fortune_cookie_shell'),
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: _onFortuneCookieTap,
+                                    child: SizedBox(
+                                      width: cookieSize * 1.4,
+                                      height: cookieSize * 1.25,
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          if (!_fortuneCookieCracked &&
+                                              _fortuneCrackController.value ==
+                                                  0)
+                                            _buildFortuneCookieDisc(
+                                              cookieSize,
+                                              crackVisible: false,
+                                            )
+                                          else
+                                            Opacity(
+                                              opacity: cookieOpacity,
+                                              child: Stack(
+                                                alignment: Alignment.center,
+                                                children: [
+                                                  Transform.translate(
+                                                    offset: Offset(
+                                                      -cookieSize *
+                                                          0.26 *
+                                                          crackValue,
+                                                      -cookieSize *
+                                                          0.10 *
+                                                          crackValue,
+                                                    ),
+                                                    child: Transform.rotate(
+                                                      angle: -0.24 * crackValue,
+                                                      child: ClipRect(
+                                                        child: Align(
+                                                          alignment: Alignment
+                                                              .centerLeft,
+                                                          widthFactor: 0.5,
+                                                          child:
+                                                              _buildFortuneCookieDisc(
+                                                            cookieSize,
+                                                            crackVisible: true,
+                                                          ),
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
-                                                ),
-                                              ),
-                                              Transform.translate(
-                                                offset: Offset(
-                                                  cookieSize *
-                                                      0.26 *
-                                                      crackValue,
-                                                  cookieSize *
-                                                      0.10 *
-                                                      crackValue,
-                                                ),
-                                                child: Transform.rotate(
-                                                  angle: 0.24 * crackValue,
-                                                  child: ClipRect(
-                                                    child: Align(
-                                                      alignment:
-                                                          Alignment.centerRight,
-                                                      widthFactor: 0.5,
-                                                      child:
-                                                          _buildFortuneCookieDisc(
-                                                        cookieSize,
-                                                        crackVisible: true,
+                                                  Transform.translate(
+                                                    offset: Offset(
+                                                      cookieSize *
+                                                          0.26 *
+                                                          crackValue,
+                                                      cookieSize *
+                                                          0.10 *
+                                                          crackValue,
+                                                    ),
+                                                    child: Transform.rotate(
+                                                      angle: 0.24 * crackValue,
+                                                      child: ClipRect(
+                                                        child: Align(
+                                                          alignment: Alignment
+                                                              .centerRight,
+                                                          widthFactor: 0.5,
+                                                          child:
+                                                              _buildFortuneCookieDisc(
+                                                            cookieSize,
+                                                            crackVisible: true,
+                                                          ),
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
+                                                ],
+                                              ),
+                                            ),
+                                          if (!_fortuneCookieCracked)
+                                            Positioned(
+                                              bottom: 8,
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                  vertical: 6,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      Colors.white.withValues(
+                                                    alpha: 0.84,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          999),
+                                                ),
+                                                child: Text(
+                                                  l10n.breakFortuneCookieTapHint,
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w700,
+                                                    color: definition.color,
+                                                  ),
                                                 ),
                                               ),
-                                            ],
-                                          ),
-                                        ),
-                                      if (!_fortuneCookieCracked)
-                                        Positioned(
-                                          bottom: 8,
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 6,
                                             ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white.withValues(
-                                                alpha: 0.84,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(999),
-                                            ),
-                                            child: Text(
-                                              l10n.breakFortuneCookieTapHint,
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w700,
-                                                color: definition.color,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                    ],
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
+                              ],
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -2346,19 +2409,21 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
   }
 
   Widget _buildPairGrid(BreakActivityDefinition definition) {
-    const spacing = 10.0;
     const columns = 4;
     const rows = 5;
     final hintIndices = _pairHintIndices();
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final compact =
+            constraints.maxHeight < 360 || constraints.maxWidth < 320;
+        final spacing = compact ? 6.0 : 10.0;
         final tileWidth =
             (constraints.maxWidth - (spacing * (columns - 1))) / columns;
         final tileHeight =
             (constraints.maxHeight - (spacing * (rows - 1))) / rows;
         final aspectRatio =
-            tileHeight <= 0 ? 1.0 : (tileWidth / tileHeight).clamp(0.72, 1.2);
+            tileHeight <= 0 ? 1.0 : (tileWidth / tileHeight).clamp(0.72, 1.4);
 
         return GridView.builder(
           physics: const NeverScrollableScrollPhysics(),
@@ -2689,26 +2754,28 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
+                  final compact = constraints.maxHeight < 420;
                   final dialSize = min(
                     constraints.maxWidth * 0.62,
                     max(64.0, constraints.maxHeight - 68),
                   );
-                  final coreSize = dialSize * 0.36;
-                  final labelFontSize = dialSize < 150 ? 18.0 : 22.0;
+                  final coreSize = dialSize * 0.32;
+                  final labelFontSize = compact ? 20.0 : 18.0;
                   final ringColors = _defuseRingColors();
 
-                  return Center(
-                    child: AnimatedBuilder(
-                      animation: _defuseDialController,
-                      builder: (context, _) {
-                        final activeStep = _defuseCount.clamp(
-                          0,
-                          _defuseTargetTapCount - 1,
-                        );
-                        return GestureDetector(
-                          key: const Key('defuse_safe_crack'),
-                          onTap: _onDefuseTap,
-                          child: SizedBox(
+                  return GestureDetector(
+                    key: const Key('defuse_safe_crack'),
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _onDefuseTap,
+                    child: Center(
+                      child: AnimatedBuilder(
+                        animation: _defuseDialController,
+                        builder: (context, _) {
+                          final activeStep = _defuseCount.clamp(
+                            0,
+                            _defuseTargetTapCount - 1,
+                          );
+                          return SizedBox(
                             width: dialSize,
                             height: dialSize,
                             child: Stack(
@@ -2747,20 +2814,27 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                                     ),
                                   ),
                                   child: Center(
-                                    child: Text(
-                                      'Tap',
-                                      style: TextStyle(
-                                        fontSize: labelFontSize,
-                                        fontWeight: FontWeight.bold,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(4),
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          '☝️',
+                                          style: TextStyle(
+                                            fontSize: labelFontSize,
+                                            height: 1,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   );
                 },
@@ -2851,97 +2925,114 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
         );
       case BreakActivityType.pairMatch:
         final personalBestText = _personalBestText(l10n);
-        return Column(
-          key: const Key('break_activity_pairs'),
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.breakPairMatchInstruction,
-              style: const TextStyle(height: 1.35),
-            ),
-            const SizedBox(height: 18),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: definition.color.withValues(alpha: 0.12),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxHeight < 430;
+            return Column(
+              key: const Key('break_activity_pairs'),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.breakPairMatchInstruction,
+                  style: TextStyle(
+                    height: compact ? 1.12 : 1.32,
+                    fontSize: compact ? 13.0 : null,
                   ),
                 ),
-                child: _buildPairGrid(definition),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
+                SizedBox(height: compact ? 6 : 18),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.breakPairMatchProgress(
-                          _matchedCards.length ~/ 2,
-                          _pairMatchEmojis.length,
-                        ),
+                  child: Container(
+                    padding: EdgeInsets.all(compact ? 4 : 10),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: definition.color.withValues(alpha: 0.12),
                       ),
-                      if (personalBestText != null)
-                        Text(
-                          personalBestText,
-                          key: const Key('break_personal_best'),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: definition.color.withValues(alpha: 0.8),
+                    ),
+                    child: _buildPairGrid(definition),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.breakPairMatchProgress(
+                              _matchedCards.length ~/ 2,
+                              _pairMatchEmojis.length,
+                            ),
+                          ),
+                          if (personalBestText != null)
+                            Text(
+                              personalBestText,
+                              key: const Key('break_personal_best'),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: definition.color.withValues(alpha: 0.8),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    TextButton.icon(
+                      key: const Key('pair_hint_toggle'),
+                      onPressed: _togglePairHints,
+                      style: TextButton.styleFrom(
+                        foregroundColor: definition.color,
+                        backgroundColor: definition.color.withValues(
+                          alpha: !canUseHintHelpers
+                              ? 0.05
+                              : (_pairHintsEnabled ? 0.14 : 0.07),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: compact ? 10 : 12,
+                          vertical: compact ? 6 : 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                          side: BorderSide(
+                            color: definition.color.withValues(
+                              alpha: !canUseHintHelpers
+                                  ? 0.12
+                                  : (_pairHintsEnabled ? 0.26 : 0.16),
+                            ),
                           ),
                         ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                TextButton.icon(
-                  key: const Key('pair_hint_toggle'),
-                  onPressed: _togglePairHints,
-                  style: TextButton.styleFrom(
-                    foregroundColor: definition.color,
-                    backgroundColor: definition.color.withValues(
-                      alpha: !canUseHintHelpers
-                          ? 0.05
-                          : (_pairHintsEnabled ? 0.14 : 0.07),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(999),
-                      side: BorderSide(
-                        color: definition.color.withValues(
-                          alpha: !canUseHintHelpers
-                              ? 0.12
-                              : (_pairHintsEnabled ? 0.26 : 0.16),
-                        ),
+                        visualDensity: compact
+                            ? const VisualDensity(
+                                horizontal: -2,
+                                vertical: -2,
+                              )
+                            : VisualDensity.standard,
+                        tapTargetSize: compact
+                            ? MaterialTapTargetSize.shrinkWrap
+                            : MaterialTapTargetSize.padded,
                       ),
+                      icon: Icon(
+                        !canUseHintHelpers
+                            ? Icons.lock_outline_rounded
+                            : _pairHintsEnabled
+                                ? Icons.lightbulb_rounded
+                                : Icons.lightbulb_outline_rounded,
+                        size: 18,
+                      ),
+                      label: Text(!canUseHintHelpers
+                          ? l10n.breakHintsLocked
+                          : (_pairHintsEnabled
+                              ? l10n.breakHintsOn
+                              : l10n.breakHintsOff)),
                     ),
-                  ),
-                  icon: Icon(
-                    !canUseHintHelpers
-                        ? Icons.lock_outline_rounded
-                        : _pairHintsEnabled
-                            ? Icons.lightbulb_rounded
-                            : Icons.lightbulb_outline_rounded,
-                    size: 18,
-                  ),
-                  label: Text(!canUseHintHelpers
-                      ? l10n.breakHintsLocked
-                      : (_pairHintsEnabled
-                          ? l10n.breakHintsOn
-                          : l10n.breakHintsOff)),
+                  ],
                 ),
               ],
-            ),
-          ],
+            );
+          },
         );
       case BreakActivityType.cubeReset:
         final hintMove = _cubeHintMove();
@@ -3360,151 +3451,187 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
           promptIndex,
         );
         final personalBestText = _personalBestText(l10n);
-        return Column(
-          key: const Key('break_activity_trivia'),
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxHeight < 430;
+            final insightText = _triviaSelectedAnswer == null
+                ? null
+                : (_triviaSelectedAnswer == prompt.answerIndex
+                    ? l10n.breakTriviaCorrectInsight(prompt.insight)
+                    : l10n.breakTriviaIncorrectInsight(prompt.insight));
+            return Column(
+              key: const Key('break_activity_trivia'),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        prompt.question,
+                        style: TextStyle(
+                          fontSize: compact ? 18 : 21,
+                          fontWeight: FontWeight.bold,
+                          height: 1.18,
+                        ),
+                      ),
+                      SizedBox(height: compact ? 12 : 16),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (final i in visibleOptionIndices)
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: compact ? 8 : 10,
+                                  ),
+                                  child: OutlinedButton(
+                                    key: Key('trivia_option_$i'),
+                                    onPressed: _triviaSelectedAnswer == null
+                                        ? () => _onTriviaAnswer(i)
+                                        : null,
+                                    style: OutlinedButton.styleFrom(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: compact ? 12 : 14,
+                                      ),
+                                      backgroundColor: _triviaOptionColors[
+                                              i % _triviaOptionColors.length]
+                                          .withValues(
+                                        alpha: _triviaSelectedAnswer == i
+                                            ? 0.24
+                                            : 0.12,
+                                      ),
+                                      side: BorderSide(
+                                        color: _triviaSelectedAnswer == i
+                                            ? _triviaOptionColors[
+                                                i % _triviaOptionColors.length]
+                                            : _triviaOptionColors[i %
+                                                    _triviaOptionColors.length]
+                                                .withValues(alpha: 0.6),
+                                        width: _triviaSelectedAnswer == i
+                                            ? 2
+                                            : 1.2,
+                                      ),
+                                      foregroundColor: _triviaOptionColors[
+                                          i % _triviaOptionColors.length],
+                                    ),
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        prompt.options[i],
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (insightText != null) ...[
+                        SizedBox(height: compact ? 8 : 10),
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(compact ? 10 : 12),
+                          decoration: BoxDecoration(
+                            color: definition.color.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: definition.color.withValues(alpha: 0.14),
+                            ),
+                          ),
+                          child: Text(
+                            insightText,
+                            style: TextStyle(
+                              height: 1.32,
+                              fontSize: compact ? 14 : null,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      prompt.question,
-                      style: const TextStyle(
-                        fontSize: 21,
-                        fontWeight: FontWeight.bold,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    for (final i in visibleOptionIndices)
+                    if (personalBestText != null)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 10),
-                        child: OutlinedButton(
-                          key: Key('trivia_option_$i'),
-                          onPressed: _triviaSelectedAnswer == null
-                              ? () => _onTriviaAnswer(i)
-                              : null,
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 14,
-                            ),
-                            backgroundColor: _triviaOptionColors[
-                                    i % _triviaOptionColors.length]
-                                .withValues(
-                              alpha: _triviaSelectedAnswer == i ? 0.24 : 0.12,
-                            ),
-                            side: BorderSide(
-                              color: _triviaSelectedAnswer == i
-                                  ? _triviaOptionColors[
-                                      i % _triviaOptionColors.length]
-                                  : _triviaOptionColors[
-                                          i % _triviaOptionColors.length]
-                                      .withValues(alpha: 0.6),
-                              width: _triviaSelectedAnswer == i ? 2 : 1.2,
-                            ),
-                            foregroundColor: _triviaOptionColors[
-                                i % _triviaOptionColors.length],
+                        child: Text(
+                          personalBestText,
+                          key: const Key('break_personal_best'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: definition.color.withValues(alpha: 0.8),
                           ),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              prompt.options[i],
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        if (_triviaSelectedAnswer != null)
+                          FilledButton.icon(
+                            key: const Key('trivia_next'),
+                            onPressed: _nextTrivia,
+                            icon: const Icon(Icons.arrow_forward_rounded),
+                            label: Text(l10n.breakNext),
+                          ),
+                        TextButton.icon(
+                          key: const Key('trivia_hint_toggle'),
+                          onPressed: () =>
+                              _toggleTriviaHints(prompt, promptIndex),
+                          style: TextButton.styleFrom(
+                            foregroundColor: definition.color,
+                            backgroundColor: definition.color.withValues(
+                              alpha: !canUseHintHelpers
+                                  ? 0.05
+                                  : (_triviaHintsEnabled ? 0.14 : 0.07),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(999),
+                              side: BorderSide(
+                                color: definition.color.withValues(
+                                  alpha: !canUseHintHelpers
+                                      ? 0.12
+                                      : (_triviaHintsEnabled ? 0.26 : 0.16),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                    if (_triviaSelectedAnswer != null) ...[
-                      const SizedBox(height: 10),
-                      Text(
-                        _triviaSelectedAnswer == prompt.answerIndex
-                            ? l10n.breakTriviaCorrectInsight(prompt.insight)
-                            : l10n.breakTriviaIncorrectInsight(prompt.insight),
-                        style: const TextStyle(height: 1.35),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (personalBestText != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Text(
-                      personalBestText,
-                      key: const Key('break_personal_best'),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: definition.color.withValues(alpha: 0.8),
-                      ),
-                    ),
-                  ),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    if (_triviaSelectedAnswer != null)
-                      FilledButton.icon(
-                        key: const Key('trivia_next'),
-                        onPressed: _nextTrivia,
-                        icon: const Icon(Icons.arrow_forward_rounded),
-                        label: Text(l10n.breakNext),
-                      ),
-                    TextButton.icon(
-                      key: const Key('trivia_hint_toggle'),
-                      onPressed: () => _toggleTriviaHints(prompt, promptIndex),
-                      style: TextButton.styleFrom(
-                        foregroundColor: definition.color,
-                        backgroundColor: definition.color.withValues(
-                          alpha: !canUseHintHelpers
-                              ? 0.05
-                              : (_triviaHintsEnabled ? 0.14 : 0.07),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(999),
-                          side: BorderSide(
-                            color: definition.color.withValues(
-                              alpha: !canUseHintHelpers
-                                  ? 0.12
-                                  : (_triviaHintsEnabled ? 0.26 : 0.16),
-                            ),
+                          icon: Icon(
+                            !canUseHintHelpers
+                                ? Icons.lock_outline_rounded
+                                : _triviaHintsEnabled
+                                    ? Icons.lightbulb_rounded
+                                    : Icons.lightbulb_outline_rounded,
+                            size: 18,
                           ),
+                          label: Text(!canUseHintHelpers
+                              ? l10n.breakHintsLocked
+                              : (_triviaHintsEnabled
+                                  ? l10n.breakHintsOn
+                                  : l10n.breakHintsOff)),
                         ),
-                      ),
-                      icon: Icon(
-                        !canUseHintHelpers
-                            ? Icons.lock_outline_rounded
-                            : _triviaHintsEnabled
-                                ? Icons.lightbulb_rounded
-                                : Icons.lightbulb_outline_rounded,
-                        size: 18,
-                      ),
-                      label: Text(!canUseHintHelpers
-                          ? l10n.breakHintsLocked
-                          : (_triviaHintsEnabled
-                              ? l10n.breakHintsOn
-                              : l10n.breakHintsOff)),
+                      ],
                     ),
                   ],
                 ),
               ],
-            ),
-          ],
+            );
+          },
         );
       case BreakActivityType.fortuneCookie:
         return _buildFortuneCookieActivity(definition, l10n);
@@ -3514,22 +3641,24 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: AnimatedBuilder(
-                animation: _ambientController,
-                builder: (context, _) {
-                  final zenColors = _animatedZenColors();
-                  return LayoutBuilder(
-                    builder: (context, constraints) {
-                      final size =
-                          Size(constraints.maxWidth, constraints.maxHeight);
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final size =
+                      Size(constraints.maxWidth, constraints.maxHeight);
+                  final rainRegion = _zenRainRegion(size);
+                  return AnimatedBuilder(
+                    animation: _ambientController,
+                    builder: (context, _) {
+                      final zenColors = _animatedZenColors();
                       final dropCenters = List<Offset>.generate(
                         _zenDropSizes.length,
-                        (index) => _zenDropCenterAt(index, size),
+                        (index) => _zenDropCenterAt(index, rainRegion.size),
                       );
                       return GestureDetector(
                         key: const Key('zen_room_rain_area'),
                         behavior: HitTestBehavior.opaque,
-                        onTapDown: (details) => _onZenTapDown(details, size),
+                        onTapDown: (details) =>
+                            _onZenTapDown(details, rainRegion),
                         child: DecoratedBox(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(26),
@@ -3541,14 +3670,24 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                           ),
                           child: Stack(
                             children: [
-                              Positioned.fill(
-                                child: CustomPaint(
-                                  painter: _ZenRainPainter(
-                                    centers: dropCenters,
-                                    sizes: _zenDropSizes,
-                                    caughtProgress: List<double>.generate(
-                                      _zenDropSizes.length,
-                                      _zenCatchProgressFor,
+                              Positioned.fromRect(
+                                rect: rainRegion,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(22),
+                                  child: SizedBox(
+                                    key: const Key('zen_rain_region'),
+                                    width: rainRegion.width,
+                                    height: rainRegion.height,
+                                    child: CustomPaint(
+                                      key: const Key('zen_rain_paint'),
+                                      painter: _ZenRainPainter(
+                                        centers: dropCenters,
+                                        sizes: _zenDropSizes,
+                                        caughtProgress: List<double>.generate(
+                                          _zenDropSizes.length,
+                                          _zenCatchProgressFor,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -3587,7 +3726,7 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                               ),
                               Center(
                                 child: Container(
-                                  width: 224,
+                                  width: min(size.width - 56, 224),
                                   padding: const EdgeInsets.all(18),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withValues(alpha: 0.84),
@@ -3625,7 +3764,11 @@ class _UrgeBreakSheetState extends State<UrgeBreakSheet>
                                       _zenFortune ?? '',
                                       key: ValueKey(_zenFortune),
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(height: 1.42),
+                                      style: const TextStyle(
+                                        height: 1.42,
+                                        color: Color(0xFF385170),
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ),
                                 ),

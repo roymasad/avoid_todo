@@ -881,8 +881,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get breakActivityPairMatchTitle => 'Paires';
 
   @override
-  String get breakActivityPairMatchSubtitle =>
-      'Faites glisser votre esprit vers un petit défi de mémoire.';
+  String get breakActivityPairMatchSubtitle => 'Mini pause mémoire.';
 
   @override
   String get breakActivityCubeResetTitle => 'Reset Cube';
@@ -1009,8 +1008,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get breakHintsStrong => 'Indices : beaucoup';
 
   @override
-  String get breakPairMatchInstruction =>
-      'Trouvez les paires d’emoji. Les petites recherches de motifs sont très efficaces pour casser le pilote automatique.';
+  String get breakPairMatchInstruction => 'Trouvez les paires d’emoji.';
 
   @override
   String breakPairMatchProgress(int matchedCount, int totalCount) {

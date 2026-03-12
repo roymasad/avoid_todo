@@ -67,6 +67,42 @@ Future<void> _completeCurrentActivity(
   await tester.pump(const Duration(seconds: 1));
 }
 
+dynamic _zenRainPainter(WidgetTester tester) {
+  return tester
+      .widget<CustomPaint>(find.byKey(const Key('zen_rain_paint')))
+      .painter as dynamic;
+}
+
+List<Offset> _zenDropCenters(WidgetTester tester) {
+  return List<Offset>.from(_zenRainPainter(tester).centers as List);
+}
+
+List<double> _zenDropSizes(WidgetTester tester) {
+  return (_zenRainPainter(tester).sizes as List)
+      .map((value) => (value as num).toDouble())
+      .toList();
+}
+
+(int, Offset, double) _firstVisibleZenDrop(WidgetTester tester) {
+  final rainRect = tester.getRect(find.byKey(const Key('zen_rain_region')));
+  final centers = _zenDropCenters(tester);
+  final sizes = _zenDropSizes(tester);
+
+  for (var index = 0; index < centers.length; index++) {
+    final center = centers[index];
+    final radius = sizes[index] + 10;
+    final visible = center.dx + radius >= 0 &&
+        center.dx - radius <= rainRect.width &&
+        center.dy + radius >= 0 &&
+        center.dy - radius <= rainRect.height;
+    if (visible) {
+      return (index, center, radius);
+    }
+  }
+
+  throw StateError('No visible zen drop found');
+}
+
 void main() {
   test('stack blocker overlap ignores separated tiles', () {
     expect(
@@ -267,7 +303,7 @@ void main() {
     expect(find.text('Hints on'), findsOneWidget);
   });
 
-  testWidgets('defuse center label stays as Tap in other locales',
+  testWidgets('defuse center label stays icon-only in other locales',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -290,7 +326,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(const Key('defuse_safe_crack')),
-        matching: find.text('Tap'),
+        matching: find.text('☝️'),
       ),
       findsOneWidget,
     );
@@ -448,6 +484,91 @@ void main() {
     expect(find.byKey(const Key('zen_room_rain_area')), findsOneWidget);
     expect(find.byKey(const Key('zen_room_prompt')), findsNothing);
     expect(find.textContaining('Tap a drop'), findsWidgets);
+  });
+
+  testWidgets('zen room drops move downward over time',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.zenRoom,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    final (dropIndex, initialCenter, _) = _firstVisibleZenDrop(tester);
+
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump();
+
+    final movedCenter = _zenDropCenters(tester)[dropIndex];
+    expect(movedCenter.dy, greaterThan(initialCenter.dy));
+  });
+
+  testWidgets('zen room rain stays contained within the clipped rain region',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.zenRoom,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    final rainRect = tester.getRect(find.byKey(const Key('zen_rain_region')));
+    final boardRect =
+        tester.getRect(find.byKey(const Key('zen_room_rain_area')));
+
+    expect(rainRect.left, greaterThanOrEqualTo(boardRect.left));
+    expect(rainRect.top, greaterThanOrEqualTo(boardRect.top));
+    expect(rainRect.right, lessThanOrEqualTo(boardRect.right));
+    expect(rainRect.bottom, lessThanOrEqualTo(boardRect.bottom));
+  });
+
+  testWidgets(
+      'zen room caught drops respawn above the rain region in the same lane',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _BreakHost(
+          duration: const Duration(seconds: 5),
+          showTrustedSupport: false,
+          activityType: BreakActivityType.zenRoom,
+          onResult: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    final rainRect = tester.getRect(find.byKey(const Key('zen_rain_region')));
+    final (dropIndex, center, _) = _firstVisibleZenDrop(tester);
+    final globalTapPoint = rainRect.topLeft + center;
+
+    await tester.tapAt(globalTapPoint);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+
+    final respawnedCenter = _zenDropCenters(tester)[dropIndex];
+    expect(respawnedCenter.dx, closeTo(center.dx, 0.001));
+    expect(respawnedCenter.dy, lessThan(0));
   });
 
   testWidgets('trivia hints remove one false answer when enabled',
