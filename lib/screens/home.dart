@@ -853,39 +853,56 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     final size = renderObject.size;
     if (size.isEmpty) return null;
 
-    final offset = renderObject.localToGlobal(Offset.zero);
-    final center = Offset(
+    final navigatorContext =
+        targetContext?.findAncestorStateOfType<NavigatorState>()?.context;
+    final navigatorRenderObject =
+        navigatorContext?.findRenderObject() as RenderBox?;
+    final offset = navigatorRenderObject == null
+        ? renderObject.localToGlobal(Offset.zero)
+        : renderObject.localToGlobal(
+            Offset.zero,
+            ancestor: navigatorRenderObject,
+          );
+    final viewportSize =
+        navigatorRenderObject?.size ?? MediaQuery.of(context).size;
+    final rawCenter = Offset(
       offset.dx + (size.width / 2),
       offset.dy + (size.height / 2),
     );
 
     final mediaQuery = MediaQuery.of(context);
-    final screenSize = mediaQuery.size;
     final viewPadding = mediaQuery.viewPadding;
-    final maxRadius = math.min(
-      math.min(
-        center.dx - viewPadding.left - _coachMarkEdgeMargin,
-        screenSize.width -
-            center.dx -
-            viewPadding.right -
-            _coachMarkEdgeMargin,
-      ),
-      math.min(
-        center.dy - viewPadding.top - _coachMarkEdgeMargin,
-        screenSize.height -
-            center.dy -
-            viewPadding.bottom -
-            _coachMarkEdgeMargin,
-      ),
+    final desiredRadius =
+        (math.max(size.width, size.height) * 0.6) + _coachMarkPaddingFocus;
+    final maxViewportRadius = math.min(
+      (viewportSize.width -
+              viewPadding.left -
+              viewPadding.right -
+              (_coachMarkEdgeMargin * 2)) /
+          2,
+      (viewportSize.height -
+              viewPadding.top -
+              viewPadding.bottom -
+              (_coachMarkEdgeMargin * 2)) /
+          2,
     );
-
-    if (maxRadius <= _coachMarkPaddingFocus) {
+    final radius = math.min(desiredRadius, maxViewportRadius);
+    if (radius <= _coachMarkPaddingFocus) {
       return null;
     }
 
-    final desiredRadius =
-        (math.max(size.width, size.height) * 0.6) + _coachMarkPaddingFocus;
-    final radius = math.min(desiredRadius, maxRadius);
+    final minCenterX = viewPadding.left + _coachMarkEdgeMargin + radius;
+    final maxCenterX =
+        viewportSize.width - viewPadding.right - _coachMarkEdgeMargin - radius;
+    final minCenterY = viewPadding.top + _coachMarkEdgeMargin + radius;
+    final maxCenterY = viewportSize.height -
+        viewPadding.bottom -
+        _coachMarkEdgeMargin -
+        radius;
+    final center = Offset(
+      rawCenter.dx.clamp(minCenterX, maxCenterX).toDouble(),
+      rawCenter.dy.clamp(minCenterY, maxCenterY).toDouble(),
+    );
     final targetExtent = (radius - _coachMarkPaddingFocus) / 0.6;
 
     return TargetPosition(
